@@ -1,0 +1,96 @@
+/** Startdaten (keine Fake-Mitglieder, keine erfundenen Beiträge). */
+
+export const INTERESTS: { slug: string; label: string; category: string }[] = [
+  { slug: "kennenlernen", label: "Entspannt kennenlernen", category: "Kontakt" },
+  { slug: "freundschaft", label: "Freundschaft", category: "Kontakt" },
+  { slug: "dating", label: "Dating", category: "Kontakt" },
+  { slug: "offene-beziehung", label: "Offene Beziehung", category: "Beziehung" },
+  { slug: "enm", label: "Einvernehmliche Nicht-Monogamie", category: "Beziehung" },
+  { slug: "swinger", label: "Swinger-Community", category: "Community" },
+  { slug: "clubkultur", label: "Clubkultur & Partys", category: "Community" },
+  { slug: "stammtisch", label: "Stammtische", category: "Community" },
+  { slug: "bdsm-kink", label: "BDSM & Kink (respektvoll)", category: "Community" },
+  { slug: "queer", label: "Queer", category: "Community" },
+  { slug: "koerperpositivitaet", label: "Körperpositivität", category: "Werte" },
+  { slug: "einvernehmlichkeit", label: "Einvernehmlichkeit & Grenzen", category: "Werte" },
+  { slug: "reisen", label: "Reisen", category: "Freizeit" },
+  { slug: "kultur", label: "Kultur & Konzerte", category: "Freizeit" },
+  { slug: "essen", label: "Gutes Essen & Wein", category: "Freizeit" },
+  { slug: "natur", label: "Natur & Wandern", category: "Freizeit" },
+  { slug: "tanzen", label: "Tanzen", category: "Freizeit" },
+  { slug: "wellness", label: "Wellness & Sauna", category: "Freizeit" },
+  { slug: "fotografie", label: "Fotografie", category: "Freizeit" },
+  { slug: "spieleabend", label: "Spieleabende", category: "Freizeit" },
+];
+
+export const OFFICIAL_TOPICS: { name: string; question: string; category: string }[] = [
+  { name: "Neu hier – entspannt ankommen", question: "Was hilft dir beim ersten Kennenlernen in einer neuen Community?", category: "Community" },
+  { name: "Einvernehmlichkeit & Grenzen", question: "Wie kommunizieren wir Wünsche und Grenzen respektvoll?", category: "Werte" },
+  { name: "Swinger-Community & Clubkultur", question: "Welche Umgangsformen machen einen ersten Clubbesuch angenehm?", category: "Community" },
+  { name: "Paare im Gespräch", question: "Wie besprechen wir neue Erfahrungen miteinander?", category: "Beziehung" },
+  { name: "Offene Beziehungen & ENM", question: "Wie gestalten Menschen faire Vereinbarungen und gehen mit Eifersucht um?", category: "Beziehung" },
+  { name: "Queer & verbunden", question: "Was macht einen Communityraum für dich inklusiv?", category: "Community" },
+  { name: "BDSM & Kink – respektvoll entdecken", question: "Welche nicht expliziten Grundlagen helfen bei Kommunikation und Sicherheit?", category: "Community" },
+  { name: "Körperpositivität & Selbstvertrauen", question: "Wie können wir unterschiedliche Körper wertschätzend wahrnehmen?", category: "Werte" },
+  { name: "Erstes Date & digitale Diskretion", question: "Welche Vorkehrungen helfen beim sicheren ersten Treffen?", category: "Sicherheit" },
+  { name: "Stammtische & regionale Kontakte", question: "Wer möchte sich zunächst in ungezwungener Atmosphäre austauschen?", category: "Regional" },
+  { name: "Partys, Clubs & Wochenendpläne", question: "Welche Art von Veranstaltung interessiert dich?", category: "Events" },
+  { name: "Fotografie & Selbstdarstellung", question: "Wie gestalten wir Profile, ohne Privatsphäre und Bildrechte zu verletzen?", category: "Profil" },
+  { name: "Beziehungswissen & Kommunikation", question: "Welche Gespräche stärken Nähe und Vertrauen?", category: "Beziehung" },
+  { name: "Wohlbefinden & Prävention", question: "Welche seriösen Informationsangebote möchtet ihr kennenlernen? (Keine individuelle medizinische Beratung.)", category: "Gesundheit" },
+  { name: "Reisen & Community unterwegs", question: "Wie finden wir respektvolle Kontakte außerhalb der Heimatregion?", category: "Freizeit" },
+  { name: "Feedback an eropub", question: "Welche Verbesserung würde dir das Verbinden mit anderen erleichtern?", category: "Plattform" },
+];
+
+type Q = { key: string; variant: "either_or" | "our_evening" | "what_matters"; category: string; text: string; options: string[] };
+
+export const GAME_QUESTIONS: Q[] = [
+  // Entweder oder (12)
+  { key: "eo_first_meet", variant: "either_or", category: "Kennenlernen", text: "Wie möchtet ihr euch zuerst kennenlernen?", options: ["Bei einem Kaffee", "Gemeinsamer Spaziergang", "Stammtisch", "Videoanruf"] },
+  { key: "eo_morning_evening", variant: "either_or", category: "Freizeit", text: "Seid ihr eher Morgen- oder Abendmenschen?", options: ["Morgens", "Abends", "Ganz unterschiedlich"] },
+  { key: "eo_city_nature", variant: "either_or", category: "Freizeit", text: "Stadt oder Natur?", options: ["Stadt", "Natur", "Beides gern"] },
+  { key: "eo_wine_cocktail", variant: "either_or", category: "Freizeit", text: "Was trinkt ihr am liebsten zum Anstoßen?", options: ["Wein", "Cocktail", "Alkoholfrei", "Bier"] },
+  { key: "eo_activity", variant: "either_or", category: "Freizeit", text: "Was unternehmt ihr gemeinsam gern?", options: ["Essen gehen", "Kultur", "Draußen unterwegs", "Spieleabend"] },
+  { key: "eo_chat_style", variant: "either_or", category: "Kommunikation", text: "Wie schreibt ihr am liebsten?", options: ["Kurz und häufig", "Ausführlich und seltener", "Lieber reden statt schreiben"] },
+  { key: "eo_conversation_start", variant: "either_or", category: "Kommunikation", text: "Welcher Gesprächseinstieg passt zu euch?", options: ["Gemeinsame Interessen", "Kleine Kennenlernfragen", "Offene Vorstellung"] },
+  { key: "eo_music", variant: "either_or", category: "Freizeit", text: "Welche Musik läuft bei euch am häufigsten?", options: ["Pop & Charts", "Rock & Indie", "Elektronisch", "Jazz & Soul"] },
+  { key: "eo_holiday", variant: "either_or", category: "Freizeit", text: "Welcher Urlaub reizt euch mehr?", options: ["Strand & Sonne", "Städtereise", "Berge", "Wellness"] },
+  { key: "eo_humor", variant: "either_or", category: "Kennenlernen", text: "Welcher Humor beschreibt euch am besten?", options: ["Trocken", "Albern", "Ironisch", "Herzlich"] },
+  { key: "eo_food", variant: "either_or", category: "Freizeit", text: "Wo esst ihr lieber?", options: ["Gemütliches Restaurant", "Selbst kochen", "Streetfood"] },
+  { key: "eo_weekend", variant: "either_or", category: "Freizeit", text: "Wie sieht ein ideales Wochenende aus?", options: ["Ausschlafen und entspannen", "Viel unternehmen", "Freunde treffen"] },
+  // Unser gemeinsamer Abend (12)
+  { key: "ev_planning", variant: "our_evening", category: "Planung", text: "Wie plant ihr einen gemeinsamen Abend am liebsten?", options: ["Frühzeitig", "Einige Tage vorher", "Spontan"] },
+  { key: "ev_atmosphere", variant: "our_evening", category: "Atmosphäre", text: "Welche Atmosphäre gefällt euch?", options: ["Ruhig und gemütlich", "Gesellig", "Festlich"] },
+  { key: "ev_group_size", variant: "our_evening", category: "Gruppengröße", text: "Wie groß darf eine erste Runde sein?", options: ["Nur zwei Paare", "Kleine Gruppe", "Größerer Stammtisch"] },
+  { key: "ev_time", variant: "our_evening", category: "Zeit", text: "Wann habt ihr eher Zeit?", options: ["Werktags abends", "Am Wochenende", "Unterschiedlich"] },
+  { key: "ev_location", variant: "our_evening", category: "Ort", text: "Wo trefft ihr euch am liebsten zuerst?", options: ["Café oder Bar", "Restaurant", "Bei einer Veranstaltung"] },
+  { key: "ev_duration", variant: "our_evening", category: "Zeit", text: "Wie lang darf ein erstes Treffen dauern?", options: ["Eine Stunde", "Ein paar Stunden", "Ganz offen"] },
+  { key: "ev_dresscode", variant: "our_evening", category: "Atmosphäre", text: "Welcher Dresscode passt zu euch?", options: ["Lässig", "Schick", "Je nach Anlass"] },
+  { key: "ev_activity", variant: "our_evening", category: "Aktivität", text: "Was wäre ein schöner Programmpunkt?", options: ["Gemeinsam essen", "Tanzen", "Ein Konzert oder Theater", "Einfach reden"] },
+  { key: "ev_music_volume", variant: "our_evening", category: "Atmosphäre", text: "Wie laut darf es sein?", options: ["Leise, man kann gut reden", "Mittel", "Gern lebhaft"] },
+  { key: "ev_travel", variant: "our_evening", category: "Ort", text: "Wie weit würdet ihr für einen Abend fahren?", options: ["In der eigenen Stadt", "Bis zu einer Stunde", "Auch weiter"] },
+  { key: "ev_followup", variant: "our_evening", category: "Planung", text: "Wie meldet ihr euch nach einem netten Abend?", options: ["Noch am selben Abend", "Am nächsten Tag", "Wenn es sich ergibt"] },
+  { key: "ev_budget", variant: "our_evening", category: "Planung", text: "Wie teilt ihr Kosten am liebsten?", options: ["Getrennt", "Abwechselnd einladen", "Wird vor Ort entschieden"] },
+  // Was uns wichtig ist (12)
+  { key: "wm_contact_before", variant: "what_matters", category: "Kommunikation", text: "Wie möchtet ihr vor einem Treffen kommunizieren?", options: ["Zunächst schreiben", "Audioanruf", "Videoanruf"] },
+  { key: "wm_visibility", variant: "what_matters", category: "Privatsphäre", text: "Wie sichtbar möchtet ihr innerhalb der Community sein?", options: ["Nur bestätigte Kontakte", "Ausgewählte Gruppen", "Verifizierte Community"] },
+  { key: "wm_invitation", variant: "what_matters", category: "Umgangsformen", text: "Was ist euch bei einer Einladung besonders wichtig?", options: ["Klare Angaben", "Entspannte Planung", "Gemeinsamer Austausch"] },
+  { key: "wm_photos", variant: "what_matters", category: "Privatsphäre", text: "Wie geht ihr mit Fotos um?", options: ["Erst nach Kennenlernen teilen", "Nur Profilbilder", "Gar keine Fotos teilen"] },
+  { key: "wm_cancel", variant: "what_matters", category: "Umgangsformen", text: "Was erwartet ihr, wenn jemand absagen muss?", options: ["Frühzeitige Nachricht", "Kurzer Anruf", "Ein neuer Terminvorschlag"] },
+  { key: "wm_boundaries", variant: "what_matters", category: "Umgangsformen", text: "Wann sprecht ihr über Wünsche und Grenzen?", options: ["Vor dem ersten Treffen", "Beim ersten Treffen", "Schritt für Schritt"] },
+  { key: "wm_discretion", variant: "what_matters", category: "Privatsphäre", text: "Wie wichtig ist euch Diskretion im Alltag?", options: ["Sehr wichtig", "Wichtig", "Wir gehen offen damit um"] },
+  { key: "wm_reliability", variant: "what_matters", category: "Umgangsformen", text: "Was bedeutet Verlässlichkeit für euch?", options: ["Pünktlichkeit", "Ehrliche Kommunikation", "Zusagen einhalten"] },
+  { key: "wm_pace", variant: "what_matters", category: "Planung", text: "In welchem Tempo lernt ihr Menschen gern kennen?", options: ["Langsam", "Mittel", "Zügig"] },
+  { key: "wm_contact_freq", variant: "what_matters", category: "Kommunikation", text: "Wie oft möchtet ihr in Kontakt sein?", options: ["Täglich", "Ein paar Mal pro Woche", "Wenn es passt"] },
+  { key: "wm_feedback", variant: "what_matters", category: "Kommunikation", text: "Wie gebt ihr Rückmeldung, wenn etwas nicht passt?", options: ["Direkt ansprechen", "Behutsam schreiben", "Im Gespräch zu zweit"] },
+  { key: "wm_first_meet_safety", variant: "what_matters", category: "Sicherheit", text: "Was gibt euch beim ersten Treffen Sicherheit?", options: ["Öffentlicher Ort", "Jemandem Bescheid geben", "Vorher telefonieren"] },
+];
+
+export const GIFTS = [
+  { key: "rose", label: "Rose", emoji: "🌹", tokenCost: 2 },
+  { key: "coffee", label: "Kaffee", emoji: "☕", tokenCost: 1 },
+  { key: "toast", label: "Anstoßen", emoji: "🥂", tokenCost: 2 },
+  { key: "heart", label: "Herz", emoji: "❤️", tokenCost: 1 },
+  { key: "sparkle", label: "Funkeln", emoji: "✨", tokenCost: 3 },
+  { key: "bouquet", label: "Blumenstrauß", emoji: "💐", tokenCost: 5 },
+];

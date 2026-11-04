@@ -1076,6 +1076,7 @@ CREATE TABLE "SettingVersion" (
 -- CreateTable
 CREATE TABLE "AuditEvent" (
     "id" TEXT NOT NULL,
+    "seq" SERIAL NOT NULL,
     "actorUserId" TEXT,
     "action" TEXT NOT NULL,
     "targetType" TEXT,
@@ -1469,6 +1470,9 @@ CREATE INDEX "SettingVersion_key_createdAt_idx" ON "SettingVersion"("key", "crea
 
 -- CreateIndex
 CREATE UNIQUE INDEX "SettingVersion_key_version_key" ON "SettingVersion"("key", "version");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "AuditEvent_seq_key" ON "AuditEvent"("seq");
 
 -- CreateIndex
 CREATE INDEX "AuditEvent_action_createdAt_idx" ON "AuditEvent"("action", "createdAt");

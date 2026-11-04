@@ -1177,6 +1177,7 @@ model SettingVersion {
 
 model AuditEvent {
   id          String   @id @default(cuid())
+  seq         Int      @unique @default(autoincrement())
   actorUserId String?
   action      String
   targetType  String?
