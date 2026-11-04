@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { requireViewer } from "@/lib/viewer";
 import { db } from "@/server/db";
@@ -6,6 +7,7 @@ import { PLAN_LABEL } from "@/domain/plans";
 
 export default async function Dashboard() {
   const v = await requireViewer();
+  if (!v.profileRow) redirect("/app/profil/neu");
   const p = v.profileRow;
   const [requests, conversations, invites] = p
     ? await Promise.all([

@@ -83,7 +83,12 @@ export interface CapabilityResult {
 export function can(cap: Capability, actor: PersonState, profile: ProfileState, now = new Date()): CapabilityResult {
   if (!personActive(actor)) return { allowed: false, reason: "Konto nicht aktiv oder E-Mail/Volljährigkeit nicht bestätigt." };
   if (!profile.members.some((m) => m.userId === actor.userId)) return { allowed: false, reason: "Kein Mitglied dieses Profils." };
-  if (profile.status !== "active") return { allowed: false, reason: "Profil ist nicht aktiv." };
+  // Paarprofil, dessen Partnerperson noch nicht beigetreten ist: Grundfunktionen erlaubt,
+  // Community/Spiele/Premium bleiben bis zur vollständigen Verifizierung beider Personen gesperrt.
+  const basicCap = cap === "view_profiles" || cap === "contact_request" || cap === "read_messages" || cap === "send_message";
+  if (profile.status !== "active" && !(profile.status === "pending_partner" && basicCap)) {
+    return { allowed: false, reason: profile.status === "pending_partner" ? "Lade zuerst deine Partnerperson ein." : "Profil ist nicht aktiv." };
+  }
   const verified = profileVerified(profile, now);
   const plan = effectivePlan(actor, profile, now);
 

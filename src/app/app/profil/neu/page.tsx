@@ -14,13 +14,22 @@ export default async function NeuesProfil() {
   return (
     <div className="narrow stack">
       <h1>Profil anlegen</h1>
-      <p className="muted">Du hast derzeit kein aktives Profil – zum Beispiel nach einer Paartrennung. Lege ein neues Profil an oder nimm eine Paar-Einladung über den Link aus der E-Mail an.</p>
+      <div className="alert info" role="note">
+        <strong>Dein Konto ({v.user.email}) hat noch kein Community-Profil.</strong> Ohne Profil kannst du Entdecken, Nachrichten,
+        Community, Events und Spiele noch nicht nutzen – deshalb landest du hier. Das betrifft z. B. Admin-Konten, die im Terminal
+        angelegt wurden, oder Konten nach einer Paartrennung. Einmal ausfüllen, dann ist alles freigeschaltet.
+      </div>
       <div className="card">
         <ActionForm action={createProfileAction} submit="Profil anlegen">
           <fieldset>
             <legend>Profiltyp</legend>
             <label className="check"><input type="radio" name="profileType" value="single" defaultChecked /> Einzelprofil</label>
             <label className="check"><input type="radio" name="profileType" value="couple" /> Paarprofil – deine Partnerperson tritt mit eigenem Login bei</label>
+            <p className="hint" style={{ marginBottom: 0 }}>
+              So funktioniert ein Paarprofil: Du legst das gemeinsame Profil an (hier nur mit <em>deinem</em> Geburtsjahr). Danach lädst du
+              deine Partnerperson per E-Mail ein. Sie legt ein eigenes Konto mit eigenem Passwort an, tritt dem Profil bei und trägt ihr
+              Geburtsjahr selbst ein. Geteilte Passwörter gibt es bewusst nicht. „Verifiziert“ wird das Paarprofil, sobald beide Personen geprüft sind.
+            </p>
           </fieldset>
           <div className="field">
             <label htmlFor="handle">Pseudonym</label>

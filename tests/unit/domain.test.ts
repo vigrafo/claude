@@ -82,6 +82,13 @@ describe("Zugriffsregeln", () => {
     // Token-Chat bleibt möglich – aber mit Tokenkosten, da Premium ohne Verifizierung nicht greift
     expect(can("send_message", a, pr)).toEqual({ allowed: true, tokenCostPerMessage: 1 });
   });
+  it("Paarprofil mit ausstehender Partnerperson: Grundfunktionen ja, Community nein", () => {
+    const a = person({ userId: "a" });
+    const pr: ProfileState = { profileId: "p", type: "couple", status: "pending_partner", members: [a] };
+    expect(can("view_profiles", a, pr).allowed).toBe(true);
+    expect(can("send_message", a, pr).tokenCostPerMessage).toBe(1);
+    expect(can("community", a, pr).allowed).toBe(false);
+  });
   it("Paarprofil mit nur einer Person ist nicht verifiziert", () => {
     expect(profileVerified(profile("couple", [person({ userId: "a" })]))).toBe(false);
   });
