@@ -1,7 +1,8 @@
 import { db } from "./db";
 import { processOutboxBatch, type Handler } from "./outbox";
 import { expireVerifications, purgeEvidence } from "./verification";
-import { revokeRoom } from "./calls";
+import { revokeRoom, expireRinging } from "./calls";
+import { storage } from "./storage";
 import { sendMail } from "./mail";
 import { getSetting } from "./settings";
 import { sha256 } from "./crypto";
@@ -56,12 +57,15 @@ export async function deleteUserData(userId: string) {
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return;
   const subjectHash = sha256(`user:${userId}`);
+  const mediaKeys: string[] = [];
   await db.$transaction(async (tx) => {
     const memberships = await tx.profileMembership.findMany({ where: { userId } });
     for (const m of memberships) {
       const others = await tx.profileMembership.count({ where: { profileId: m.profileId, status: "active", userId: { not: userId } } });
       if (others === 0) {
         await tx.message.updateMany({ where: { senderProfileId: m.profileId }, data: { body: "[gelöscht]", deletedAt: new Date() } });
+        const assets = await tx.mediaAsset.findMany({ where: { ownerId: m.profileId, legalHold: false, deletedAt: null }, select: { storageKey: true } });
+        mediaKeys.push(...assets.map((a) => a.storageKey));
         await tx.mediaAsset.updateMany({ where: { ownerId: m.profileId, legalHold: false }, data: { deletedAt: new Date() } });
         await tx.communityProfile.update({
           where: { id: m.profileId },
@@ -79,7 +83,9 @@ export async function deleteUserData(userId: string) {
     });
     await tx.deletionTombstone.upsert({ where: { subjectHash }, create: { subjectHash, doneAt: new Date() }, update: {} });
   });
-  await audit("privacy.deleted", { targetType: "user", targetId: userId });
+  // Dateien erst nach erfolgreicher Transaktion entfernen (rechtlich gesicherte bleiben erhalten)
+  for (const k of mediaKeys) await storage().del(k).catch(() => undefined);
+  await audit("privacy.deleted", { targetType: "user", targetId: userId, meta: { mediaDeleted: mediaKeys.length } });
 }
 
 /** Nach einem Restore: alle Tombstones erneut anwenden (Restore darf Löschungen nicht dauerhaft rückgängig machen). */
@@ -129,9 +135,9 @@ export async function expireGames(now = new Date()) {
   return r.count;
 }
 
+/** Nicht angenommene Anrufe (60 s) als verpasst markieren und Räume schließen. */
 export async function missedCalls(now = new Date()) {
-  const r = await db.callSession.updateMany({ where: { status: "ringing", createdAt: { lte: new Date(now.getTime() - 60_000) } }, data: { status: "missed", endedAt: now } });
-  return r.count;
+  return expireRinging(now);
 }
 
 /** Gold-CMS: geplante Inhalte zum Veröffentlichungszeitpunkt freischalten. */

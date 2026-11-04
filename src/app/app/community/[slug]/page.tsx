@@ -10,6 +10,7 @@ import { db } from "@/server/db";
 import { Empty, Gate, formatDate } from "@/components/ui";
 import { ActionForm } from "@/components/ActionForm";
 import { HiddenForm, ReportForm } from "@/app/app/_components/forms";
+import { uploadGroupPhotoAction } from "@/app/actions/member/media";
 import {
   createThreadAction, joinGroupAction, leaveGroupAction, moderateMemberAction, moderatorApplyAction,
 } from "@/app/actions/member/community";
@@ -146,7 +147,23 @@ export default async function Gruppe({ params }: { params: Promise<{ slug: strin
             <p className="muted" style={{ margin: 0 }}>{gallery.reason} <Link href="/app/konto/tarif">Tarife ansehen</Link></p>
           ) : galleryItems.length === 0 ? (
             <p className="muted" style={{ margin: 0 }}>Noch keine freigegebenen Bilder in dieser Gruppe.</p>
-          ) : (
+          ) : null}
+          {gallery.allowed && (
+            <details>
+              <summary style={{ cursor: "pointer", fontWeight: 600, minHeight: 32 }}>Bild zur Gruppengalerie hinzufügen</summary>
+              <ActionForm action={uploadGroupPhotoAction} submit="Hochladen" resetOnSuccess>
+                <input type="hidden" name="groupId" value={g.id} />
+                <input type="hidden" name="slug" value={g.slug} />
+                <div className="field">
+                  <label htmlFor="gfile">Bilddatei (JPEG, PNG, WebP)</label>
+                  <input id="gfile" name="file" type="file" accept="image/jpeg,image/png,image/webp" required />
+                  <p className="hint">Metadaten werden entfernt. Das Bild erscheint nach der Prüfung für aktive Gruppenmitglieder mit Premium oder Gold.</p>
+                </div>
+                <label className="check field"><input type="checkbox" name="rights" required /> Ich habe die Rechte am Bild; alle erkennbaren Personen sind volljährig und einverstanden.</label>
+              </ActionForm>
+            </details>
+          )}
+          {galleryItems.length > 0 && (
             <div className="grid grid-4">
               {galleryItems.map((m) => (
                 <figure key={m.id} style={{ margin: 0 }}>

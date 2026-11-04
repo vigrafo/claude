@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { visibleProfilePhotos } from "@/server/uploads";
 import type { Metadata } from "next";
 import { actingProfile } from "@/app/app/_lib/server";
 import { discoverProfiles, type DiscoverFilters } from "@/server/discover";
@@ -30,6 +31,7 @@ export default async function Entdecken({ searchParams }: { searchParams: Promis
     discoverProfiles(userId, profileId, f),
     db.interest.findMany({ where: { active: true }, orderBy: [{ category: "asc" }, { label: "asc" }] }),
   ]);
+  const photos = await visibleProfilePhotos(profileId, items.map((x) => x.id));
   const noCoords = v.profileRow.lat == null;
   return (
     <div className="stack">
@@ -93,7 +95,7 @@ export default async function Entdecken({ searchParams }: { searchParams: Promis
           {items.map((p) => (
             <article key={p.id} className="card stack" aria-labelledby={`h-${p.id}`}>
               <div className="row">
-                <Avatar name={p.handle} />
+                <Avatar name={p.handle} photoId={photos.get(p.id)} />
                 <div>
                   <h2 id={`h-${p.id}`} style={{ fontSize: "1.15rem", margin: 0 }}><Link href={`/app/profil/${encodeURIComponent(p.handle)}`}>{p.handle}</Link></h2>
                   <div className="muted" style={{ fontSize: "0.9rem" }}>

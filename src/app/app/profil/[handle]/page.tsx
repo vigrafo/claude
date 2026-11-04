@@ -13,6 +13,7 @@ import { startCallAction } from "@/app/actions/member/calls";
 import { GAME_VARIANTS } from "@/domain/games";
 import { PROFILE_TYPE_LABEL, relationshipLabel } from "@/app/app/_lib/options";
 import { livekitConfigured } from "@/server/calls";
+import { listVisibleGallery, visibleProfilePhotos } from "@/server/uploads";
 
 export const metadata: Metadata = { title: "Profil" };
 
@@ -30,10 +31,11 @@ export default async function ProfilDetail({ params }: { params: Promise<{ handl
   const calls = v.can("calls");
   const canInviteGame = v.profileRow.type === "couple" && p.type === "couple" && !p.isSelf;
   const games = v.can("games");
+  const [photos, gallery] = await Promise.all([visibleProfilePhotos(profileId, [p.id]), p.isSelf ? Promise.resolve([]) : listVisibleGallery(profileId, p.id)]);
   return (
     <div className="stack">
       <div className="card row" style={{ alignItems: "flex-start", gap: 20 }}>
-        <Avatar name={p.handle} size="lg" />
+        <Avatar name={p.handle} size="lg" photoId={photos.get(p.id)} />
         <div className="stack" style={{ flex: 1, minWidth: 220 }}>
           <div>
             <h1 style={{ margin: 0 }}>{p.handle}</h1>
@@ -109,6 +111,18 @@ export default async function ProfilDetail({ params }: { params: Promise<{ handl
       )}
 
       <div className="grid grid-2">
+        {gallery.length > 0 && (
+          <section className="card" aria-labelledby="gal-h">
+            <h2 id="gal-h">Galerie</h2>
+            <div className="photo-grid">
+              {gallery.map((g, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={g.id} src={`/app/medien/${g.id}`} alt={`Galeriebild ${i + 1} von ${p.handle}`} loading="lazy" />
+              ))}
+            </div>
+            <p className="hint" style={{ marginBottom: 0 }}>Du siehst nur Bilder, die {p.handle} für dich freigegeben hat.</p>
+          </section>
+        )}
         <section className="card" aria-labelledby="about-h">
           <h2 id="about-h">Über {p.type === "couple" ? "uns" : "mich"}</h2>
           {p.about ? <p style={{ whiteSpace: "pre-wrap" }}>{p.about}</p> : <p className="muted">Noch keine Beschreibung.</p>}

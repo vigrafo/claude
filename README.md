@@ -65,6 +65,7 @@ Unit-Tests (Fachregeln) und Integrationstests gegen PostgreSQL (`TEST_DATABASE_U
 | Tarife, Tokens, Rabatte | `docs/tariffs.md` |
 | Zahlungen | `docs/payments.md` |
 | Verifizierung | `docs/verification.md` |
+| Anrufe & Fotos | `docs/calls-and-media.md` |
 | Datenschutz | `docs/privacy.md` |
 | Moderation | `docs/moderation.md` |
 | Länder/Regionen | `docs/regions.md` |

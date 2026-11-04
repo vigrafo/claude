@@ -26,7 +26,7 @@ export default async function MedienPage({ searchParams }: { searchParams: Promi
   ]);
   return (
     <>
-      <PageHead title="Medien">Moderationswarteschlange (nur Metadaten). Rechtliche Sperre (Legal Hold) verhindert Löschung.</PageHead>
+      <PageHead title="Medien">Moderationswarteschlange mit geschützter Vorschau (jeder Abruf wird protokolliert; Chatbilder nur fallbezogen). Rechtliche Sperre (Legal Hold) verhindert Löschung.</PageHead>
       <SearchBar base="/admin/medien" q={q} params={params} placeholder="Profil-Pseudonym" filters={[
         { name: "moderation", label: "Moderation", options: ["pending", "approved", "rejected"].map((s) => ({ value: s, label: s })) },
         { name: "purpose", label: "Zweck", options: ["profile", "gallery", "message", "group", "club", "gold"].map((s) => ({ value: s, label: s })) },
@@ -34,10 +34,16 @@ export default async function MedienPage({ searchParams }: { searchParams: Promi
       ]} />
       {rows.length === 0 ? <Empty title="Keine Medien in dieser Ansicht" /> : (
         <div className="table-wrap"><table>
-          <thead><tr><th>Hochgeladen</th><th>Profil</th><th>Zweck / Sichtbarkeit</th><th>Typ / Größe</th><th>Rechtehinweis</th><th>Status</th><th>Aktionen</th></tr></thead>
+          <thead><tr><th>Vorschau</th><th>Hochgeladen</th><th>Profil</th><th>Zweck / Sichtbarkeit</th><th>Typ / Größe</th><th>Rechtehinweis</th><th>Status</th><th>Aktionen</th></tr></thead>
           <tbody>
             {rows.map((m) => (
               <tr key={m.id}>
+                <td>
+                  {m.purpose !== "message" ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <a href={`/admin/medien/${m.id}/bild`} target="_blank" rel="noopener"><img src={`/admin/medien/${m.id}/bild`} alt={`Upload von ${m.owner.handle}`} loading="lazy" style={{ width: 96, height: 96, objectFit: "cover", borderRadius: 8 }} /></a>
+                  ) : <span className="dim">Chatbild – nur fallbezogen</span>}
+                </td>
                 <td>{formatDate(m.createdAt, true)}</td>
                 <td>{m.owner.handle}</td>
                 <td>{m.purpose} · {m.visibility}</td>

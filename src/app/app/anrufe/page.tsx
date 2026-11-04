@@ -62,7 +62,10 @@ export default async function Anrufe() {
             return (
               <div key={x.id} className="row between">
                 <span>{x.mode === "video" ? "🎥" : "📞"} {handles.get(other) ?? "Kontakt"} · {x.status === "ringing" ? "klingelt …" : "verbunden"}</span>
-                <HiddenForm action={endCallAction} fields={{ callId: x.id }} submit="Auflegen" submitClass="btn danger small" />
+                <span className="row">
+                  <a className="btn small" href={`/app/anrufe/${x.id}`}>{x.callerProfileId === profileId || x.status === "active" ? "Zum Anruf" : "Öffnen"}</a>
+                  <HiddenForm action={endCallAction} fields={{ callId: x.id }} submit="Auflegen" submitClass="btn danger small" />
+                </span>
               </div>
             );
           })}

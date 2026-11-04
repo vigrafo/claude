@@ -11,3 +11,4 @@ coverage
 secrets/
 tsconfig.tsbuildinfo
 next-env.d.ts
+storage/

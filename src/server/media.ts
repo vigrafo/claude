@@ -15,6 +15,12 @@ export async function canViewMedia(userId: string, profileId: string, mediaId: s
   if (m.ownerId === profileId) return m;
   if (m.moderation !== "approved") return null;
   if (await isBlockedEitherWay(profileId, m.ownerId)) return null;
+  if (m.purpose === "message") {
+    // Chatbilder: nur Teilnehmende der Konversation
+    if (!m.scopeId) return null;
+    const part = await db.conversationParticipant.findUnique({ where: { conversationId_profileId: { conversationId: m.scopeId, profileId } } });
+    return part ? m : null;
+  }
   const owner = await db.communityProfile.findUnique({ where: { id: m.ownerId } });
   if (!owner || owner.status !== "active") return null;
   switch (m.visibility) {

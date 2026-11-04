@@ -5,6 +5,8 @@ import { requireViewer } from "@/lib/viewer";
 import { logoutAction } from "@/app/actions/auth";
 import { db } from "@/server/db";
 import { maintenanceScreen } from "@/components/Maintenance";
+import { IncomingCall } from "@/app/app/anrufe/IncomingCall";
+import { livekitConfigured } from "@/server/calls";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +40,7 @@ export default async function MemberLayout({ children }: { children: React.React
           </div>
         </div>
       </header>
+      {livekitConfigured() && v.can("calls").allowed && <IncomingCall />}
       <main id="main" className="member-main container" style={{ paddingTop: 24 }}>{children}</main>
       <nav className="bottomnav" aria-label="Hauptnavigation mobil">
         <NavLink href="/app/entdecken"><Icon name="discover" />Entdecken</NavLink>

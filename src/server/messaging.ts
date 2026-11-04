@@ -14,8 +14,9 @@ export interface SendInput {
   toProfileId: string;
   body: string;
   clientKey: string; // Idempotenzschlüssel vom Client
-  kind?: "text" | "gift";
+  kind?: "text" | "gift" | "media";
   giftKey?: string;
+  mediaId?: string;
 }
 
 export interface SendResult {
@@ -66,7 +67,7 @@ async function duplicateResult(messageId: string, conversationId: string, profil
   return { messageId, conversationId, tokenCost: m.tokenCost, balance: p.tokenBalance, duplicate: true, isRequest: false };
 }
 
-async function doSend(tx: Tx, input: SendInput, kind: "text" | "gift"): Promise<SendResult> {
+async function doSend(tx: Tx, input: SendInput, kind: "text" | "gift" | "media"): Promise<SendResult> {
   const actor = await personState(input.actorUserId, tx);
   const from = await profileState(input.fromProfileId, tx);
   const to = await tx.communityProfile.findUnique({
@@ -115,6 +116,19 @@ async function doSend(tx: Tx, input: SendInput, kind: "text" | "gift"): Promise<
   }
 
   // Geschenke: serverseitig konfigurierte Kosten
+  // Bildnachricht: nur eigenes, für genau diese Konversation hochgeladenes Bild; nicht als erste Anfrage
+  let mediaId: string | undefined;
+  if (kind === "media") {
+    if (isRequest) throw forbidden("Bilder kannst du erst senden, wenn deine Anfrage angenommen wurde.");
+    const m = input.mediaId ? await tx.mediaAsset.findUnique({ where: { id: input.mediaId } }) : null;
+    if (!m || m.ownerId !== input.fromProfileId || m.purpose !== "message" || m.scopeId !== conv.id || m.deletedAt) {
+      throw new AppError("media_invalid", "Bild nicht verfügbar.");
+    }
+    const used = await tx.message.count({ where: { mediaId: m.id } });
+    if (used) throw new AppError("media_invalid", "Dieses Bild wurde bereits gesendet.");
+    mediaId = m.id;
+  }
+
   let giftCost = 0;
   let giftId: string | undefined;
   if (kind === "gift") {
@@ -130,7 +144,7 @@ async function doSend(tx: Tx, input: SendInput, kind: "text" | "gift"): Promise<
   const msg = await tx.message.create({
     data: {
       conversationId: conv.id, senderProfileId: input.fromProfileId, senderUserId: input.actorUserId,
-      senderLabel: membership?.displayLabel ?? null, kind, body: input.body, giftId,
+      senderLabel: membership?.displayLabel ?? null, kind, body: input.body, giftId, mediaId,
       clientKey: input.clientKey, tokenCost: cost,
     },
   });

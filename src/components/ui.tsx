@@ -20,7 +20,11 @@ export function VerifiedBadge({ verified }: { verified: boolean }) {
   );
 }
 
-export function Avatar({ name, size }: { name: string; size?: "lg" }) {
+export function Avatar({ name, size, photoId }: { name: string; size?: "lg"; photoId?: string | null }) {
+  if (photoId) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img className={`avatar ${size ?? ""}`} src={`/app/medien/${photoId}`} alt={`Profilbild von ${name}`} loading="lazy" />;
+  }
   return <span className={`avatar ${size ?? ""}`} aria-hidden="true">{name.slice(0, 2).toUpperCase()}</span>;
 }
 

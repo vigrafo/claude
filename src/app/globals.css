@@ -245,3 +245,22 @@ details.admin-details > summary { cursor: pointer; min-height: 44px; display: fl
 summary.btn { display: inline-flex; list-style: none; }
 summary.btn::-webkit-details-marker { display: none; }
 .row > form { margin: 0; }
+
+/* calls */
+.call-stage { position: relative; background: #050506; border: 1px solid var(--line); border-radius: var(--radius); aspect-ratio: 16 / 9; overflow: hidden; }
+.call-remote { position: absolute; inset: 0; display: grid; place-items: center; }
+.call-placeholder { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.call-local { position: absolute; right: 12px; bottom: 12px; width: min(28%, 220px); aspect-ratio: 4 / 3; object-fit: cover; border-radius: 10px; border: 2px solid #fff; background: #000; transform: scaleX(-1); }
+.call-controls { display: flex; flex-wrap: wrap; gap: 10px; }
+@media (max-width: 600px) { .call-stage { aspect-ratio: 3 / 4; } }
+.incoming-call { position: fixed; left: 50%; transform: translateX(-50%); top: 76px; z-index: 60; display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+  background: #1c0a0f; border: 1px solid var(--red); border-radius: 14px; padding: 10px 14px; box-shadow: var(--shadow); max-width: calc(100% - 32px); }
+
+/* media */
+img.avatar { object-fit: cover; padding: 0; }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.photo-grid figure { margin: 0; }
+.photo-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; background: var(--bg-elev-2); display: block; }
+.photo-grid figcaption { font-size: 0.82rem; color: var(--text-dim); margin-top: 6px; }
+.msg img.chat-img { display: block; max-width: 100%; max-height: 360px; border-radius: 10px; margin-bottom: 6px; }
+.call-overlay { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }

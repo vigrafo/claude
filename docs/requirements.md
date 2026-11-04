@@ -1,7 +1,7 @@
 # Anforderungen & Umsetzungsstand
 
 Status: ✅ umgesetzt und getestet · 🟡 teilweise / mit Einschränkung · ⬜ offen (externe Voraussetzung oder Folgeetappe).
-Testbelege: `tests/` (90 automatisierte Tests, Stand 04.11.2026) und Browser-Durchlauf `docs/test-results.md`.
+Testbelege: `tests/` (99 automatisierte Tests, Stand 04.11.2026) und Browser-Durchlauf `docs/test-results.md`.
 
 | # | Anforderung | Status | Abnahmekriterium / Beleg |
 |---|---|---|---|
@@ -22,7 +22,7 @@ Testbelege: `tests/` (90 automatisierte Tests, Stand 04.11.2026) und Browser-Dur
 | 15 | Entdecken mit Erklärungen statt Prozentwerten, Filter, grobe Entfernung | 🟡 | `member-discover.test.ts`; PLZ→Koordinaten-Geodaten fehlen noch (`docs/regions.md`) |
 | 16 | Kontaktanfragen mit Limit, Favoriten, Like/Pass ohne Kontaktfreigabe, Blockieren, Melden | ✅ | `member-contacts.test.ts`, `member-reports-dates.test.ts` |
 | 17 | Kennenlernspiele (3 Varianten, 36 Fragen, Snapshots, Bestätigung beider Personen, 8/10, 7/8, unvollständig, 4 Zustimmungen) | ✅ | `games.test.ts` |
-| 18 | Audio-/Videoanrufe (LiveKit) | 🟡 | Rechte, Raumtokens, Entzug, Limits serverseitig; Browser-Client (`livekit-client`) und LiveKit-Server-Betrieb offen |
+| 18 | Audio-/Videoanrufe (LiveKit) | ✅ | Echter Zwei-Browser-Videoanruf getestet (`docs/calls-and-media.md`); Relay/TURN in Produktion noch ungetestet |
 | 19 | Gruppen/Foren mit Freigabe, 16 offizielle Themen, Moderator-Bewerbung, Schreibfreigabe | ✅ | `community.test.ts`, Seed |
 | 20 | Events, Clubs (Sterne nur eropub), Kapazität, 30-Min-Vormerkung, Anbieterlink + manueller Abgleich | ✅ | `events.ts`, Admin `/admin/events` |
 | 21 | Gold-Rabatt 10 € einmal je Event/Profil, Parallelität, Storno/Erstattung | ✅ | `community.test.ts` |
@@ -38,5 +38,5 @@ Testbelege: `tests/` (90 automatisierte Tests, Stand 04.11.2026) und Browser-Dur
 | 31 | Länder Europas inkl. Kleinstaaten/Gebiete, RU/BY ausgeschlossen, Regionskatalog + Freitext | ✅ | Unit-Test; Datenlücken in `docs/regions.md` |
 | 32 | Ubuntu-Betrieb: Docker/Compose, Caddy, Firewall-Hinweise, Backup/Restore, Monitoring, Kostenmodell | 🟡 | Dateien validiert (`compose config`), **Container nie gestartet** (kein Docker-Daemon in der Entwicklungsumgebung) |
 | 33 | Deployment auf eropub.de (Strato/Plesk) | ⬜ | erfordert Serverzugang; Anleitung `docs/ubuntu-deployment.md` |
-| 34 | Medien-Upload mit EXIF-Entfernung, S3-Speicher | ⬜ | Auslieferung mit Rechteprüfung vorhanden; Upload-Pipeline (S3, EXIF-Strip, Bildprüfung) Folgeetappe |
+| 34 | Foto-Upload mit EXIF-Entfernung, privatem Speicher, Freigaben, Moderation, Chatbilder | ✅ | `media-calls.test.ts`, Browser-Test (Metadaten entfernt, 404 vor/200 nach Freigabe, 401 ohne Login); S3-Treiber gegen echtes MinIO ungetestet |
 | 35 | Rechtstexte (Impressum, Datenschutz, AGB), DSFA | ⬜ | Entwürfe als Platzhalter, rechtliche Prüfung erforderlich |

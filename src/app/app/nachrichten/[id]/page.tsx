@@ -12,6 +12,10 @@ import { HiddenForm, ReportForm } from "@/app/app/_components/forms";
 import { MessageComposer } from "@/app/app/_components/MessageComposer";
 import { respondMessageRequestAction, sendMessageAction } from "@/app/actions/member/messages";
 import { blockAction } from "@/app/actions/member/contacts";
+import { sendPhotoMessageAction } from "@/app/actions/member/media";
+import { ActionForm } from "@/components/ActionForm";
+import { HiddenImage } from "../HiddenImage";
+import { randomUUID } from "node:crypto";
 
 export const metadata: Metadata = { title: "Unterhaltung" };
 
@@ -81,6 +85,10 @@ export default async function Unterhaltung({ params }: { params: Promise<{ id: s
           return (
             <div key={m.id} className={`msg ${mine ? "mine" : ""}`}>
               {m.kind === "gift" && <div style={{ fontSize: "1.6rem" }} aria-label={`Geschenk: ${gift?.label ?? "Geschenk"}`}>{gift?.emoji ?? "🎁"} <span style={{ fontSize: "0.9rem" }}>{gift?.label ?? "Geschenk"}</span></div>}
+              {m.kind === "media" && m.mediaId && (mine
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img className="chat-img" src={`/app/medien/${m.mediaId}`} alt="Von dir gesendetes Bild" />
+                : <HiddenImage mediaId={m.mediaId} from={other.handle} />)}
               {m.body && <div>{m.body}</div>}
               <div className="meta">
                 {formatDate(m.createdAt, true)}
@@ -107,6 +115,22 @@ export default async function Unterhaltung({ params }: { params: Promise<{ id: s
           gifts={features.giftsEnabled ? gifts.map((g) => ({ key: g.key, label: g.label, emoji: g.emoji, tokenCost: g.tokenCost })) : []}
         />
       ) : null}
+      {canWrite && (connected || req?.status === "accepted") && (
+        <details className="card tight">
+          <summary style={{ cursor: "pointer", fontWeight: 600, minHeight: 32 }}>🖼 Bild senden</summary>
+          <ActionForm action={sendPhotoMessageAction} submit={(send.tokenCostPerMessage ?? 1) > 0 ? `Bild senden (${send.tokenCostPerMessage ?? 1} Token)` : "Bild senden"} resetOnSuccess>
+            <input type="hidden" name="conversationId" value={id} />
+            <input type="hidden" name="clientKey" value={randomUUID()} />
+            <div className="field">
+              <label htmlFor="pfile">Bilddatei (JPEG, PNG, WebP)</label>
+              <input id="pfile" name="file" type="file" accept="image/jpeg,image/png,image/webp" required />
+              <p className="hint">Metadaten werden entfernt. {other.handle} sieht das Bild erst nach einem Klick auf „Anzeigen“ und kann es melden.</p>
+            </div>
+            <div className="field"><label htmlFor="pcap">Begleittext (optional)</label><input id="pcap" name="caption" type="text" maxLength={2000} /></div>
+            <label className="check field"><input type="checkbox" name="rights" required /> Ich habe die Rechte am Bild; alle erkennbaren Personen sind volljährig und einverstanden.</label>
+          </ActionForm>
+        </details>
+      )}
     </div>
   );
 }

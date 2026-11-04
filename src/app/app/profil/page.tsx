@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { actingProfile } from "@/app/app/_lib/server";
 import { Avatar, VerifiedBadge } from "@/components/ui";
+import { profilePhoto } from "@/server/uploads";
 import { HiddenForm } from "@/app/app/_components/forms";
 import { switchProfileAction } from "@/app/actions/member/profile";
 import { PLAN_LABEL } from "@/domain/plans";
@@ -16,6 +17,7 @@ export default async function MeinProfil() {
   const statusNote = p.status === "pending_partner" ? "Wartet auf die Partnerperson" : null;
   const links: [string, string, string][] = [
     ["/app/profil/bearbeiten", "Profil bearbeiten", "Überschrift, Text, Interessen, Region, Kontaktfilter und Privatsphäre."],
+    ["/app/profil/fotos", "Fotos", "Profilbild und Galerie mit Freigaben verwalten."],
     [`/app/profil/${encodeURIComponent(p.handle)}`, "Vorschau", "So sehen andere Mitglieder dein Profil."],
     ...(p.type === "couple" ? [["/app/profil/paar", "Paarprofil", "Partnerperson einladen, Paar verlassen oder umwandeln."] as [string, string, string]] : []),
     ["/app/verifizierung", "Verifizierung", "Identität prüfen lassen – Voraussetzung für Community, Spiele, Premium und Gold."],
@@ -29,7 +31,7 @@ export default async function MeinProfil() {
   return (
     <div className="stack">
       <div className="card row" style={{ gap: 20 }}>
-        <Avatar name={p.handle} size="lg" />
+        <Avatar name={p.handle} size="lg" photoId={(await profilePhoto(p.id))?.id} />
         <div className="stack" style={{ flex: 1 }}>
           <h1 style={{ margin: 0 }}>{p.handle}</h1>
           <div className="row">
