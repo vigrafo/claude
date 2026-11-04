@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.7
+# Kompatibel mit BuildKit und dem klassischen Docker-Builder (z. B. Plesk-Server ohne buildx).
 #
 # eropub.com – Container-Image für Web (Next.js) und Worker.
 #
@@ -31,7 +31,7 @@ FROM base AS deps
 COPY package.json package-lock.json ./
 # prisma/ wird vor `npm ci` benötigt, da `postinstall` `prisma generate` ausführt.
 COPY prisma ./prisma
-RUN --mount=type=cache,target=/root/.npm npm ci --no-audit
+RUN npm ci --no-audit && npm cache clean --force
 
 # ──────────────────────────────── Build ───────────────────────────────
 FROM deps AS build
