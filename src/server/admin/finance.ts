@@ -4,6 +4,7 @@ import { AppError, notFound } from "../errors";
 import { postLedger } from "../tokens";
 import { activatePlanFromOrder } from "../subscriptions";
 import { enqueue } from "../outbox";
+import { issueInvoice } from "../payments/service";
 import { assertPerm, requireReason } from "./guard";
 
 export interface OrderFilter { q?: string; status?: string; kind?: string; provider?: string; from?: Date; to?: Date }
@@ -79,7 +80,8 @@ export async function confirmBankTransfer(actorUserId: string, orderId: string, 
       await tx.discountRedemption.updateMany({ where: { ticketOrderId: order.refKey, status: "reserved" }, data: { status: "redeemed" } });
     }
     await tx.order.update({ where: { id: orderId }, data: { fulfilledAt: now } });
-    await enqueue(tx, "notify.user", { userId: order.userId, kind: "payment", title: "Zahlung bestätigt", link: "/konto" });
+    await issueInvoice(tx, orderId, input.amountCents);
+    await enqueue(tx, "notify.user", { userId: order.userId, kind: "payment", title: "Zahlung bestätigt", link: "/app/konto" });
     await audit("finance.bank_transfer_confirmed", { actorUserId, targetType: "order", targetId: orderId, meta: { reference, amountCents: input.amountCents, reason } }, tx);
   }, { timeout: 20000 });
 }

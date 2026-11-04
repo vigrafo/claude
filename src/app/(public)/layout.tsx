@@ -2,8 +2,11 @@ import Link from "next/link";
 import { Logo } from "@/components/ui";
 import { getViewer } from "@/lib/viewer";
 import { PublicFooter } from "@/components/PublicFooter";
+import { maintenanceScreen } from "@/components/Maintenance";
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
+  const m = await maintenanceScreen();
+  if (m) return m;
   const v = await getViewer();
   return (
     <>

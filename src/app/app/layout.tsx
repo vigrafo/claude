@@ -4,10 +4,13 @@ import { NavLink } from "@/components/NavLink";
 import { requireViewer } from "@/lib/viewer";
 import { logoutAction } from "@/app/actions/auth";
 import { db } from "@/server/db";
+import { maintenanceScreen } from "@/components/Maintenance";
 
 export const dynamic = "force-dynamic";
 
 export default async function MemberLayout({ children }: { children: React.ReactNode }) {
+  const m = await maintenanceScreen();
+  if (m) return m;
   const v = await requireViewer();
   const unread = v.profileRow
     ? await db.messageRequest.count({ where: { toProfileId: v.profileRow.id, status: "pending" } })

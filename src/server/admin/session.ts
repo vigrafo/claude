@@ -21,7 +21,7 @@ export type AdminLoginResult =
  */
 export async function adminLoginCheck(emailRaw: string, password: string, otp: string): Promise<AdminLoginResult> {
   const email = emailRaw.trim().toLowerCase();
-  const user = await db.user.findUnique({ where: { email } });
+  const user = await db.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } } });
   const pwOk = await verifyPassword(user?.passwordHash ?? DUMMY_HASH, password);
   if (!user || !pwOk) {
     await audit("admin.login_failed", { targetType: "user", targetId: user?.id, meta: { step: "password" } });

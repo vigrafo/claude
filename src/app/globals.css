@@ -44,7 +44,7 @@ body.with-motif::before {
   position: fixed;
   inset: 0;
   background: url("/motif-kiss.svg") no-repeat right -80px bottom -40px / min(720px, 90vw) auto;
-  opacity: 0.07;
+  opacity: 0.05;
   pointer-events: none;
   z-index: 0;
 }
@@ -239,6 +239,7 @@ td form { margin: 0; }
 td .btn.small { min-height: 36px; }
 details.admin-details > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; }
 @media (max-width: 600px) { .admin-kv { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .admin-side > div { display: contents; } .admin-topbar .logo img { height: 28px; } }
 
 /* member area */
 summary.btn { display: inline-flex; list-style: none; }

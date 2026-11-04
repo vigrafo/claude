@@ -134,6 +134,12 @@ export async function missedCalls(now = new Date()) {
   return r.count;
 }
 
+/** Gold-CMS: geplante Inhalte zum Veröffentlichungszeitpunkt freischalten. */
+export async function publishScheduledContent(now = new Date()) {
+  const r = await db.goldContent.updateMany({ where: { status: "scheduled", publishAt: { lte: now } }, data: { status: "published" } });
+  return r.count;
+}
+
 export async function runPeriodic() {
   const results = {
     deletions: await runDeletions(),
@@ -143,6 +149,7 @@ export async function runPeriodic() {
     subscriptionsClosed: await closeEndedSubscriptions(),
     gamesExpired: await expireGames(),
     missedCalls: await missedCalls(),
+    contentPublished: await publishScheduledContent(),
     ticketsReleased: await db.$transaction((tx) => releaseExpired(tx)),
   };
   await cleanupRateLimits();

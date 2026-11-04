@@ -166,7 +166,7 @@ async function applyEvent(tx: Tx, provider: string, ev: NormalizedEvent): Promis
   }
 }
 
-async function fulfil(tx: Tx, orderId: string, ev: NormalizedEvent) {
+export async function fulfil(tx: Tx, orderId: string, ev: NormalizedEvent) {
   const order = await tx.order.findUniqueOrThrow({ where: { id: orderId } });
   if (order.fulfilledAt) return;
   if (order.kind === "tokens") {
@@ -185,7 +185,7 @@ async function fulfil(tx: Tx, orderId: string, ev: NormalizedEvent) {
   await enqueue(tx, "notify.user", { userId: order.userId, kind: "payment", title: "Zahlung bestätigt", link: "/app/konto" });
 }
 
-async function issueInvoice(tx: Tx, orderId: string, grossCents: number) {
+export async function issueInvoice(tx: Tx, orderId: string, grossCents: number) {
   const existing = await tx.invoice.findUnique({ where: { orderId } });
   if (existing) return existing;
   const taxBp = 1900;
