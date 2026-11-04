@@ -246,6 +246,22 @@ Plesk belegt 80/443 mit eigenem nginx/Apache – Caddy entfällt dort.
 `APP_URL=https://eropub.de`, eigene Secrets, eigene Datenbank. Erst nach erfolgreichem Test
 `eropub.com` aufschalten.
 
+### Schnellweg (getestet in einer Docker-Testumgebung): `scripts/install-plesk.sh`
+
+Im Plesk-**SSH Terminal** (root):
+
+```bash
+apt-get install -y git docker-compose-plugin
+git clone -b claude/kind-gauss-d3bemj https://github.com/vigrafo/claude.git /opt/eropub
+cd /opt/eropub && bash scripts/install-plesk.sh eropub.com
+```
+
+Das Skript erzeugt Secrets und `.env.production` (Testmodus, Suchmaschinen gesperrt), baut die Images,
+startet Datenbank/Cache, führt Migrationen und Stammdaten aus und startet Web + Worker auf `127.0.0.1:3000`.
+Danach in Plesk: Let's-Encrypt-Zertifikat, Proxy-Modus aus, `deploy/plesk-nginx.conf` als zusätzliche
+nginx-Anweisungen; Admin anlegen. Updates: `git pull && bash scripts/install-plesk.sh eropub.com --update`.
+Fotos liegen im Docker-Volume `eropub_media`, die Datenbank in `eropub_pg-data` – beide ins Backup aufnehmen.
+
 ### Option (a) – empfohlen: Container per SSH + docker compose, Plesk-nginx als Reverse Proxy
 
 1. Per SSH auf den Server, Projekt nach `/opt/eropub` (Schritte 4–5 oben), aber starten mit
@@ -272,7 +288,7 @@ Plesk belegt 80/443 mit eigenem nginx/Apache – Caddy entfällt dort.
        proxy_set_header Connection "upgrade";
        proxy_set_header Host $host;
        proxy_set_header X-Forwarded-Proto $scheme;
-       # WICHTIG: XFF überschreiben, nicht anhängen – die App liest den ERSTEN Eintrag
+       # WICHTIG: XFF überschreiben, nicht anhängen – die App wertet die vom Proxy gesetzte Adresse aus
        # (Rate-Limits, CCBill-IP-Allowlist). $proxy_add_x_forwarded_for wäre fälschbar.
        proxy_set_header X-Forwarded-For $remote_addr;
        proxy_set_header X-Real-IP $remote_addr;
