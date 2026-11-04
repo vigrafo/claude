@@ -91,8 +91,12 @@ else
 fi
 
 # ── Bauen & starten ──────────────────────────────────────────────────────────
-say "Baue Images (dauert beim ersten Mal einige Minuten)"
-"${DC[@]}" build web worker
+if [[ "${SKIP_BUILD:-0}" == 1 ]]; then
+  say "SKIP_BUILD=1 – verwende vorhandene Images eropub-web/worker:$EROPUB_TAG"
+else
+  say "Baue Images (dauert beim ersten Mal 5–15 Minuten)"
+  "${DC[@]}" build web worker
+fi
 
 say "Starte Datenbank und Cache"
 "${DC[@]}" up -d postgres valkey
