@@ -1,0 +1,6 @@
+# Länder & Regionen – Quellen und Datenlücken
+
+- **Länderliste** (`src/domain/countries.ts`, 56 Einträge): Staaten Europas inkl. Kleinstaaten (Andorra, Liechtenstein, Malta, Monaco, San Marino, Vatikanstadt), Gebiete (Ålandinseln, Färöer, Gibraltar, Guernsey, Isle of Man, Jersey, Spitzbergen und Jan Mayen) und grenzüberschreitende Staaten (Armenien, Aserbaidschan, Georgien, Kasachstan, Türkei, Zypern). Codes nach ISO 3166-1 alpha-2; Kosovo mit gebräuchlichem, nicht offiziellem Code `XK`.
+- **Ausgeschlossen:** Russland (RU) und Belarus (BY) – als Standort vollständig ausgeschlossen (Produktvorgabe); serverseitig in `isAllowedCountry()` geprüft.
+- **Regionskatalog** (`REGIONS`): Deutschland (16 Länder), Österreich (9 Bundesländer), Schweiz (Auswahl von 10 Kantonen), Niederlande (4 Provinzen) mit größeren Städten. Quelle: amtliche Verwaltungsgliederung (Allgemeinwissen, nicht automatisiert importiert).
+- **Datenlücken:** Für alle übrigen Länder existiert noch kein Regionskatalog → Freieingabe für Region und Stadt. Schweiz unvollständig (16 Kantone fehlen). Keine Postleitzahl-Geodaten: Umkreissuche arbeitet bisher mit gespeicherten, gerundeten Koordinaten bzw. PLZ-Präfixen. Empfehlung: Import eines geprüften, lizenzrechtlich geeigneten Datensatzes (z. B. GeoNames, CC BY 4.0, mit Attribution) als eigener Migrationsschritt.
