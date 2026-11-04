@@ -36,6 +36,10 @@ docker info >/dev/null 2>&1 || die "Docker läuft nicht oder fehlende Rechte (al
 
 DC=(docker compose -f docker-compose.prod.yml -f docker-compose.plesk.yml)
 export EROPUB_TAG="$(git rev-parse --short HEAD 2>/dev/null || echo local)"
+# Compose liest .env im Projektordner für Variablen – so funktionieren spätere Befehle
+# (z. B. admin:bootstrap) auch ohne -f-Angaben und ohne EROPUB_TAG in der Shell.
+printf '%s\n' "# Erzeugt von scripts/install-plesk.sh – nur Compose-Variablen, keine Secrets." \
+  "COMPOSE_FILE=docker-compose.prod.yml:docker-compose.plesk.yml" "EROPUB_TAG=$EROPUB_TAG" > .env
 
 # ── Secrets & Konfiguration (nur beim ersten Mal) ─────────────────────────────
 mkdir -p secrets && chmod 700 secrets
@@ -137,7 +141,7 @@ cat <<EOF
         $ROOT/deploy/plesk-nginx.conf
 
  3. Ersten Admin anlegen (mit Authenticator-App, z. B. Google Authenticator):
-        cd $ROOT && ${DC[*]} run --rm -it web npm run admin:bootstrap
+        cd $ROOT && docker compose run --rm --no-deps -it web npm run admin:bootstrap
 
  Danach: https://$DOMAIN  (Mitglieder)  ·  https://$DOMAIN/admin  (Verwaltung)
  Update später:  git pull && bash scripts/install-plesk.sh $DOMAIN --update
