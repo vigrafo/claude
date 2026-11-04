@@ -1,4 +1,7 @@
 import Link from "next/link";
+
+// Laufzeit-Rendering: Wartungsmodus/Anmeldestatus kommen aus der Datenbank (beim Docker-Build gibt es keine DB).
+export const dynamic = "force-dynamic";
 import { Logo } from "@/components/ui";
 import { getViewer } from "@/lib/viewer";
 import { PublicFooter } from "@/components/PublicFooter";
