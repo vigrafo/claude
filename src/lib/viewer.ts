@@ -14,7 +14,7 @@ export const ADMIN_COOKIE = "ep_admin";
 export async function setSessionCookie(name: string, token: string, maxAgeSec: number) {
   const c = await cookies();
   c.set(name, token, {
-    httpOnly: true, sameSite: "lax", secure: process.env.APP_ENV === "production", path: "/", maxAge: maxAgeSec,
+    httpOnly: true, sameSite: "lax", secure: process.env.APP_ENV === "production" || (process.env.APP_URL ?? "").startsWith("https:"), path: "/", maxAge: maxAgeSec,
   });
 }
 

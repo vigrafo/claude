@@ -53,6 +53,8 @@ COPY --from=build --chown=node:node /app/src ./src
 COPY --from=build --chown=node:node /app/worker ./worker
 COPY --from=build --chown=node:node /app/scripts ./scripts
 COPY --from=build --chown=node:node /app/next.config.* /app/tsconfig.json ./
+# Fotospeicher für STORAGE_DRIVER=local (Volume wird beim ersten Mount mit diesen Rechten angelegt)
+RUN mkdir -p /app/storage && chown node:node /app/storage && chmod 700 /app/storage
 USER node
 ENTRYPOINT ["/usr/bin/tini", "--"]
 

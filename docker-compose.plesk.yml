@@ -1,21 +1,48 @@
 # eropub.com – Override für den Betrieb hinter Plesk-nginx (statt Caddy).
 #
 #   docker compose -f docker-compose.prod.yml -f docker-compose.plesk.yml up -d
+#   (Einfacher: scripts/install-plesk.sh)
 #
-# - Caddy wird nicht gestartet (Profil "disabled"); TLS/Let's Encrypt übernimmt Plesk.
-# - web lauscht nur auf 127.0.0.1:3000, LiveKit-Signalisierung nur auf 127.0.0.1:7880
-#   (Plesk-nginx proxyt eropub.com → 3000 und rtc.eropub.com → 7880).
-# - TURN/TLS (5349) ist hier deaktiviert, da das Zertifikat bei Plesk liegt; TURN/UDP bleibt.
+# - Caddy startet nicht (Profil "disabled"); TLS/Let's Encrypt übernimmt Plesk.
+# - web lauscht nur auf 127.0.0.1:3000 (Plesk-nginx proxyt eropub.com → 3000).
+# - Fotos liegen auf dem Docker-Volume "media" (STORAGE_DRIVER=local) statt in MinIO –
+#   weniger Dienste auf dem Einzelserver. MinIO startet hier nicht. Volume im Backup sichern!
+# - LiveKit (Anrufe) ist optional: Profil "calls". Aktivieren mit
+#     docker compose -f docker-compose.prod.yml -f docker-compose.plesk.yml --profile calls up -d
+#   Signalisierung auf 127.0.0.1:7880 (Plesk-nginx: rtc.eropub.com → 7880), TURN nur UDP.
 # Benötigt Docker Compose ≥ 2.24 (YAML-Tag !override).
 services:
   caddy:
     profiles: [disabled]
 
+  minio:
+    profiles: [disabled]
+
   web:
     ports:
       - "127.0.0.1:3000:3000"
+    environment:
+      STORAGE_DRIVER: local
+      STORAGE_DIR: /app/storage
+    volumes:
+      - media:/app/storage
+    depends_on: !override
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+
+  worker:
+    environment:
+      STORAGE_DRIVER: local
+      STORAGE_DIR: /app/storage
+    volumes:
+      - media:/app/storage
 
   livekit:
+    profiles: [calls]
     ports: !override
       - "127.0.0.1:7880:7880/tcp"
       - "7881:7881/tcp"
@@ -23,3 +50,7 @@ services:
       - "3478:3478/udp"
     volumes: !override
       - ./deploy/livekit.plesk.yaml:/etc/livekit.yaml:ro
+    depends_on: !reset []
+
+volumes:
+  media:

@@ -21,7 +21,7 @@ async function guardIp() {
 
 async function setAdminCookie(token: string) {
   (await cookies()).set(ADMIN_COOKIE, token, {
-    httpOnly: true, sameSite: "strict", secure: process.env.APP_ENV === "production", path: "/", maxAge: ADMIN_MAX_AGE,
+    httpOnly: true, sameSite: "strict", secure: process.env.APP_ENV === "production" || (process.env.APP_URL ?? "").startsWith("https:"), path: "/", maxAge: ADMIN_MAX_AGE,
   });
 }
 
@@ -38,7 +38,7 @@ export async function adminLoginAction(_: ActionState, fd: FormData): Promise<Ac
     const r = await adminLoginCheck(email, String(fd.get("password") ?? ""), str(fd, "otp"));
     if (r.status === "need_otp") return { ok: false, error: "Bitte gib den Code aus deiner Authenticator-App ein.", data: { step: "otp" } };
     if (r.status === "enrol") {
-      (await cookies()).set(ENROL_COOKIE, r.enrolToken, { httpOnly: true, sameSite: "strict", secure: process.env.APP_ENV === "production", path: "/admin", maxAge: 600 });
+      (await cookies()).set(ENROL_COOKIE, r.enrolToken, { httpOnly: true, sameSite: "strict", secure: process.env.APP_ENV === "production" || (process.env.APP_URL ?? "").startsWith("https:"), path: "/admin", maxAge: 600 });
       return { ok: true, data: { step: "enrol", secret: r.secret, otpauth: r.otpauth } };
     }
     await begin(r.userId, ip);
