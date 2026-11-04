@@ -135,10 +135,10 @@ cat <<EOF
  1. SSL/TLS-Zertifikate → Let's Encrypt für $DOMAIN und www.$DOMAIN ausstellen,
     „Permanente 301-Weiterleitung von HTTP zu HTTPS“ aktivieren.
 
- 2. Hosting & DNS → Apache & nginx-Einstellungen:
-    - „Proxy-Modus“ AUS (nginx bedient die Domain selbst)
-    - „Zusätzliche nginx-Anweisungen“ – Inhalt einfügen aus:
-        $ROOT/deploy/plesk-nginx.conf
+ 2. NICHT nginx in Plesk einschalten, falls es auf dem Server deaktiviert ist!
+    Weiterleitung über Apache (nur diese Domain), siehe docs/ubuntu-deployment.md,
+    Abschnitt „Plesk ohne nginx“ – Vorlage: $ROOT/deploy/plesk-apache.conf
+    Mit nginx (Proxy-Modus aus): $ROOT/deploy/plesk-nginx.conf
 
  3. Ersten Admin anlegen (mit Authenticator-App, z. B. Google Authenticator):
         cd $ROOT && docker compose run --rm --no-deps -it web npm run admin:bootstrap

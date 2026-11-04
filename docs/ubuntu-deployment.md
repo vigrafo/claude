@@ -246,6 +246,15 @@ Plesk belegt 80/443 mit eigenem nginx/Apache – Caddy entfällt dort.
 `APP_URL=https://eropub.de`, eigene Secrets, eigene Datenbank. Erst nach erfolgreichem Test
 `eropub.com` aufschalten.
 
+### ⚠ Plesk-Server ohne nginx
+
+Ist nginx in Plesk deaktiviert (`plesk sbin nginxmng --status` → `Disabled`), **nginx nicht einschalten**:
+Auf dem Produktivserver führte `nginxmng --enable` dazu, dass Apache auf interne Ports umgestellt wurde,
+nginx aber nicht startete – alle Domains waren nicht erreichbar. Wiederherstellung:
+`plesk sbin nginxmng --disable && plesk sbin httpdmng --reconfigure-all && systemctl restart apache2`.
+Stattdessen die Apache-Weiterleitung nur für die eropub-Domain nutzen: `deploy/plesk-apache.conf`.
+Nie zusätzliche nginx-Anweisungen mit `client_max_body_size` anlegen (setzt Plesk selbst → „duplicate“).
+
 ### Schnellweg (getestet in einer Docker-Testumgebung): `scripts/install-plesk.sh`
 
 Im Plesk-**SSH Terminal** (root):
