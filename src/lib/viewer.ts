@@ -51,7 +51,11 @@ export type Viewer = NonNullable<Awaited<ReturnType<typeof getViewer>>>;
 
 export async function requireViewer(): Promise<Viewer> {
   const v = await getViewer();
-  if (!v) redirect("/anmelden");
+  if (!v) {
+    const h = await headers();
+    const path = h.get("x-pathname");
+    redirect(path && path.startsWith("/app") ? `/anmelden?next=${encodeURIComponent(path)}` : "/anmelden");
+  }
   if (!v.user.emailVerifiedAt) redirect("/anmelden/bestaetigen");
   return v;
 }

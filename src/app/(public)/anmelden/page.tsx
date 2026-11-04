@@ -5,12 +5,14 @@ import { loginAction } from "@/app/actions/auth";
 
 export const metadata: Metadata = { title: "Anmelden" };
 
-export default function Anmelden() {
+export default async function Anmelden({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const { next } = await searchParams;
   return (
     <div className="narrow section">
       <h1>Anmelden</h1>
       <div className="card">
         <ActionForm action={loginAction} submit="Anmelden">
+          <input type="hidden" name="next" value={next ?? ""} />
           <div className="field">
             <label htmlFor="email">E-Mail-Adresse</label>
             <input id="email" name="email" type="email" required autoComplete="email" />

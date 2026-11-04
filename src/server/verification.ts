@@ -43,7 +43,7 @@ export async function startVerification(userId: string, documentType: string, co
   if (!provider) throw new AppError("no_provider", "Die Identitätsprüfung ist derzeit noch nicht angebunden. Wir informieren dich, sobald sie verfügbar ist.", 503);
   if (!SUPPORTED_DOCUMENTS.some((d) => d.key === documentType)) throw new AppError("doc", "Dokumenttyp nicht unterstützt.");
   const open = await db.verificationCase.findFirst({ where: { userId, status: { in: ["in_progress", "pending_review"] } } });
-  if (open) return { caseId: open.id, redirectUrl: `/verifizierung?case=${open.id}` };
+  if (open) return { caseId: open.id, redirectUrl: `/app/verifizierung?case=${open.id}` };
   const c = await db.verificationCase.create({ data: { userId, provider: provider.key, documentType, documentCountry: country, status: "in_progress" } });
   const r = await provider.start(c.id, { documentType, country, returnUrl: "/verifizierung" });
   await db.verificationCase.update({ where: { id: c.id }, data: { providerRef: r.providerRef } });

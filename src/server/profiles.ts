@@ -10,6 +10,13 @@ import { roundCoord } from "@/domain/geo";
 import { sendMail } from "./mail";
 
 const HANDLE_RE = /^[a-zA-Z0-9_.-]{3,24}$/;
+/** Pseudonyme, die mit festen Routen kollidieren würden oder irreführend sind. */
+export const RESERVED_HANDLES = new Set(["bearbeiten", "neu", "paar", "datenschutz", "sicherheit", "admin", "eropub", "support", "verwaltung", "moderation", "system"]);
+
+export function validateHandle(handle: string) {
+  if (!HANDLE_RE.test(handle)) throw new AppError("handle", "Pseudonym: 3–24 Zeichen, Buchstaben, Ziffern, . _ -");
+  if (RESERVED_HANDLES.has(handle.toLowerCase())) throw new AppError("handle", "Dieses Pseudonym ist reserviert. Bitte wähle ein anderes.");
+}
 
 export interface RegisterInput {
   email: string;
@@ -28,7 +35,7 @@ export async function register(input: RegisterInput) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new AppError("email", "Bitte gib eine gültige E-Mail-Adresse ein.");
   const pwErr = validatePassword(input.password);
   if (pwErr) throw new AppError("password", pwErr);
-  if (!HANDLE_RE.test(input.handle)) throw new AppError("handle", "Pseudonym: 3–24 Zeichen, Buchstaben, Ziffern, . _ -");
+  validateHandle(input.handle);
   if (!input.adultConfirmed) throw new AppError("adult", "eropub ist ausschließlich für Personen ab 18 Jahren.");
   const year = new Date().getUTCFullYear();
   if (!input.birthYear || year - input.birthYear < 18 || year - input.birthYear > 110) throw new AppError("adult", "eropub ist ausschließlich für Personen ab 18 Jahren.");

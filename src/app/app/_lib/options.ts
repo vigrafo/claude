@@ -50,3 +50,8 @@ export function memberLink(link: string | null | undefined): string | null {
 export function formatCents(cents: number, currency = "EUR"): string {
   return new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(cents / 100);
 }
+
+export const SESSION_STATUS: Record<string, string> = {
+  invited: "Eingeladen", accepted: "Zusagen laufen", answering: "Antworten läuft", completed: "Abgeschlossen",
+  declined: "Abgelehnt", expired: "Abgelaufen", cancelled: "Beendet",
+};

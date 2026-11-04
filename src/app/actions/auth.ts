@@ -49,7 +49,9 @@ export async function loginAction(_: ActionState, fd: FormData): Promise<ActionS
     const { token } = await createSession(user.id, { userAgent: (await headers()).get("user-agent") ?? undefined, ip: await clientIp() });
     await setSessionCookie(SESSION_COOKIE, token, 30 * 86400);
     await audit("auth.login", { actorUserId: user.id });
-    redirect(user.emailVerifiedAt ? "/app" : "/anmelden/bestaetigen");
+    const next = str(fd, "next");
+    const safeNext = next.startsWith("/app") && !next.startsWith("//") ? next : "/app";
+    redirect(user.emailVerifiedAt ? safeNext : "/anmelden/bestaetigen");
   });
 }
 

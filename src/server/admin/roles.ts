@@ -14,7 +14,7 @@ export async function requestRoleGrant(actorUserId: string, email: string, roleK
   const reason = requireReason(reasonRaw);
   const def = ROLES[roleKey];
   if (!def || def.permissions.length === 0) throw new AppError("role", "Diese Rolle ist keine Plattformrolle.");
-  const user = await db.user.findUnique({ where: { email: email.trim().toLowerCase() } });
+  const user = await db.user.findFirst({ where: { email: { equals: email.trim(), mode: "insensitive" } } });
   if (!user) throw notFound("Keine Person mit dieser E-Mail-Adresse.");
   if (user.id === actorUserId) throw forbidden("Eigene Rollen können nicht selbst geändert werden.");
   if (user.status !== "active") throw new AppError("inactive", "Konto ist nicht aktiv.");

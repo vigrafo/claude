@@ -70,7 +70,7 @@ export async function inviteGame(userId: string, fromProfileId: string, toProfil
     const me = session.participants.find((p) => p.profileId === fromProfileId)!;
     await tx.gamePersonConsent.create({ data: { participantId: me.id, userId, kind: "join" } });
     for (const m of target.members) {
-      await enqueue(tx, "notify.user", { userId: m.userId, kind: "game", title: "Neue Einladung zu einem Kennenlernspiel", link: `/spiele/${session.id}` });
+      await enqueue(tx, "notify.user", { userId: m.userId, kind: "game", title: "Neue Einladung zu einem Kennenlernspiel", link: `/app/spiele/${session.id}` });
     }
     return session;
   });

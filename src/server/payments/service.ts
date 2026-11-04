@@ -46,7 +46,7 @@ export async function createOrder(o: {
   const base = process.env.APP_URL ?? "http://localhost:3000";
   const session = await adapter.createCheckout({
     orderId: order.id, kind: o.kind, amountCents: o.amountCents, currency: o.currency, description: o.description,
-    recurring: o.recurring, returnUrl: `${base}/konto/zahlung?order=${order.id}`, cancelUrl: `${base}/preise`,
+    recurring: o.recurring, returnUrl: `${base}/app/konto/zahlung?order=${order.id}`, cancelUrl: `${base}/preise`,
   });
   if (session.providerRef) await db.order.update({ where: { id: order.id }, data: { providerRef: session.providerRef } });
   return { order, redirectUrl: session.redirectUrl };
@@ -182,7 +182,7 @@ async function fulfil(tx: Tx, orderId: string, ev: NormalizedEvent) {
     await tx.discountRedemption.updateMany({ where: { ticketOrderId: order.refKey, status: "reserved" }, data: { status: "redeemed" } });
   }
   await tx.order.update({ where: { id: order.id }, data: { fulfilledAt: new Date() } });
-  await enqueue(tx, "notify.user", { userId: order.userId, kind: "payment", title: "Zahlung bestätigt", link: "/konto" });
+  await enqueue(tx, "notify.user", { userId: order.userId, kind: "payment", title: "Zahlung bestätigt", link: "/app/konto" });
 }
 
 async function issueInvoice(tx: Tx, orderId: string, grossCents: number) {

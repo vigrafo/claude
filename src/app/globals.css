@@ -215,3 +215,32 @@ ul.checks li.no::before { content: "–"; color: var(--text-dim); }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 @media (max-width: 600px) { .hide-sm { display: none; } }
+
+/* admin */
+.admin-head { margin-bottom: 20px; }
+.admin-head h1 { font-size: clamp(1.5rem, 3vw, 2.1rem); }
+.admin-topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: #0f0f12; flex-wrap: wrap; }
+.admin-search { align-items: flex-end; margin-bottom: 12px; }
+.admin-search .field { margin-bottom: 0; min-width: 160px; flex: 1 1 160px; }
+.admin-pager { justify-content: space-between; margin: 12px 0; }
+.admin-count { margin: 8px 0; font-size: 0.88rem; }
+.admin-inline { display: inline-flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+.admin-inline .field { margin-bottom: 0; }
+.admin-inline form { display: inline-flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+.admin-section { margin: 28px 0; }
+.admin-section > h2 { font-size: 1.25rem; }
+.admin-kv { display: grid; grid-template-columns: minmax(140px, 220px) 1fr; gap: 6px 16px; margin: 0; }
+.admin-kv dt { color: var(--text-dim); }
+.admin-kv dd { margin: 0; overflow-wrap: anywhere; }
+.admin-pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #101013; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px; font-size: 0.9rem; max-height: 420px; overflow: auto; }
+.admin-swatch { width: 56px; height: 56px; border-radius: 12px; border: 1px solid var(--line); display: inline-block; }
+.admin-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem; overflow-wrap: anywhere; }
+td form { margin: 0; }
+td .btn.small { min-height: 36px; }
+details.admin-details > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; }
+@media (max-width: 600px) { .admin-kv { grid-template-columns: 1fr; } }
+
+/* member area */
+summary.btn { display: inline-flex; list-style: none; }
+summary.btn::-webkit-details-marker { display: none; }
+.row > form { margin: 0; }

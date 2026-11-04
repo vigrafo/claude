@@ -112,7 +112,9 @@ export async function discoverProfiles(userId: string, profileId: string, f: Dis
 
     const shared = theirVisible.filter((i) => myInterests.has(i.interest.slug)).map((i) => i.interest.label);
     const sharedLooking = c.lookingFor.filter((x) => myLooking.has(x)).map(lookingForLabel);
-    const recentlyActive = !!c.lastActiveAt && now.getTime() - c.lastActiveAt.getTime() < 7 * 86400_000;
+    // Wer den Online-Status verbirgt, erscheint nicht als „kürzlich aktiv“
+    const hidesActivity = !!(c.privacy as { invisibleOnline?: boolean } | null)?.invisibleOnline;
+    const recentlyActive = !hidesActivity && !!c.lastActiveAt && now.getTime() - c.lastActiveAt.getTime() < 7 * 86400_000;
 
     const reasons: string[] = [];
     let rank = 0;
