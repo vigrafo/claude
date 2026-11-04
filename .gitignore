@@ -9,3 +9,5 @@ coverage
 /playwright-report
 /storage
 secrets/
+tsconfig.tsbuildinfo
+next-env.d.ts
