@@ -83,5 +83,6 @@ export async function requireAdmin(p?: PermissionKey): Promise<AdminViewer> {
 
 export async function clientIp(): Promise<string> {
   const h = await headers();
-  return (h.get("x-forwarded-for")?.split(",")[0] ?? h.get("x-real-ip") ?? "0.0.0.0").trim();
+  // Letzter Eintrag = vom eigenen Reverse Proxy (Caddy/nginx) gesetzt → vom Client nicht fälschbar.
+  return (h.get("x-forwarded-for")?.split(",").at(-1) ?? h.get("x-real-ip") ?? "0.0.0.0").trim();
 }

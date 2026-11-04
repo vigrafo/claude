@@ -12,7 +12,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ provider: 
   const headers: Record<string, string> = {};
   req.headers.forEach((v, k) => (headers[k.toLowerCase()] = v));
   const query = Object.fromEntries(req.nextUrl.searchParams.entries());
-  const sourceIp = (req.headers.get("x-forwarded-for")?.split(",")[0] ?? req.headers.get("x-real-ip") ?? "").trim();
+  const sourceIp = (req.headers.get("x-forwarded-for")?.split(",").at(-1) ?? req.headers.get("x-real-ip") ?? "").trim();
   try {
     const r = await handleWebhook(provider, { rawBody, headers, query, sourceIp });
     return NextResponse.json(r);
