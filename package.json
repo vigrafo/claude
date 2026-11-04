@@ -1,0 +1,51 @@
+{
+  "name": "eropub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "eropub.com – verifizierte Community für Erwachsene (18+)",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "worker": "tsx worker/index.ts",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
+    "admin:bootstrap": "tsx scripts/bootstrap-admin.ts",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1161.0",
+    "@aws-sdk/s3-request-presigner": "3.1161.0",
+    "@fontsource-variable/fraunces": "5.3.0",
+    "@fontsource-variable/inter": "5.3.0",
+    "@node-rs/argon2": "2.2.2",
+    "@prisma/client": "6.19.3",
+    "ioredis": "5.11.1",
+    "livekit-server-sdk": "2.19.2",
+    "next": "15.5.29",
+    "nodemailer": "7.0.13",
+    "otplib": "12.0.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/node": "22.20.5",
+    "@types/nodemailer": "8.0.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "prisma": "6.19.3",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}

@@ -1,0 +1,1357 @@
+// eropub.com – Datenmodell
+// Grundsätze: Geld in Cent (Int) + Währung, unveränderliche Ledger, Snapshots für
+// laufende Spielrunden, strikte Trennung Identität / Profil / Zahlung.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────────── Identität & Zugang ─────────────────────────────
+
+enum UserStatus {
+  active
+  suspended
+  banned
+  deleted
+}
+
+enum VerificationStatus {
+  not_started
+  in_progress
+  pending_review
+  verified
+  rejected
+  expired
+  revoked
+}
+
+model User {
+  id                 String             @id @default(cuid())
+  email              String             @unique
+  emailVerifiedAt    DateTime?
+  passwordHash       String
+  status             UserStatus         @default(active)
+  // Alterszulassung (18+) und Identitätsbadge sind getrennte Anforderungen.
+  adultConfirmedAt   DateTime? // Selbstauskunft bei Registrierung (kein Altersnachweis!)
+  ageAssuredAt       DateTime? // durch Anbieter bestätigte Volljährigkeit
+  identityStatus     VerificationStatus @default(not_started)
+  identityVerifiedAt DateTime?
+  identityExpiresAt  DateTime?
+  mfaSecretEnc       String? // TOTP-Secret, verschlüsselt (AES-GCM)
+  mfaEnabledAt       DateTime?
+  timezone           String             @default("Europe/Berlin")
+  locale             String             @default("de")
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  deletedAt          DateTime?
+
+  sessions             Session[]
+  memberships          ProfileMembership[]
+  verificationCases    VerificationCase[]
+  consents             ConsentRecord[]
+  roleAssignments      RoleAssignment[]
+  subscriptions        Subscription[]
+  orders               Order[]
+  premiumClock         PremiumClock?
+  emailTokens          EmailToken[]
+  deletionRequests     DeletionRequest[]
+  supportTickets       SupportTicket[]             @relation("TicketRequester")
+  gameConsents         GamePersonConsent[]
+  groupModApplications GroupModeratorApplication[]
+}
+
+model Session {
+  id              String    @id @default(cuid())
+  tokenHash       String    @unique
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeProfileId String?
+  isAdmin         Boolean   @default(false) // Adminsitzungen sind kürzer und benötigen MFA
+  mfaAt           DateTime?
+  reauthAt        DateTime?
+  createdAt       DateTime  @default(now())
+  lastSeenAt      DateTime  @default(now())
+  expiresAt       DateTime
+  revokedAt       DateTime?
+  userAgent       String?
+  ipHash          String?
+
+  @@index([userId])
+}
+
+model EmailToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose   String // verify_email | reset_password
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+enum ProfileType {
+  single
+  couple
+  organizer
+}
+
+enum ProfileStatus {
+  active
+  pending_partner
+  suspended
+  dissolved
+  deleted
+}
+
+model CommunityProfile {
+  id               String        @id @default(cuid())
+  handle           String        @unique // Pseudonym
+  type             ProfileType
+  status           ProfileStatus @default(active)
+  headline         String?
+  about            String?       @db.VarChar(2000)
+  relationshipForm String?
+  regionCountry    String? // ISO-3166-1 alpha-2
+  regionName       String?
+  regionCity       String?
+  postalPrefix     String? // nur grobe PLZ (2–3 Stellen), keine Adresse
+  lat              Float? // grob gerundet (0.1°)
+  lng              Float?
+  birthYearA       Int? // nur Jahr, für Altersanzeige
+  birthYearB       Int?
+  lookingFor       String[]      @default([])
+  contactFilter    Json          @default("{}")
+  privacy          Json          @default("{}")
+  // Verifizierungsbadge wird abgeleitet & hier gecacht (Neuberechnung bei Änderungen)
+  verifiedBadge    Boolean       @default(false)
+  tokenBalance     Int           @default(0) // Cache – Wahrheit ist der Ledger
+  lastActiveAt     DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  memberships         ProfileMembership[]
+  interests           ProfileInterest[]
+  tokenLedger         TokenLedgerEntry[]
+  sentRequests        ContactRequest[]          @relation("RequestFrom")
+  receivedRequests    ContactRequest[]          @relation("RequestTo")
+  connectionsA        Connection[]              @relation("ConnA")
+  connectionsB        Connection[]              @relation("ConnB")
+  blocksMade          Block[]                   @relation("Blocker")
+  blocksReceived      Block[]                   @relation("Blocked")
+  favorites           Favorite[]                @relation("FavOwner")
+  favoritedBy         Favorite[]                @relation("FavTarget")
+  conversationParts   ConversationParticipant[]
+  messagesSent        Message[]
+  media               MediaAsset[]
+  groupMemberships    GroupMembership[]
+  posts               Post[]
+  threads             Thread[]
+  ticketOrders        TicketOrder[]
+  discountRedemptions DiscountRedemption[]
+  gameParticipants    GameParticipant[]
+  likesGiven          ProfileLike[]             @relation("LikeFrom")
+  likesReceived       ProfileLike[]             @relation("LikeTo")
+  organizer           Organizer?
+  datesCreated        DateOffer[]
+  goldBookmarks       GoldBookmark[]
+
+  @@index([type, status])
+  @@index([regionCountry, regionName])
+}
+
+enum MembershipStatus {
+  invited
+  active
+  removed
+}
+
+model ProfileMembership {
+  id           String           @id @default(cuid())
+  profileId    String
+  profile      CommunityProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status       MembershipStatus @default(active)
+  role         String           @default("owner") // owner | partner
+  displayLabel String? // z. B. "Sie" / "Er" – sichtbar als Absenderkennung
+  confirmedAt  DateTime?
+  createdAt    DateTime         @default(now())
+  endedAt      DateTime?
+
+  @@unique([profileId, userId])
+  @@index([userId, status])
+}
+
+model CoupleInvite {
+  id         String    @id @default(cuid())
+  profileId  String
+  invitedBy  String
+  email      String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model VerificationCase {
+  id              String             @id @default(cuid())
+  userId          String
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider        String // "test" | anbieterkennung
+  providerRef     String? // pseudonyme Anbieterreferenz
+  documentType    String? // id_card | passport | residence_permit
+  documentCountry String?
+  status          VerificationStatus @default(in_progress)
+  adultConfirmed  Boolean?
+  priority        Int                @default(0)
+  reason          String?
+  decidedById     String?
+  decidedAt       DateTime?
+  expiresAt       DateTime?
+  appealText      String?
+  appealAt        DateTime?
+  // Keine Dokumentbilder hier. Temporäre Belege nur als verschlüsselter Speicherschlüssel mit Löschfrist.
+  tempEvidenceKey String?
+  evidencePurgeAt DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@unique([provider, providerRef])
+  @@index([status, priority])
+}
+
+model ConsentRecord {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String // terms | privacy | sensitive_profile_data | biometric_verification | marketing
+  version   String
+  givenAt   DateTime  @default(now())
+  revokedAt DateTime?
+
+  @@index([userId, kind])
+}
+
+// ───────────────────────────── Rollen & Rechte ─────────────────────────────
+
+model Role {
+  id          String           @id @default(cuid())
+  key         String           @unique // superadmin, platform_admin, verifier, moderator, support, finance, editor, organizer, group_moderator
+  name        String
+  permissions RolePermission[]
+  assignments RoleAssignment[]
+}
+
+model Permission {
+  id    String           @id @default(cuid())
+  key   String           @unique
+  label String
+  roles RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model RoleAssignment {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId     String
+  role       Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  scopeType  String? // null = Plattform; "group" | "event"
+  scopeId    String?
+  grantedBy  String?
+  approvedBy String? // Vier-Augen-Freigabe für kritische Rollen
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+
+  @@index([userId])
+  @@index([scopeType, scopeId])
+}
+
+model PendingApproval {
+  id          String    @id @default(cuid())
+  kind        String // role_grant | token_correction | sensitive_export | provider_secret
+  payload     Json
+  requestedBy String
+  approvedBy  String?
+  rejectedBy  String?
+  decidedAt   DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+// ───────────────────────────── Interessen, Kontakte ─────────────────────────────
+
+model Interest {
+  id       String            @id @default(cuid())
+  slug     String            @unique
+  label    String
+  category String
+  active   Boolean           @default(true)
+  profiles ProfileInterest[]
+}
+
+model ProfileInterest {
+  profileId  String
+  interestId String
+  visibility String           @default("verified_members") // contacts | verified_members
+  profile    CommunityProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  interest   Interest         @relation(fields: [interestId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, interestId])
+}
+
+enum RequestStatus {
+  pending
+  accepted
+  declined
+  withdrawn
+  expired
+}
+
+model ContactRequest {
+  id          String           @id @default(cuid())
+  fromId      String
+  from        CommunityProfile @relation("RequestFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  toId        String
+  to          CommunityProfile @relation("RequestTo", fields: [toId], references: [id], onDelete: Cascade)
+  status      RequestStatus    @default(pending)
+  source      String           @default("direct") // direct | game_match | like_match
+  createdAt   DateTime         @default(now())
+  respondedAt DateTime?
+
+  @@index([toId, status])
+  @@index([fromId, createdAt])
+}
+
+model Connection {
+  id        String           @id @default(cuid())
+  aId       String // lexikographisch kleinere Profil-ID
+  a         CommunityProfile @relation("ConnA", fields: [aId], references: [id], onDelete: Cascade)
+  bId       String
+  b         CommunityProfile @relation("ConnB", fields: [bId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+  endedAt   DateTime?
+
+  @@unique([aId, bId])
+}
+
+model Block {
+  id        String           @id @default(cuid())
+  blockerId String
+  blocker   CommunityProfile @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedId String
+  blocked   CommunityProfile @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+
+  @@unique([blockerId, blockedId])
+}
+
+model Favorite {
+  ownerId   String
+  targetId  String
+  owner     CommunityProfile @relation("FavOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  target    CommunityProfile @relation("FavTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+
+  @@id([ownerId, targetId])
+}
+
+// Bildentdeckung: Like/Pass ohne automatische Kontaktfreigabe
+model ProfileLike {
+  fromId    String
+  toId      String
+  value     String // like | pass
+  from      CommunityProfile @relation("LikeFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  to        CommunityProfile @relation("LikeTo", fields: [toId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+
+  @@id([fromId, toId])
+}
+
+// ───────────────────────────── Nachrichten ─────────────────────────────
+
+model Conversation {
+  id           String                    @id @default(cuid())
+  pairKey      String                    @unique // "<idA>:<idB>" sortiert
+  createdAt    DateTime                  @default(now())
+  participants ConversationParticipant[]
+  messages     Message[]
+  request      MessageRequest?
+}
+
+model ConversationParticipant {
+  conversationId String
+  profileId      String
+  conversation   Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  profile        CommunityProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  lastReadAt     DateTime?
+  archivedAt     DateTime?
+
+  @@id([conversationId, profileId])
+}
+
+// Erste zulässige Nachricht an Fremde. Weitere Nachrichten erst nach Annahme.
+model MessageRequest {
+  id             String        @id @default(cuid())
+  conversationId String        @unique
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  fromProfileId  String
+  toProfileId    String
+  status         RequestStatus @default(pending)
+  createdAt      DateTime      @default(now())
+  respondedAt    DateTime?
+}
+
+model Message {
+  id              String           @id @default(cuid())
+  conversationId  String
+  conversation    Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderProfileId String
+  senderProfile   CommunityProfile @relation(fields: [senderProfileId], references: [id], onDelete: Cascade)
+  senderUserId    String // Audit: wer im Paar gesendet hat (sichtbar als Label)
+  senderLabel     String?
+  kind            String           @default("text") // text | media | gift
+  body            String           @db.VarChar(2000)
+  giftId          String?
+  mediaId         String?
+  clientKey       String // Idempotenzschlüssel vom Client
+  tokenCost       Int              @default(0)
+  createdAt       DateTime         @default(now())
+  deletedAt       DateTime?
+
+  @@unique([senderProfileId, clientKey])
+  @@index([conversationId, createdAt])
+}
+
+model GiftType {
+  id        String  @id @default(cuid())
+  key       String  @unique
+  label     String
+  emoji     String
+  tokenCost Int
+  active    Boolean @default(true)
+  sort      Int     @default(0)
+}
+
+// ───────────────────────────── Medien ─────────────────────────────
+
+model MediaAsset {
+  id         String           @id @default(cuid())
+  ownerId    String
+  owner      CommunityProfile @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  storageKey String           @unique
+  mime       String
+  bytes      Int
+  width      Int?
+  height     Int?
+  purpose    String // profile | gallery | message | group | club | gold
+  visibility String           @default("contacts") // private | contacts | verified_members | group
+  scopeId    String? // z. B. groupId / clubId
+  moderation String           @default("pending") // pending | approved | rejected
+  rightsNote String?
+  legalHold  Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+  deletedAt  DateTime?
+
+  @@index([ownerId])
+  @@index([moderation])
+}
+
+// ───────────────────────────── Anrufe ─────────────────────────────
+
+model CallSession {
+  id              String    @id @default(cuid())
+  roomName        String    @unique
+  callerProfileId String
+  calleeProfileId String
+  callerUserId    String
+  mode            String // audio | video
+  status          String    @default("ringing") // ringing | active | declined | missed | ended | busy | failed | revoked
+  createdAt       DateTime  @default(now())
+  answeredAt      DateTime?
+  endedAt         DateTime?
+  endReason       String?
+
+  @@index([callerProfileId, createdAt])
+  @@index([calleeProfileId, status])
+}
+
+// ───────────────────────────── Tarife, Abos, Tokens ─────────────────────────────
+
+enum PlanKey {
+  basis
+  premium
+  gold
+}
+
+model PlanVersion {
+  id              String    @id @default(cuid())
+  plan            PlanKey
+  version         Int
+  introPriceCents Int? // Premium: 700 für 24 Monate
+  introMonths     Int?
+  priceCents      Int // Premium 1400, Gold 2500
+  currency        String    @default("EUR")
+  taxRateBp       Int       @default(1900) // Basispunkte, Endpreise inkl. USt.
+  features        Json
+  validFrom       DateTime
+  validTo         DateTime?
+  createdById     String?
+  createdAt       DateTime  @default(now())
+
+  subscriptions Subscription[]
+
+  @@unique([plan, version])
+}
+
+// Unveränderliche Premium-Frist je Person.
+model PremiumClock {
+  userId                  String   @id
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstPremiumActivatedAt DateTime
+  introPriceEndsAt        DateTime
+  source                  String // premium | gold
+  createdAt               DateTime @default(now())
+}
+
+enum SubscriptionStatus {
+  pending
+  active
+  past_due
+  cancel_at_period_end
+  canceled
+  expired
+}
+
+model Subscription {
+  id                  String             @id @default(cuid())
+  userId              String
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                PlanKey
+  planVersionId       String
+  planVersion         PlanVersion        @relation(fields: [planVersionId], references: [id])
+  provider            String
+  providerSubId       String?
+  status              SubscriptionStatus @default(pending)
+  currentPeriodStart  DateTime?
+  currentPeriodEnd    DateTime?
+  nextPriceCents      Int?
+  priceChangeNoticeAt DateTime?
+  canceledAt          DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@unique([provider, providerSubId])
+  @@index([userId, status])
+}
+
+model Entitlement {
+  id        String    @id @default(cuid())
+  userId    String
+  key       String // plan:premium | plan:gold
+  source    String // subscription:<id> | admin:<id>
+  validFrom DateTime
+  validTo   DateTime?
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, key])
+}
+
+model TokenPackageVersion {
+  id         String   @id @default(cuid())
+  key        String // t20 | t40 | t100
+  version    Int
+  tokens     Int
+  priceCents Int
+  currency   String   @default("EUR")
+  active     Boolean  @default(true)
+  validFrom  DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@unique([key, version])
+}
+
+model TokenLedgerEntry {
+  id           String           @id @default(cuid())
+  profileId    String
+  profile      CommunityProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  delta        Int
+  balanceAfter Int
+  kind         String // purchase | message | gift | refund_technical | admin_credit | admin_debit | chargeback | refund_payment
+  refType      String?
+  refId        String?
+  idemKey      String           @unique
+  actorUserId  String?
+  reason       String?
+  createdAt    DateTime         @default(now())
+
+  @@index([profileId, createdAt])
+}
+
+model TokenDebt {
+  id        String    @id @default(cuid())
+  profileId String
+  tokens    Int
+  orderId   String
+  createdAt DateTime  @default(now())
+  settledAt DateTime?
+}
+
+// ───────────────────────────── Zahlungen ─────────────────────────────
+
+model Order {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  profileId   String?
+  kind        String // subscription | tokens | ticket
+  refKey      String // plan / package key / ticketOrderId
+  amountCents Int
+  currency    String    @default("EUR")
+  provider    String
+  providerRef String?
+  status      String    @default("created") // created | pending | paid | failed | canceled | refunded | partially_refunded | chargeback
+  idemKey     String    @unique
+  createdAt   DateTime  @default(now())
+  paidAt      DateTime?
+  fulfilledAt DateTime?
+
+  payments Payment[]
+  refunds  Refund[]
+  invoice  Invoice?
+
+  @@unique([provider, providerRef])
+  @@index([userId, createdAt])
+}
+
+model Payment {
+  id           String   @id @default(cuid())
+  orderId      String
+  order        Order    @relation(fields: [orderId], references: [id])
+  provider     String
+  providerTxId String
+  amountCents  Int
+  currency     String
+  status       String // succeeded | failed | reversed
+  method       String?
+  createdAt    DateTime @default(now())
+
+  @@unique([provider, providerTxId])
+}
+
+model Refund {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id])
+  amountCents Int
+  reason      String
+  kind        String // refund | chargeback
+  providerRef String?
+  createdById String?
+  createdAt   DateTime @default(now())
+}
+
+model Invoice {
+  id         String   @id @default(cuid())
+  number     String   @unique
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [id])
+  netCents   Int
+  taxCents   Int
+  grossCents Int
+  currency   String
+  issuedAt   DateTime @default(now())
+}
+
+model ProviderConfiguration {
+  id             String    @id @default(cuid())
+  key            String    @unique // test, ccbill, segpay, stripe, paypal, mollie, adyen
+  displayName    String
+  implStatus     String // implemented | not_implemented | sandbox_only
+  eligibility    String // approval_required | eligible | not_eligible
+  mode           String    @default("sandbox") // sandbox | live
+  enabled        Boolean   @default(false)
+  priority       Int       @default(100)
+  countries      String[]  @default([])
+  currencies     String[]  @default(["EUR"])
+  methods        String[]  @default([])
+  capabilities   String[]  @default([])
+  secretRef      String? // Verweis/verschlüsselt – nie Klartext in der UI
+  secretHint     String? // z. B. "…a91f"
+  webhookLastAt  DateTime?
+  webhookHealthy Boolean   @default(false)
+  notes          String?
+  updatedAt      DateTime  @updatedAt
+}
+
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String
+  eventId     String
+  type        String
+  signatureOk Boolean
+  payload     Json
+  status      String    @default("received") // received | processed | rejected | failed
+  error       String?
+  attempts    Int       @default(0)
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+
+  @@unique([provider, eventId])
+}
+
+// ───────────────────────────── Gruppen & Foren ─────────────────────────────
+
+enum GroupStatus {
+  draft
+  pending_approval
+  approved
+  rejected
+  suspended
+  archived
+}
+
+model Group {
+  id            String      @id @default(cuid())
+  slug          String      @unique
+  name          String
+  description   String      @db.VarChar(4000)
+  category      String
+  visibility    String      @default("open") // open | closed | invite
+  rules         String?     @db.VarChar(4000)
+  official      Boolean     @default(false)
+  status        GroupStatus @default(draft)
+  regionCountry String?
+  regionName    String?
+  imageKey      String?
+  createdById   String?
+  decidedById   String?
+  decisionNote  String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  memberships     GroupMembership[]
+  applications    GroupApplication[]
+  forumCategories ForumCategory[]
+  modApplications GroupModeratorApplication[]
+
+  @@index([status])
+}
+
+model GroupMembership {
+  id        String           @id @default(cuid())
+  groupId   String
+  group     Group            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  profileId String
+  profile   CommunityProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  status    String           @default("active") // pending | active | invited | removed
+  canWrite  Boolean          @default(true) // getrennte Schreibfreigabe
+  createdAt DateTime         @default(now())
+
+  @@unique([groupId, profileId])
+}
+
+model GroupApplication {
+  id                 String    @id @default(cuid())
+  groupId            String
+  group              Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  applicantUserId    String
+  profileId          String
+  proposedModerators String[]  @default([])
+  note               String?
+  status             String    @default("pending") // pending | approved | rejected
+  createdAt          DateTime  @default(now())
+  decidedAt          DateTime?
+}
+
+model GroupModeratorApplication {
+  id          String    @id @default(cuid())
+  groupId     String
+  group       Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  motivation  String    @db.VarChar(2000)
+  status      String    @default("pending") // pending | approved | rejected | withdrawn | revoked
+  openKey     String?   @unique // "<groupId>:<userId>" solange offen → keine Doppelbewerbung
+  createdAt   DateTime  @default(now())
+  decidedAt   DateTime?
+  decidedById String?
+}
+
+model ForumCategory {
+  id      String   @id @default(cuid())
+  groupId String?
+  group   Group?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  slug    String   @unique
+  name    String
+  sort    Int      @default(0)
+  threads Thread[]
+}
+
+model Thread {
+  id            String               @id @default(cuid())
+  categoryId    String
+  category      ForumCategory        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  authorId      String?
+  author        CommunityProfile?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  title         String
+  official      Boolean              @default(false)
+  pinned        Boolean              @default(false)
+  locked        Boolean              @default(false)
+  createdAt     DateTime             @default(now())
+  lastPostAt    DateTime             @default(now())
+  posts         Post[]
+  subscriptions ThreadSubscription[]
+
+  @@index([categoryId, pinned, lastPostAt])
+}
+
+model ThreadSubscription {
+  threadId  String
+  profileId String
+  thread    Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@id([threadId, profileId])
+}
+
+model Post {
+  id           String            @id @default(cuid())
+  threadId     String
+  thread       Thread            @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  authorId     String?
+  author       CommunityProfile? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorUserId String?
+  body         String            @db.VarChar(10000)
+  quoteId      String?
+  official     Boolean           @default(false)
+  hidden       Boolean           @default(false)
+  createdAt    DateTime          @default(now())
+  editedAt     DateTime?
+  revisions    PostRevision[]
+}
+
+model PostRevision {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  body      String   @db.VarChar(10000)
+  editedBy  String
+  createdAt DateTime @default(now())
+}
+
+// ───────────────────────────── Events, Clubs, Tickets ─────────────────────────────
+
+model Organizer {
+  id                 String           @id @default(cuid())
+  profileId          String           @unique
+  profile            CommunityProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  legalName          String
+  contactEmail       String
+  responsibleUserId  String
+  status             String           @default("pending") // pending | approved | rejected | suspended
+  isPartner          Boolean          @default(false)
+  partnerContractRef String?
+  createdAt          DateTime         @default(now())
+  events             Event[]
+  clubs              Club[]
+}
+
+model Club {
+  id          String    @id @default(cuid())
+  organizerId String
+  organizer   Organizer @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  name        String
+  description String    @db.VarChar(4000)
+  street      String
+  postalCode  String
+  city        String
+  country     String
+  areaSqm     Int?
+  capacity    Int
+  amenities   String[]  @default([])
+  stars       Int? // nur durch eropub (1–5)
+  starsById   String?
+  status      String    @default("pending") // pending | approved | rejected | suspended
+  createdAt   DateTime  @default(now())
+  events      Event[]
+}
+
+model Event {
+  id                   String        @id @default(cuid())
+  organizerId          String
+  organizer            Organizer     @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  clubId               String?
+  club                 Club?         @relation(fields: [clubId], references: [id])
+  title                String
+  description          String        @db.VarChar(6000)
+  regionCountry        String
+  regionName           String?
+  city                 String?
+  startsAt             DateTime
+  endsAt               DateTime
+  capacity             Int
+  status               String        @default("pending_approval") // draft | pending_approval | approved | rejected | canceled
+  visibility           String        @default("verified_members")
+  requirements         String?
+  cancellationPolicy   String?
+  goldDiscountEligible Boolean       @default(false)
+  isEropubEvent        Boolean       @default(false)
+  providerPaymentUrl   String? // Clubparty: Vorauszahlung direkt an Anbieter
+  createdAt            DateTime      @default(now())
+  ticketTypes          TicketType[]
+  ticketOrders         TicketOrder[]
+
+  @@index([status, startsAt])
+}
+
+model TicketType {
+  id               String  @id @default(cuid())
+  eventId          String
+  event            Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name             String // Einzelticket | Paarticket
+  priceCents       Int
+  feeCents         Int     @default(0)
+  quota            Int
+  sold             Int     @default(0)
+  discountable     Boolean @default(true)
+  personsPerTicket Int     @default(1)
+}
+
+model TicketOrder {
+  id             String           @id @default(cuid())
+  eventId        String
+  event          Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  ticketTypeId   String
+  profileId      String
+  profile        CommunityProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  userId         String
+  quantity       Int              @default(1)
+  grossCents     Int
+  discountCents  Int              @default(0)
+  payableCents   Int
+  status         String           @default("reserved") // reserved | waitlist | paid | canceled | refunded | expired | awaiting_provider
+  reservedUntil  DateTime?
+  showAttendance Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  paidAt         DateTime?
+
+  @@index([eventId, status])
+}
+
+model DiscountRule {
+  id            String               @id @default(cuid())
+  key           String               @unique // gold_party_10
+  amountCents   Int
+  plan          PlanKey
+  perEventLimit Int                  @default(1)
+  combinable    Boolean              @default(false)
+  fundedBy      String               @default("eropub")
+  active        Boolean              @default(true)
+  createdAt     DateTime             @default(now())
+  redemptions   DiscountRedemption[]
+}
+
+model DiscountRedemption {
+  id            String           @id @default(cuid())
+  ruleId        String
+  rule          DiscountRule     @relation(fields: [ruleId], references: [id])
+  eventId       String
+  profileId     String
+  profile       CommunityProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  ticketOrderId String           @unique
+  amountCents   Int
+  status        String           @default("reserved") // reserved | redeemed | released
+  // Aktiv-Schlüssel: gesetzt solange reserved/redeemed → eindeutig je Event+Profil+Regel
+  activeKey     String?          @unique
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+// ───────────────────────────── Dates ─────────────────────────────
+
+model DateOffer {
+  id          String           @id @default(cuid())
+  profileId   String
+  profile     CommunityProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  kind        String // personal | group
+  title       String
+  description String           @db.VarChar(2000)
+  postalCode  String
+  country     String
+  lat         Float?
+  lng         Float?
+  when        DateTime?
+  preferences String[]         @default([])
+  maxPeople   Int?
+  status      String           @default("open") // open | closed | removed
+  createdAt   DateTime         @default(now())
+
+  @@index([country, postalCode])
+}
+
+// ───────────────────────────── Gold-CMS ─────────────────────────────
+
+model GoldContent {
+  id          String                @id @default(cuid())
+  slug        String                @unique
+  title       String
+  kind        String // article | interview | workshop | video | event_insight
+  category    String
+  summary     String
+  body        String                @db.Text
+  mediaKey    String?
+  rightsProof String?
+  status      String                @default("draft") // draft | review | scheduled | published | archived | withdrawn
+  publishAt   DateTime?
+  version     Int                   @default(1)
+  createdById String?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  revisions   GoldContentRevision[]
+  bookmarks   GoldBookmark[]
+}
+
+model GoldContentRevision {
+  id        String      @id @default(cuid())
+  contentId String
+  content   GoldContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  version   Int
+  title     String
+  body      String      @db.Text
+  editedBy  String
+  createdAt DateTime    @default(now())
+}
+
+model GoldBookmark {
+  profileId String
+  contentId String
+  profile   CommunityProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  content   GoldContent      @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, contentId])
+}
+
+model PublicPage {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  body      String   @db.Text // Markdown-artig, wird escaped gerendert – kein HTML/JS
+  navOrder  Int?
+  updatedAt DateTime @updatedAt
+}
+
+// ───────────────────────────── Moderation & Support ─────────────────────────────
+
+model Report {
+  id                String   @id @default(cuid())
+  reporterUserId    String
+  reporterProfileId String?
+  targetType        String // profile | message | post | event | media | group | club
+  targetId          String
+  reason            String
+  details           String?  @db.VarChar(2000)
+  caseId            String?
+  createdAt         DateTime @default(now())
+
+  @@index([targetType, targetId])
+}
+
+model ModerationCase {
+  id         String             @id @default(cuid())
+  number     String             @unique
+  targetType String
+  targetId   String
+  status     String             @default("open") // open | in_review | actioned | dismissed | appealed | closed
+  priority   Int                @default(0)
+  assigneeId String?
+  dueAt      DateTime?
+  decision   String?
+  reasoning  String?
+  appealText String?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  actions    ModerationAction[]
+}
+
+model ModerationAction {
+  id        String         @id @default(cuid())
+  caseId    String
+  case      ModerationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  actorId   String
+  action    String // note | hide | remove | warn | suspend | ban | restore | evidence_access
+  purpose   String?
+  note      String?
+  createdAt DateTime       @default(now())
+}
+
+model SupportTicket {
+  id          String         @id @default(cuid())
+  number      String         @unique
+  requesterId String?
+  requester   User?          @relation("TicketRequester", fields: [requesterId], references: [id])
+  email       String?
+  topic       String
+  body        String         @db.VarChar(5000)
+  status      String         @default("open") // open | pending | resolved | closed
+  assigneeId  String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  replies     SupportReply[]
+}
+
+model SupportReply {
+  id        String        @id @default(cuid())
+  ticketId  String
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId  String
+  internal  Boolean       @default(false)
+  body      String        @db.VarChar(5000)
+  createdAt DateTime      @default(now())
+}
+
+// ───────────────────────────── Benachrichtigungen, Outbox, Settings, Audit ─────────────────────────────
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  kind      String
+  // Neutral formuliert – keine intimen Inhalte, keine Nachrichtentexte
+  title     String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+}
+
+model OutboxEvent {
+  id          String    @id @default(cuid())
+  topic       String // message.created | email.send | call.revoke | ...
+  payload     Json
+  status      String    @default("pending") // pending | done | failed
+  attempts    Int       @default(0)
+  availableAt DateTime  @default(now())
+  lastError   String?
+  createdAt   DateTime  @default(now())
+  doneAt      DateTime?
+
+  @@index([status, availableAt])
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  template  String
+  toHash    String // Empfänger gehasht
+  status    String // queued | sent | failed | suppressed
+  error     String?
+  createdAt DateTime @default(now())
+}
+
+model SettingVersion {
+  id        String   @id @default(cuid())
+  key       String
+  value     Json
+  version   Int
+  changedBy String?
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@unique([key, version])
+  @@index([key, createdAt])
+}
+
+model AuditEvent {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  action      String
+  targetType  String?
+  targetId    String?
+  meta        Json     @default("{}")
+  prevHash    String?
+  hash        String // Hashkette → manipulationserschwert
+  createdAt   DateTime @default(now())
+
+  @@index([action, createdAt])
+  @@index([targetType, targetId])
+}
+
+model DeletionRequest {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status       String    @default("requested") // requested | scheduled | done | failed | canceled
+  scheduledFor DateTime
+  doneAt       DateTime?
+  error        String?
+  createdAt    DateTime  @default(now())
+}
+
+// Separates Löschregister – überlebt Restore, damit erledigte Löschungen nach Backup-Wiederherstellung erneut greifen.
+model DeletionTombstone {
+  id          String   @id @default(cuid())
+  subjectHash String   @unique
+  doneAt      DateTime
+}
+
+model Country {
+  code    String   @id // ISO-3166-1 alpha-2 / Sonderkennung
+  nameDe  String
+  kind    String // state | territory | transcontinental
+  allowed Boolean  @default(true)
+  regions Region[]
+}
+
+model Region {
+  id          String   @id @default(cuid())
+  countryCode String
+  country     Country  @relation(fields: [countryCode], references: [code])
+  name        String
+  cities      String[] @default([])
+
+  @@unique([countryCode, name])
+}
+
+// ───────────────────────────── Kennenlernspiele ─────────────────────────────
+
+model GameQuestionVersion {
+  id          String       @id @default(cuid())
+  questionKey String // stabiler Schlüssel über Versionen
+  version     Int
+  variant     String // either_or | our_evening | what_matters
+  category    String
+  locale      String       @default("de")
+  text        String
+  status      String       @default("approved") // draft | approved | archived
+  createdAt   DateTime     @default(now())
+  options     GameOption[]
+
+  @@unique([questionKey, version])
+  @@index([variant, status])
+}
+
+model GameOption {
+  id         String              @id @default(cuid())
+  questionId String
+  question   GameQuestionVersion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  key        String
+  label      String
+  sort       Int                 @default(0)
+  neutral    Boolean             @default(false) // "Nicht mein Thema" – nie Treffer
+
+  @@unique([questionId, key])
+}
+
+model GameRuleVersion {
+  id                String   @id @default(cuid())
+  version           Int      @unique
+  roundSize         Int      @default(10)
+  minAnswered       Int      @default(8)
+  thresholdBp       Int      @default(8000) // 80,00 %
+  inviteLimitPerDay Int      @default(5)
+  expiresHours      Int      @default(168)
+  active            Boolean  @default(false)
+  createdById       String?
+  createdAt         DateTime @default(now())
+}
+
+model GameSession {
+  id               String            @id @default(cuid())
+  variant          String
+  // Snapshot: Regeln + Fragen + Optionen beim Start, unveränderlich
+  ruleSnapshot     Json
+  questionSnapshot Json
+  status           String            @default("invited") // invited | accepted | answering | completed | declined | expired | cancelled
+  incomplete       Boolean           @default(false)
+  invitedById      String
+  expiresAt        DateTime
+  createdAt        DateTime          @default(now())
+  completedAt      DateTime?
+  participants     GameParticipant[]
+  answers          GameAnswer[]
+  submissions      GameSubmission[]
+  match            GameMatch?
+}
+
+model GameParticipant {
+  id        String              @id @default(cuid())
+  sessionId String
+  session   GameSession         @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  profileId String
+  profile   CommunityProfile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  status    String              @default("invited") // invited | accepted | answering | submitted | declined
+  createdAt DateTime            @default(now())
+  consents  GamePersonConsent[]
+
+  @@unique([sessionId, profileId])
+}
+
+model GamePersonConsent {
+  id            String          @id @default(cuid())
+  participantId String
+  participant   GameParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind          String // join | answers | contact
+  answersHash   String? // Bestätigung bezieht sich auf genau diese Antwortversion
+  createdAt     DateTime        @default(now())
+
+  @@unique([participantId, userId, kind])
+}
+
+model GameAnswer {
+  id            String      @id @default(cuid())
+  sessionId     String
+  session       GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  participantId String
+  questionKey   String
+  optionKey     String? // null = übersprungen
+  updatedById   String
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([sessionId, participantId, questionKey])
+}
+
+model GameSubmission {
+  id            String      @id @default(cuid())
+  sessionId     String
+  session       GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  participantId String      @unique
+  answersHash   String
+  lockedAnswers Json
+  createdAt     DateTime    @default(now())
+}
+
+model GameMatch {
+  id           String      @id @default(cuid())
+  sessionId    String      @unique // idempotent: genau ein Ergebnis je Runde
+  session      GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  isMatch      Boolean
+  answeredBoth Int
+  hits         Int
+  sharedKeys   String[]
+  connectionId String?
+  createdAt    DateTime    @default(now())
+}
+
+model RateLimitHit {
+  key         String
+  windowStart DateTime
+  count       Int      @default(0)
+
+  @@id([key, windowStart])
+}
