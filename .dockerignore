@@ -1,0 +1,30 @@
+# Niemals Secrets oder lokale Zustände in den Build-Kontext
+.env
+.env.*
+!.env.example
+secrets/
+backups/
+*.pem
+*.key
+
+# Abhängigkeiten/Build-Artefakte werden im Container neu erzeugt
+node_modules
+.next
+*.tsbuildinfo
+coverage
+test-results
+playwright-report
+storage
+
+# VCS / Editor / Doku / Deployment
+.git
+.gitignore
+.github
+.vscode
+.idea
+*.log
+docs
+deploy
+Dockerfile
+docker-compose*.yml
+.dockerignore

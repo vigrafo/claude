@@ -1,0 +1,52 @@
+# eropub.com – LiveKit-Server (selbst gehostet). Beispielkonfiguration für docker-compose.prod.yml.
+#
+# - API-Schlüssel kommen NICHT aus dieser Datei, sondern aus dem Docker-Secret `livekit_keys`
+#   (Datei ./secrets/livekit_keys, eine Zeile "<LIVEKIT_API_KEY>: <LIVEKIT_API_SECRET>", chmod 600).
+#   Dieselben Werte stehen in .env.production (LIVEKIT_API_KEY / LIVEKIT_API_SECRET).
+# - Keine Aufzeichnung, kein Egress/Ingress, keine Webhooks mit Inhalten.
+# - Portbereiche müssen exakt zu den veröffentlichten Ports in docker-compose.prod.yml passen.
+
+port: 7880                 # HTTP/WebSocket-Signalisierung, nur intern (Caddy → rtc.eropub.com)
+bind_addresses:
+  - "0.0.0.0"
+
+log_level: info
+
+key_file: /run/secrets/livekit_keys
+
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 50100
+  # Öffentliche IP per STUN ermitteln (Container läuft hinter Docker-NAT).
+  use_external_ip: true
+  # Bei Problemen mit der Erkennung stattdessen fest setzen:
+  # node_ip: 203.0.113.20
+
+# Eingebetteter TURN-Server für restriktive Netze (Firmen-WLAN, Mobilfunk-CGNAT).
+# Zertifikat: von Caddy für rtc.eropub.com bezogen, read-only aus dem caddy-data-Volume.
+# Hinweis: LiveKit lädt das Zertifikat nur beim Start. Nach Erneuerung (ca. alle 60 Tage)
+# `docker compose -f docker-compose.prod.yml restart livekit` (z. B. per monatlichem Cron).
+turn:
+  enabled: true
+  domain: rtc.eropub.com
+  udp_port: 3478
+  tls_port: 5349
+  external_tls: false
+  cert_file: /caddy-data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/rtc.eropub.com/rtc.eropub.com.crt
+  key_file: /caddy-data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/rtc.eropub.com/rtc.eropub.com.key
+
+room:
+  # Räume werden von der App mit kurzlebigen Tokens erzeugt; leere Räume schnell schließen.
+  auto_create: true
+  empty_timeout: 60
+  departure_timeout: 20
+  max_participants: 2      # 1:1-Anrufe
+
+# Keine Aufzeichnung/Weiterleitung: Egress/Ingress werden nicht konfiguriert und nicht betrieben.
+# Kein `redis`-Block: Single-Node-Betrieb.
+
+limit:
+  # Grobe Schutzgrenze pro Node; Kostenbudget steuert zusätzlich die App (calls.limits).
+  num_tracks: 400
+  bytes_per_sec: 200000000

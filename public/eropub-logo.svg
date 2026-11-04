@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 70" role="img" aria-label="eropub.com">
+  <title>eropub.com</title>
+  
+  <g>  <!-- Zwei offene, gegensinnige Bögen. Oberkante des rechten Bogens (y=26) liegt exakt auf der Mittellinie des linken Bogens (cy=26). -->
+  <path d="M34.28 13.74 A16 16 0 1 0 34.28 38.26" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+  <path d="M33.72 32.74 A16 16 0 1 1 33.72 57.26" fill="none" stroke="#E0263F" stroke-width="6" stroke-linecap="round"/>
+  <!-- Zwei Herzen -->
+  <path d="M24 23.2c-1.4-2.6-5.6-2.2-5.6 1 0 2.4 3 4.4 5.6 6.6 2.6-2.2 5.6-4.2 5.6-6.6 0-3.2-4.2-3.6-5.6-1z" fill="#E0263F"/>
+  <path d="M44 42.2c-1.4-2.6-5.6-2.2-5.6 1 0 2.4 3 4.4 5.6 6.6 2.6-2.2 5.6-4.2 5.6-6.6 0-3.2-4.2-3.6-5.6-1z" fill="#FFFFFF"/>
+</g>
+  <text x="74" y="46" font-family="Fraunces, 'Fraunces Variable', Georgia, 'Times New Roman', serif" font-size="34" font-weight="600" letter-spacing="-0.5" fill="#FFFFFF">eropub<tspan fill="#E0263F">.com</tspan></text>
+</svg>

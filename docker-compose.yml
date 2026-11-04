@@ -1,0 +1,68 @@
+# eropub.com – lokale ENTWICKLUNGS-Infrastruktur.
+#
+#   docker compose up -d          # Dienste starten
+#   npm run dev                   # App läuft auf dem Host (Port 3000)
+#   npm run worker                # Worker auf dem Host
+#
+# Alle Ports sind ausschließlich an 127.0.0.1 gebunden. Zugangsdaten hier sind
+# reine Entwicklungswerte – NIEMALS in Produktion verwenden (dort: docker-compose.prod.yml).
+name: eropub-dev
+
+services:
+  postgres:
+    image: postgres:16.15-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: eropub
+      POSTGRES_PASSWORD: eropub_dev
+      POSTGRES_DB: eropub
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pg-dev:/var/lib/postgresql/data
+      # legt zusätzlich die Testdatenbank eropub_ci an (siehe tests/setup.ts)
+      - ./deploy/dev/postgres-init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eropub -d eropub"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  valkey:
+    image: valkey/valkey:8.1.11
+    restart: unless-stopped
+    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    # Upstream-MinIO veröffentlicht keine Docker-Hub-Images mehr; Community-Build (Pigsty).
+    # Siehe docs/ubuntu-deployment.md, Abschnitt "Objektspeicher".
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: eropub-dev
+      MINIO_ROOT_PASSWORD: eropub-dev-secret
+    ports:
+      - "127.0.0.1:9000:9000"   # S3-API
+      - "127.0.0.1:9001:9001"   # Web-Konsole
+    volumes:
+      - minio-dev:/data
+
+  mailpit:
+    # fängt sämtliche ausgehenden Mails ab (SMTP 1025, Web-UI http://127.0.0.1:8025)
+    image: axllent/mailpit:v1.33.0
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+
+volumes:
+  pg-dev:
+  minio-dev:

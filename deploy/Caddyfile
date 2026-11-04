@@ -1,0 +1,100 @@
+# eropub.com – Caddy (Reverse Proxy, automatisches HTTPS via Let's Encrypt).
+#
+# Voraussetzungen: DNS A/AAAA für eropub.com, www.eropub.com, rtc.eropub.com zeigen auf den Server,
+# Ports 80/443 (TCP) und 443/UDP sind erreichbar.
+#
+# Client-IP: Caddy setzt X-Forwarded-For ohne `trusted_proxies` ausschließlich auf die echte
+# Gegenstelle (eingehende XFF-Header werden verworfen). Die App liest den ersten XFF-Eintrag.
+# `trusted_proxies` NUR setzen, wenn ein vertrauenswürdiger CDN/Proxy vorgeschaltet wird.
+
+{
+	email {$ACME_EMAIL}
+	# Nur Let's Encrypt: Pfad des rtc-Zertifikats ist dann stabil (wird von LiveKit für TURN/TLS gelesen).
+	cert_issuer acme
+}
+
+# ─────────────────────────────── Snippets ───────────────────────────────
+
+(security_headers) {
+	header {
+		# HSTS bewusst OHNE preload. Preload erst nach stabiler HTTPS-Phase und bewusster Entscheidung.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Frame-Options "DENY"
+		# Kamera/Mikrofon nur für die eigene Origin (In-App-Anrufe), alles andere aus.
+		Permissions-Policy "camera=(self), microphone=(self), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), browsing-topics=()"
+		-Server
+		-X-Powered-By
+	}
+}
+
+# Suchmaschinen-Sperre. Standardmäßig AKTIV (Wunsch des Betreibers).
+# Entfernen erst bei bewusster Freigabe: Zeilen `import noindex` unten löschen,
+# zusätzlich ALLOW_SEARCH_INDEXING=true in .env.production setzen (steuert /robots.txt),
+# dann `docker compose -f docker-compose.prod.yml up -d web caddy` bzw. `caddy reload`.
+(noindex) {
+	header X-Robots-Tag "noindex, nofollow, noarchive"
+}
+
+# Optionale Admin-Härtung: /admin nur von festen IPs erreichbar.
+# Aktivieren: Block entkommentieren, IPs eintragen, im Site-Block `import admin_allowlist` setzen.
+# Ergänzt (ersetzt nicht) die App-seitige Prüfung über ADMIN_ALLOWED_IPS und MFA.
+# (admin_allowlist) {
+# 	@admin_denied {
+# 		path /admin /admin/* /api/admin /api/admin/*
+# 		not remote_ip 203.0.113.10 2001:db8:1234::/48
+# 	}
+# 	respond @admin_denied 404
+# }
+
+# ─────────────────────────────── Sites ───────────────────────────────
+
+www.eropub.com {
+	import security_headers
+	import noindex
+	redir https://eropub.com{uri} permanent
+}
+
+eropub.com {
+	import security_headers
+	import noindex
+	# import admin_allowlist
+
+	encode zstd gzip
+
+	# Upload-Grenze (App prüft zusätzlich: uploads.limits.maxImageBytes)
+	request_body {
+		max_size 26MB
+	}
+
+	# WebSockets/Server-Sent Events werden von reverse_proxy automatisch durchgereicht.
+	reverse_proxy web:3000 {
+		health_uri /api/health
+		health_interval 30s
+		header_up X-Real-IP {remote_host}
+	}
+
+	log {
+		output stdout
+		# Keine Cookies/Authorization-Header in Logs
+		format filter {
+			wrap json
+			fields {
+				request>headers>Cookie delete
+				request>headers>Authorization delete
+				request>uri query {
+					delete token
+					delete code
+				}
+			}
+		}
+	}
+}
+
+# LiveKit-Signalisierung (WebSocket) + Server-API. Medien laufen direkt über UDP/TCP-Ports.
+rtc.eropub.com {
+	import security_headers
+	import noindex
+	reverse_proxy livekit:7880
+}

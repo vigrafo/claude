@@ -1,0 +1,25 @@
+# eropub.com – Override für den Betrieb hinter Plesk-nginx (statt Caddy).
+#
+#   docker compose -f docker-compose.prod.yml -f docker-compose.plesk.yml up -d
+#
+# - Caddy wird nicht gestartet (Profil "disabled"); TLS/Let's Encrypt übernimmt Plesk.
+# - web lauscht nur auf 127.0.0.1:3000, LiveKit-Signalisierung nur auf 127.0.0.1:7880
+#   (Plesk-nginx proxyt eropub.com → 3000 und rtc.eropub.com → 7880).
+# - TURN/TLS (5349) ist hier deaktiviert, da das Zertifikat bei Plesk liegt; TURN/UDP bleibt.
+# Benötigt Docker Compose ≥ 2.24 (YAML-Tag !override).
+services:
+  caddy:
+    profiles: [disabled]
+
+  web:
+    ports:
+      - "127.0.0.1:3000:3000"
+
+  livekit:
+    ports: !override
+      - "127.0.0.1:7880:7880/tcp"
+      - "7881:7881/tcp"
+      - "50000-50100:50000-50100/udp"
+      - "3478:3478/udp"
+    volumes: !override
+      - ./deploy/livekit.plesk.yaml:/etc/livekit.yaml:ro
