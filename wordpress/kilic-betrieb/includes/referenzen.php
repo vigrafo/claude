@@ -61,10 +61,15 @@ add_shortcode( 'kilic_referenzen', function ( $atts ) {
 		$args['tax_query'] = array( array( 'taxonomy' => 'kilic_ref_kat', 'field' => 'slug', 'terms' => array_map( 'trim', explode( ',', $a['art'] ) ) ) );
 	}
 	$refs = get_posts( $args );
+	$hint = '';
+	if ( current_user_can( 'edit_posts' ) ) {
+		$hint = '<p class="kilic-edit-hint">Nur für Sie sichtbar: Diese Projekte und ihre Fotos pflegen Sie unter <a href="' . esc_url( admin_url( 'edit.php?post_type=kilic_referenz' ) ) . '">Kilic Betrieb → Referenzen</a> (Foto = „Projektfoto“ rechts im Projekt). Im Divi-Editor erscheint hier nur der Platzhalter &#91;kilic_referenzen&#93;.</p>';
+	}
 	if ( ! $refs ) {
-		return '<p class="muted">Hier erscheinen in Kürze unsere aktuellen Projekte.</p>';
+		return $hint . '<p class="muted">Hier erscheinen in Kürze unsere aktuellen Projekte.</p>';
 	}
 	ob_start();
+	echo $hint; // phpcs:ignore WordPress.Security.EscapeOutput
 	if ( 'ja' === $a['filter'] ) {
 		$terms = get_terms( array( 'taxonomy' => 'kilic_ref_kat', 'hide_empty' => true ) );
 		echo '<div class="filter-bar"><button type="button" class="active" data-filter="all">Alle</button>';

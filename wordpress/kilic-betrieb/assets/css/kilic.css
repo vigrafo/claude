@@ -1051,14 +1051,16 @@ input[type=range] { width: 100%; accent-color: var(--accent); margin: 14px 0 4px
 .mobile-bar { display: none; }
 
 /* ---------- Responsive ---------- */
-@media (max-width: 1520px) {
+@media (max-width: 1679px) {
   .header-phone { display: none; }
 }
-@media (max-width: 1100px) {
-  .main-nav > ul > li > a { padding-inline: 10px; font-size: 1rem; }
+@media (max-width: 1440px) {
+  .main-nav > ul > li > a { padding-inline: 10px; }
+  .main-nav > ul > li > a::after { left: 10px; right: 10px; }
+  .main-nav .menu-item-has-children > a { padding-right: 24px; }
 }
 
-@media (max-width: 1240px) {
+@media (max-width: 1300px) {
   .nav-toggle { display: block; }
   .main-nav {
     position: fixed;
@@ -1155,6 +1157,9 @@ input[type=range] { width: 100%; accent-color: var(--accent); margin: 14px 0 4px
 /* Inline-Icons in Überschriften */
 h3 :is(svg,.ki), h4 :is(svg,.ki) { width: 1em; height: 1em; flex: none; }
 .logo-text small { white-space: nowrap; }
+
+/* Kopfzeile: etwas breiter als der Inhalt, damit Menü, Telefon und Button nebeneinander passen */
+.topbar .wrap, .site-header .wrap { width: min(1440px, 100% - 32px); }
 
 
 /* ==========================================================================
@@ -1275,3 +1280,18 @@ body.kilic-site #page-container, body.kilic-site #et-main-area { padding-top: 0 
 [hidden] { display: none !important; }
 .screen-reader-text { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(1px,1px,1px,1px); white-space: nowrap; }
 .skip-link:focus { position: fixed !important; top: 8px; left: 8px; width: auto; height: auto; clip: auto; z-index: 100; background: #fff; color: var(--ink); padding: 10px 16px; border-radius: var(--radius); box-shadow: var(--shadow-lg); }
+
+/* Absätze, die ein Editor (z. B. Divi) automatisch einfügt, dürfen Raster und
+   Kartenreihen nicht zerlegen: In Layout-Containern zählen nur ihre Inhalte. */
+body.kilic-site #kilic-main p:empty { display: none; }
+body.kilic-site #kilic-main :is(.grid, .contact-cards, .btn-row, .related, .examples, .hero-badges, .steps, .split, .layers, .ba, .filter-bar, .trustbar .wrap, .emergency .wrap, .cta-box) > p { display: contents; }
+
+/* Ganze Karte klickbar, obwohl der Link nur im Text steht */
+.service-card, .contact-card { position: relative; }
+.stretched::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+.contact-card strong a { text-decoration: none; color: inherit; }
+.service-card .more { text-decoration: none; }
+
+/* Hinweis für angemeldete Bearbeiter */
+.kilic-edit-hint { background: #fff4cc; border: 1px dashed #d9a400; color: #6b4a00; padding: 10px 14px; border-radius: var(--radius); font-size: .85rem; margin-bottom: 20px; }
+.kilic-edit-hint a { font-weight: 600; }

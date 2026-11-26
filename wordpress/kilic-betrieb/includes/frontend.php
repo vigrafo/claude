@@ -64,13 +64,24 @@ add_filter( 'the_content', function ( $content ) {
 	return kilic_is_layout() ? kilic_replace_tokens( $content ) : $content;
 }, 100 );
 
-/** Unsere Abschnitte sind fertiges HTML – automatische Absätze würden es zerlegen. */
+/**
+ * Unsere Abschnitte sind fertiges HTML – automatische Absätze (wpautop) würden
+ * leere <p> und Lücken erzeugen. Gilt auch mit Divi.
+ */
 add_action( 'wp', function () {
-	if ( kilic_is_layout() && ! kilic_divi_aktiv() ) {
+	if ( kilic_is_layout() ) {
 		remove_filter( 'the_content', 'wpautop' );
 		remove_filter( 'the_content', 'wptexturize' );
 	}
-} );
+}, 99 );
+
+/** Zusätzlich direkt vor jedem Inhalts-Durchlauf, falls ein Builder wpautop wieder anmeldet. */
+add_filter( 'the_content', function ( $content ) {
+	if ( kilic_is_layout() ) {
+		remove_filter( 'the_content', 'wpautop' );
+	}
+	return $content;
+}, 1 );
 
 function kilic_divi_aktiv() {
 	return function_exists( 'et_setup_theme' ) || defined( 'ET_BUILDER_PLUGIN_VERSION' ) || class_exists( 'ET_Builder_Element' );

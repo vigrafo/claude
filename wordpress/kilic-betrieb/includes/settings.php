@@ -140,6 +140,18 @@ function kilic_render_settings() {
 			<?php wp_nonce_field( 'kilic_setup_pages' ); ?>
 			<?php submit_button( 'Fehlende Seiten anlegen', 'secondary', 'submit', false ); ?>
 		</form>
+
+		<h2>Seiteninhalte auf Standard zurücksetzen</h2>
+		<p>Ersetzt den Inhalt aller Kilic-Seiten (Start, Estrich, Boden, Rohrreinigung, Unterseiten …) durch die aktuelle Standardversion des Plugins. <strong>Eigene Änderungen an diesen Seiten gehen dabei verloren.</strong> Sinnvoll nach einem Plugin-Update, solange die Texte noch nicht angepasst wurden.</p>
+		<?php if ( isset( $_GET['kilic_reset'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+			<div class="notice notice-success inline"><p><?php echo (int) $_GET['kilic_reset']; // phpcs:ignore WordPress.Security.NonceVerification ?> Seiten wurden zurückgesetzt.</p></div>
+		<?php endif; ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="kilic_reset_pages">
+			<?php wp_nonce_field( 'kilic_reset_pages' ); ?>
+			<p><label><input type="checkbox" name="bestaetigt" value="1" required> Ja, Inhalte der Kilic-Seiten überschreiben</label></p>
+			<?php submit_button( 'Seiteninhalte zurücksetzen', 'secondary', 'submit', false ); ?>
+		</form>
 	</div>
 	<?php
 }

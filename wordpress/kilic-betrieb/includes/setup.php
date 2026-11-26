@@ -195,6 +195,35 @@ add_action( 'admin_post_kilic_setup_pages', function () {
 	exit;
 } );
 
+/** Inhalte aller Kilic-Seiten durch die Standardversion ersetzen. */
+function kilic_reset_pages() {
+	$n = 0;
+	kses_remove_filters();
+	foreach ( kilic_seiten() as $slug => $def ) {
+		$path = $def[1] ? $def[1] . '/' . $slug : $slug;
+		$page = get_page_by_path( $path );
+		if ( ! $page ) {
+			continue;
+		}
+		wp_update_post( array( 'ID' => $page->ID, 'post_content' => call_user_func( $def[3] ) ) );
+		update_post_meta( $page->ID, '_wp_page_template', KILIC_TEMPLATE );
+		$n++;
+	}
+	kses_init_filters();
+	return $n;
+}
+
+add_action( 'admin_post_kilic_reset_pages', function () {
+	check_admin_referer( 'kilic_reset_pages' );
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Keine Berechtigung.' );
+	}
+	$n = empty( $_POST['bestaetigt'] ) ? 0 : kilic_reset_pages();
+	kilic_setup_pages();
+	wp_safe_redirect( admin_url( 'admin.php?page=kilic-einstellungen&kilic_reset=' . $n ) );
+	exit;
+} );
+
 /** Versionswechsel: Rollen aktualisieren. */
 add_action( 'admin_init', function () {
 	if ( get_option( 'kilic_version' ) !== KILIC_VERSION ) {
