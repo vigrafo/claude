@@ -202,34 +202,77 @@ add_action( 'admin_menu', function () {
 
 function kilic_render_fotos_seite() {
 	$kunden = get_posts( array( 'post_type' => 'kilic_kunde', 'numberposts' => -1, 'orderby' => 'title', 'order' => 'ASC' ) );
+	$belege = get_posts( array( 'post_type' => 'kilic_beleg', 'numberposts' => 200, 'meta_query' => array( array( 'key' => '_status', 'value' => array( 'entwurf', 'offen', 'angenommen' ), 'compare' => 'IN' ) ) ) );
 	$vor    = absint( $_GET['kunde'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification
+	$letzte = get_posts( array( 'post_type' => 'attachment', 'post_status' => 'inherit', 'numberposts' => 12, 'meta_key' => '_kilic_kunde', 'orderby' => 'date', 'order' => 'DESC' ) );
 	?>
 	<div class="wrap kilic-fotoseite">
-		<h1>Fotos vom Objekt hochladen</h1>
+		<h1>Fotos vom Objekt</h1>
+		<p class="kf-intro">Fotos direkt auf der Baustelle aufnehmen und dem Kunden zuordnen – sie landen in der Kundenakte und im Verlauf.</p>
 		<?php if ( isset( $_GET['ok'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
-			<div class="notice notice-success"><p><?php echo (int) $_GET['ok']; // phpcs:ignore WordPress.Security.NonceVerification ?> Datei(en) gespeichert. <a href="<?php echo esc_url( get_edit_post_link( absint( $_GET['kunde'] ?? 0 ) ) ); // phpcs:ignore WordPress.Security.NonceVerification ?>">Zur Kundenakte</a></p></div>
+			<div class="kf-ok" role="status"><span class="dashicons dashicons-yes-alt"></span> <?php echo (int) $_GET['ok']; // phpcs:ignore WordPress.Security.NonceVerification ?> Foto(s) gespeichert. <a href="<?php echo esc_url( get_edit_post_link( absint( $_GET['kunde'] ?? 0 ) ) . '#kilic_kunde_fotos' ); // phpcs:ignore WordPress.Security.NonceVerification ?>">Zur Kundenakte →</a></div>
 		<?php endif; ?>
-		<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-			<input type="hidden" name="action" value="kilic_fotos_hochladen">
-			<?php wp_nonce_field( 'kilic_fotos_hochladen' ); ?>
-			<p><label for="kf_kunde"><strong>1. Kunde</strong></label><br>
-				<select id="kf_kunde" name="kunde" required>
-					<option value="">– Kunde wählen –</option>
-					<option value="neu">+ Neuer Kunde</option>
-					<?php foreach ( $kunden as $k ) : ?>
-						<option value="<?php echo esc_attr( $k->ID ); ?>" <?php selected( $vor, $k->ID ); ?>><?php echo esc_html( kilic_kunde_label( $k->ID ) ); ?></option>
-					<?php endforeach; ?>
-				</select>
-				<input type="text" name="neu_name" class="kf-neu" placeholder="Name des neuen Kunden" hidden>
-			</p>
-			<p><strong>2. Fotos</strong><br>
-				<label class="kilic-upload-btn big"><span class="dashicons dashicons-camera"></span> Foto aufnehmen / auswählen<input type="file" name="kilic_fotos[]" accept="image/*,application/pdf" multiple required></label>
-				<span class="kilic-upload-liste description"></span>
-			</p>
-			<p><label for="kf_notiz"><strong>3. Notiz</strong> (optional)</label><br>
-				<input type="text" id="kf_notiz" name="notiz" placeholder="z. B. „Estrich vor Beginn“, „Riss im Flur“"></p>
-			<p><button type="submit" class="button button-primary button-hero">Hochladen &amp; zuordnen</button></p>
-		</form>
+		<div class="kf-grid">
+			<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="kf-form">
+				<input type="hidden" name="action" value="kilic_fotos_hochladen">
+				<?php wp_nonce_field( 'kilic_fotos_hochladen' ); ?>
+
+				<section class="kf-step">
+					<h2><b>1</b> Kunde</h2>
+					<select id="kf_kunde" name="kunde" required>
+						<option value="">– Kunde wählen –</option>
+						<option value="neu">+ Neuer Kunde</option>
+						<?php foreach ( $kunden as $k ) : ?>
+							<option value="<?php echo esc_attr( $k->ID ); ?>" <?php selected( $vor, $k->ID ); ?>><?php echo esc_html( kilic_kunde_label( $k->ID ) ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<input type="text" name="neu_name" class="kf-neu" placeholder="Vor- und Nachname des neuen Kunden" hidden>
+					<label for="kf_beleg" class="kf-sub">Zu einem Auftrag / Beleg (optional)</label>
+					<select id="kf_beleg" name="beleg">
+						<option value="">– ohne Zuordnung –</option>
+						<?php foreach ( $belege as $b ) : ?>
+							<option value="<?php echo esc_attr( $b->ID ); ?>" data-kunde="<?php echo esc_attr( get_post_meta( $b->ID, '_kunde', true ) ); ?>"><?php echo esc_html( kilic_beleg_label( $b->ID ) . ( get_post_meta( $b->ID, '_leistung', true ) ? ' · ' . get_post_meta( $b->ID, '_leistung', true ) : '' ) ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</section>
+
+				<section class="kf-step">
+					<h2><b>2</b> Fotos</h2>
+					<label class="kf-drop" for="kf_dateien">
+						<span class="dashicons dashicons-camera"></span>
+						<strong>Fotos aufnehmen oder auswählen</strong>
+						<small>Am Handy öffnet sich Kamera oder Galerie · am PC Dateien hierher ziehen · JPG, PNG, PDF</small>
+						<input type="file" id="kf_dateien" name="kilic_fotos[]" accept="image/*,application/pdf" multiple>
+					</label>
+					<div class="kf-previews" aria-live="polite"></div>
+				</section>
+
+				<section class="kf-step">
+					<h2><b>3</b> Notiz <span>(optional)</span></h2>
+					<input type="text" id="kf_notiz" name="notiz" placeholder="z. B. „Zustand vor Beginn“, „Riss im Flur“, „Abnahme“">
+				</section>
+
+				<button type="submit" class="button button-primary button-hero kf-submit" disabled>Fotos hochladen</button>
+			</form>
+
+			<aside class="kf-recent">
+				<h2>Zuletzt hochgeladen</h2>
+				<?php if ( ! $letzte ) : ?>
+					<p class="description">Hier erscheinen die neuesten Fotos aller Kunden.</p>
+				<?php else : ?>
+					<div class="kf-recent-grid">
+						<?php foreach ( $letzte as $f ) :
+							$kid = (int) get_post_meta( $f->ID, '_kilic_kunde', true );
+							?>
+							<a href="<?php echo esc_url( get_edit_post_link( $kid ) . '#kilic_kunde_fotos' ); ?>" title="<?php echo esc_attr( $f->post_excerpt ); ?>">
+								<?php echo wp_attachment_is_image( $f->ID ) ? wp_get_attachment_image( $f->ID, 'thumbnail' ) : '<span class="dashicons dashicons-pdf"></span>'; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+								<span><?php echo esc_html( get_the_title( $kid ) ); ?><br><small><?php echo esc_html( get_the_date( 'd.m.Y', $f ) ); ?></small></span>
+							</a>
+						<?php endforeach; ?>
+					</div>
+				<?php endif; ?>
+			</aside>
+		</div>
 	</div>
 	<?php
 }
@@ -247,7 +290,7 @@ add_action( 'admin_post_kilic_fotos_hochladen', function () {
 	if ( ! $kunde ) {
 		wp_die( 'Bitte einen Kunden wählen.', '', array( 'back_link' => true ) );
 	}
-	$n = kilic_fotos_speichern( $kunde, sanitize_text_field( wp_unslash( $_POST['notiz'] ?? '' ) ) );
+	$n = kilic_fotos_speichern( $kunde, sanitize_text_field( wp_unslash( $_POST['notiz'] ?? '' ) ), absint( $_POST['beleg'] ?? 0 ) );
 	wp_safe_redirect( admin_url( 'admin.php?page=kilic-fotos&ok=' . $n . '&kunde=' . $kunde ) );
 	exit;
 } );

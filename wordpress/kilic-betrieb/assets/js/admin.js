@@ -19,17 +19,30 @@
     return f ? num(f.value) : num(table.dataset.mwst);
   }
   function calc() {
-    var netto = 0;
+    var zw = 0;
     body.querySelectorAll(".kilic-pos-row").forEach(function (row, i) {
       row.querySelector(".kilic-pos-nr").textContent = i + 1;
       var menge = num(row.querySelector('[name="kilic_pos[menge][]"]').value);
       var preis = Math.round(num(row.querySelector('[name="kilic_pos[preis][]"]').value) * 100);
-      var sum = Math.round(menge * preis);
-      netto += sum;
+      var rf = row.querySelector('[name="kilic_pos[rabatt][]"]');
+      var r = rf ? Math.min(100, Math.max(0, num(rf.value))) : 0;
+      var sum = Math.round(menge * preis * (1 - r / 100));
+      zw += sum;
       row.querySelector(".kilic-pos-sum").textContent = eur(sum);
     });
+    var art = document.getElementById("kb_rabatt_art");
+    var wert = document.getElementById("kb_rabatt_wert");
+    var rabatt = 0;
+    if (art && wert) {
+      if (art.value === "prozent") rabatt = Math.round(zw * Math.min(100, num(wert.value)) / 100);
+      else if (art.value === "betrag") rabatt = Math.min(zw, Math.round(num(wert.value) * 100));
+      wert.style.visibility = art.value ? "visible" : "hidden";
+    }
+    var netto = zw - rabatt;
     var satz = mwst();
     var steuer = Math.round(netto * satz / 100);
+    var z = table.querySelector(".kilic-zwischen"); if (z) z.textContent = eur(zw);
+    var rz = table.querySelector(".kilic-rabatt"); if (rz) rz.textContent = rabatt ? "– " + eur(rabatt) : "";
     table.querySelector(".kilic-netto").textContent = eur(netto);
     table.querySelector(".kilic-satz").textContent = String(satz).replace(".", ",");
     table.querySelector(".kilic-mwst").textContent = eur(steuer);
@@ -171,4 +184,41 @@
       alert("Bitte den Nachnamen (oder bei Firmen die Firma) eintragen.");
     }
   });
+})();
+
+/* Fotos-Seite: Vorschau, entfernen, Belege nach Kunde filtern */
+(function () {
+  var input = document.getElementById("kf_dateien");
+  if (!input) return;
+  var drop = document.querySelector(".kf-drop");
+  var box = document.querySelector(".kf-previews");
+  var btn = document.querySelector(".kf-submit");
+  var kunde = document.getElementById("kf_kunde");
+  var beleg = document.getElementById("kf_beleg");
+  var dt = new DataTransfer();
+  function update() {
+    box.innerHTML = "";
+    [].forEach.call(dt.files, function (f, i) {
+      var fig = document.createElement("figure");
+      if (f.type.indexOf("image") === 0) {
+        var img = document.createElement("img"); img.alt = f.name; img.src = URL.createObjectURL(f); fig.appendChild(img);
+      } else { var c = document.createElement("figcaption"); c.textContent = f.name; fig.appendChild(c); }
+      var x = document.createElement("button"); x.type = "button"; x.setAttribute("aria-label", "Foto entfernen"); x.textContent = "×";
+      x.addEventListener("click", function () { var n = new DataTransfer(); [].forEach.call(dt.files, function (g, j) { if (j !== i) n.items.add(g); }); dt = n; input.files = dt.files; update(); });
+      fig.appendChild(x); box.appendChild(fig);
+    });
+    var n = dt.files.length;
+    btn.textContent = n ? n + (n === 1 ? " Foto hochladen" : " Fotos hochladen") : "Fotos hochladen";
+    btn.disabled = !n || !kunde.value || (kunde.value === "neu" && !document.querySelector(".kf-neu").value.trim());
+  }
+  input.addEventListener("change", function () { [].forEach.call(input.files, function (f) { dt.items.add(f); }); input.files = dt.files; update(); });
+  ["dragenter", "dragover"].forEach(function (e) { drop.addEventListener(e, function () { drop.classList.add("over"); }); });
+  ["dragleave", "drop"].forEach(function (e) { drop.addEventListener(e, function () { drop.classList.remove("over"); }); });
+  function filterBelege() {
+    [].forEach.call(beleg.options, function (o) { if (o.value) o.hidden = o.dataset.kunde !== kunde.value; });
+    if (beleg.selectedOptions[0] && beleg.selectedOptions[0].hidden) beleg.value = "";
+  }
+  kunde.addEventListener("change", function () { filterBelege(); update(); });
+  document.querySelector(".kf-neu").addEventListener("input", update);
+  filterBelege(); update();
 })();

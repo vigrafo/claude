@@ -18,7 +18,7 @@ $sum      = kilic_beleg_summen( $id );
 $lohn     = (int) get_post_meta( $id, '_lohn', true );
 $pdf      = ! empty( $kilic_pdf );
 $art      = isset( $kilic_art ) ? $kilic_art : sanitize_key( $_GET['art'] ?? '' ); // phpcs:ignore WordPress.Security.NonceVerification
-$titel    = 'rechnung' === $typ ? 'Rechnung' : 'Angebot';
+$titel    = 'rechnung' === $typ ? kilic_rechnungsart_name( $id ) : 'Angebot';
 $doktitel = $titel;
 if ( 'ab' === $art && 'angebot' === $typ ) {
 	$doktitel = 'Auftragsbestätigung';
@@ -73,8 +73,9 @@ $absender = trim( $firma . ' · ' . kilic_opt( 'strasse' ) . ' · ' . kilic_opt(
 	.pos .txt { white-space: pre-line; }
 	table.summe { margin-left: 85mm; width: 80mm; border-collapse: collapse; }
 	.summe td { padding: 1.5mm 1.5mm; }
-	.summe td.v { text-align: right; }
+	.summe td.v { text-align: right; white-space: nowrap; vertical-align: top; }
 	.summe .total td { border-top: 1.5px solid #1b1f23; font-weight: bold; font-size: 11pt; }
+	.quittung { margin-top: 4mm; padding: 3mm 4mm; border: 1.5px solid #1f9d55; color: #14653a; }
 	.hinweis { margin-top: 6mm; font-size: 8.5pt; color: #3b434b; }
 	table.foot { position: absolute; left: 25mm; bottom: 10mm; width: 165mm; border-collapse: collapse; border-top: 1px solid #ccc; font-size: 7pt; color: #6b7279; }
 	table.foot td { padding: 3mm 3mm 0 0; vertical-align: top; width: 33%; }
@@ -181,7 +182,8 @@ $absender = trim( $firma . ' · ' . kilic_opt( 'strasse' ) . ' · ' . kilic_opt(
 		<?php endif; ?>
 
 		<table class="pos">
-			<thead><tr><th>Pos.</th><th>Beschreibung</th><th class="r">Menge</th><th>Einheit</th><th class="r">Einzelpreis</th><th class="r">Gesamt</th></tr></thead>
+			<?php $mit_rabatt = (bool) array_filter( wp_list_pluck( $pos, 'rabatt' ) ); ?>
+			<thead><tr><th>Pos.</th><th>Beschreibung</th><th class="r">Menge</th><th>Einheit</th><th class="r">Einzelpreis</th><?php if ( $mit_rabatt ) : ?><th class="r">Rabatt</th><?php endif; ?><th class="r">Gesamt</th></tr></thead>
 			<tbody>
 			<?php foreach ( $pos as $i => $p ) : ?>
 				<tr>
@@ -190,16 +192,27 @@ $absender = trim( $firma . ' · ' . kilic_opt( 'strasse' ) . ' · ' . kilic_opt(
 					<td class="r"><?php echo esc_html( kilic_num( $p['menge'], 3 ) ); ?></td>
 					<td><?php echo esc_html( $p['einheit'] ); ?></td>
 					<td class="r"><?php echo esc_html( kilic_eur( $p['preis'] ) ); ?></td>
-					<td class="r"><?php echo esc_html( kilic_eur( (int) round( (float) $p['menge'] * (int) $p['preis'] ) ) ); ?></td>
+					<?php if ( $mit_rabatt ) : ?><td class="r"><?php echo ! empty( $p['rabatt'] ) ? esc_html( kilic_num( $p['rabatt'], 2 ) ) . ' %' : ''; ?></td><?php endif; ?>
+					<td class="r"><?php echo esc_html( kilic_eur( kilic_pos_summe( $p ) ) ); ?></td>
 				</tr>
 			<?php endforeach; ?>
 			</tbody>
 		</table>
 
 		<table class="summe">
+			<?php if ( $sum['rabatt'] ) : ?>
+				<tr><td>Zwischensumme netto</td><td class="v"><?php echo esc_html( kilic_eur( $sum['zwischen'] ) ); ?></td></tr>
+				<tr><td>abzgl. <?php echo esc_html( get_post_meta( $id, '_rabatt_text', true ) ? get_post_meta( $id, '_rabatt_text', true ) : 'Rabatt' ); ?><?php echo 'prozent' === $sum['rabatt_art'] ? ' ' . esc_html( kilic_num( $sum['rabatt_wert'], 2 ) ) . ' %' : ''; ?></td><td class="v">– <?php echo esc_html( kilic_eur( $sum['rabatt'] ) ); ?></td></tr>
+			<?php endif; ?>
 			<tr><td>Summe netto</td><td class="v"><?php echo esc_html( kilic_eur( $sum['netto'] ) ); ?></td></tr>
 			<tr><td>zzgl. <?php echo esc_html( kilic_num( $sum['satz'], 1 ) ); ?> % MwSt.</td><td class="v"><?php echo esc_html( kilic_eur( $sum['mwst'] ) ); ?></td></tr>
-			<tr class="total"><td><?php echo 'rechnung' === $typ ? 'Rechnungsbetrag' : ( 'ab' === $art ? 'Auftragssumme' : 'Angebotssumme' ); ?></td><td class="v"><?php echo esc_html( kilic_eur( $sum['brutto'] ) ); ?></td></tr>
+			<tr class="total"><td><?php echo 'rechnung' === $typ ? ( $sum['abzuege'] ? 'Gesamtbetrag' : 'Rechnungsbetrag' ) : ( 'ab' === $art ? 'Auftragssumme' : 'Angebotssumme' ); ?></td><td class="v"><?php echo esc_html( kilic_eur( $sum['brutto'] ) ); ?></td></tr>
+			<?php foreach ( $sum['abzuege'] as $ab ) : ?>
+				<tr><td>abzgl. <?php echo esc_html( kilic_beleg_label( $ab['id'] ) ); ?> vom <?php echo esc_html( kilic_date( get_post_meta( $ab['id'], '_datum', true ) ) ); ?><br><small>netto <?php echo esc_html( kilic_eur( $ab['netto'] ) ); ?> + MwSt. <?php echo esc_html( kilic_eur( $ab['mwst'] ) ); ?></small></td><td class="v">– <?php echo esc_html( kilic_eur( $ab['brutto'] ) ); ?></td></tr>
+			<?php endforeach; ?>
+			<?php if ( $sum['abzuege'] ) : ?>
+				<tr class="total"><td>Verbleibender Rechnungsbetrag</td><td class="v"><?php echo esc_html( kilic_eur( $sum['zahlbetrag'] ) ); ?></td></tr>
+			<?php endif; ?>
 			<?php if ( 'rechnung' === $typ && kilic_beleg_bezahlt( $id ) > 0 && 'storniert' !== $status ) : ?>
 				<tr><td>bereits bezahlt</td><td class="v">– <?php echo esc_html( kilic_eur( kilic_beleg_bezahlt( $id ) ) ); ?></td></tr>
 				<tr class="total"><td>Noch offen</td><td class="v"><?php echo esc_html( kilic_eur( kilic_beleg_rest( $id ) ) ); ?></td></tr>
@@ -208,8 +221,23 @@ $absender = trim( $firma . ' · ' . kilic_opt( 'strasse' ) . ' · ' . kilic_opt(
 
 		<?php if ( 'ab' === $art ) : ?>
 			<p>Wir freuen uns auf die Zusammenarbeit. Bei Fragen erreichen Sie uns unter <?php echo esc_html( kilic_opt( 'telefon' ) ); ?>.</p>
-		<?php else : ?>
-			<p><?php echo nl2br( esc_html( get_post_meta( $id, '_text_unten', true ) ) ); ?></p>
+		<?php else :
+			$za      = get_post_meta( $id, '_zahlungsart', true );
+			$za      = $za ? $za : 'Überweisung';
+			$bar     = in_array( $za, array( 'Bar', 'EC-Karte', 'Kreditkarte' ), true );
+			$bezahlt = 'rechnung' === $typ && kilic_beleg_bezahlt( $id ) > 0 && kilic_beleg_rest( $id ) <= 0;
+			?>
+			<?php if ( 'rechnung' === $typ && $bezahlt && $bar ) : ?>
+				<p class="quittung"><strong>Betrag dankend erhalten</strong> (<?php echo esc_html( $za ); ?>) am <?php echo esc_html( kilic_date( get_post_meta( $id, '_bezahlt_am', true ) ) ); ?>.</p>
+			<?php elseif ( 'rechnung' === $typ && $bar ) : ?>
+				<p>Zahlungsart: <strong><?php echo esc_html( $za ); ?></strong> – bitte bei Fertigstellung vor Ort begleichen.</p>
+			<?php else : ?>
+				<p><?php echo nl2br( esc_html( get_post_meta( $id, '_text_unten', true ) ) ); ?></p>
+				<?php if ( 'Überweisung' !== $za && 0 !== strpos( $za, 'Auf Rechnung' ) ) : ?><p>Zahlungsart: <strong><?php echo esc_html( $za ); ?></strong></p><?php endif; ?>
+			<?php endif; ?>
+			<?php if ( $sum['skonto'] && ! $bezahlt ) : ?>
+				<p>Bei Zahlung innerhalb von <?php echo (int) get_post_meta( $id, '_skonto_tage', true ); ?> Tagen gewähren wir <?php echo esc_html( kilic_num( get_post_meta( $id, '_skonto_prozent', true ), 2 ) ); ?> % Skonto (<?php echo esc_html( kilic_eur( $sum['skonto'] ) ); ?>) – Zahlbetrag dann <strong><?php echo esc_html( kilic_eur( $sum['zahlbetrag'] - $sum['skonto'] ) ); ?></strong>.</p>
+			<?php endif; ?>
 		<?php endif; ?>
 		<?php endif; ?>
 

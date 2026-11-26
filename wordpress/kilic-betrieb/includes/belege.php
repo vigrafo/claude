@@ -52,20 +52,66 @@ function kilic_beleg_positionen( $id ) {
 }
 
 /** Summen in Cent. */
+function kilic_pos_summe( $pos ) {
+	$r = isset( $pos['rabatt'] ) ? (float) $pos['rabatt'] : 0;
+	return (int) round( (float) $pos['menge'] * (int) $pos['preis'] * ( 1 - $r / 100 ) );
+}
+
 function kilic_beleg_summen( $id ) {
-	$netto = 0;
+	$zwischen = 0;
 	foreach ( kilic_beleg_positionen( $id ) as $pos ) {
-		$netto += (int) round( (float) $pos['menge'] * (int) $pos['preis'] );
+		$zwischen += kilic_pos_summe( $pos );
 	}
-	$satz = get_post_meta( $id, '_mwst', true );
-	$satz = '' === $satz ? (float) kilic_opt( 'mwst' ) : (float) $satz;
-	$mwst = (int) round( $netto * $satz / 100 );
+	// Rabatt auf den ganzen Beleg: Prozent oder fester Betrag (Cent).
+	$art    = get_post_meta( $id, '_rabatt_art', true );
+	$wert   = (float) get_post_meta( $id, '_rabatt_wert', true );
+	$rabatt = 0;
+	if ( 'prozent' === $art && $wert > 0 ) {
+		$rabatt = (int) round( $zwischen * $wert / 100 );
+	} elseif ( 'betrag' === $art && $wert > 0 ) {
+		$rabatt = min( $zwischen, (int) $wert );
+	}
+	$netto = $zwischen - $rabatt;
+	$satz  = get_post_meta( $id, '_mwst', true );
+	$satz  = '' === $satz ? (float) kilic_opt( 'mwst' ) : (float) $satz;
+	$mwst  = (int) round( $netto * $satz / 100 );
+	$brutto = $netto + $mwst;
+	$sk_p   = (float) get_post_meta( $id, '_skonto_prozent', true );
+	// Schlussrechnung: bereits gestellte Abschlagsrechnungen abziehen.
+	$abz = array();
+	$abz_netto = 0;
+	$abz_mwst  = 0;
+	if ( 'schluss' === get_post_meta( $id, '_rechnungsart', true ) ) {
+		foreach ( (array) get_post_meta( $id, '_abzuege', true ) as $aid ) {
+			if ( ! $aid || 'kilic_beleg' !== get_post_type( $aid ) ) {
+				continue;
+			}
+			$as        = kilic_beleg_summen( $aid );
+			$abz[]     = array( 'id' => $aid, 'netto' => $as['netto'], 'mwst' => $as['mwst'], 'brutto' => $as['brutto'] );
+			$abz_netto += $as['netto'];
+			$abz_mwst  += $as['mwst'];
+		}
+	}
+	$zahlbetrag = $brutto - $abz_netto - $abz_mwst;
 	return array(
-		'netto'  => $netto,
-		'satz'   => $satz,
-		'mwst'   => $mwst,
-		'brutto' => $netto + $mwst,
+		'abzuege'     => $abz,
+		'abz_netto'   => $abz_netto,
+		'abz_mwst'    => $abz_mwst,
+		'zahlbetrag'  => $zahlbetrag,
+		'zwischen'    => $zwischen,
+		'rabatt'      => $rabatt,
+		'rabatt_art'  => $art,
+		'rabatt_wert' => $wert,
+		'netto'       => $netto,
+		'satz'        => $satz,
+		'mwst'        => $mwst,
+		'brutto'      => $brutto,
+		'skonto'      => $sk_p > 0 ? (int) round( $zahlbetrag * $sk_p / 100 ) : 0,
 	);
+}
+
+function kilic_zahlungsarten_beleg() {
+	return array( 'Auf Rechnung (Überweisung)', 'Bar', 'EC-Karte', 'Kreditkarte', 'PayPal', 'Lastschrift', 'Vorkasse', 'Scheck', 'Sonstiges' );
 }
 
 function kilic_beleg_typ( $id ) {
@@ -73,10 +119,31 @@ function kilic_beleg_typ( $id ) {
 	return 'rechnung' === $t ? 'rechnung' : 'angebot';
 }
 
+function kilic_rechnungsart_name( $id ) {
+	$a = get_post_meta( $id, '_rechnungsart', true );
+	return 'abschlag' === $a ? 'Abschlagsrechnung' : ( 'schluss' === $a ? 'Schlussrechnung' : 'Rechnung' );
+}
+
 function kilic_beleg_label( $id ) {
 	$typ = kilic_beleg_typ( $id );
 	$nr  = get_post_meta( $id, '_nummer', true );
-	return ( 'rechnung' === $typ ? 'Rechnung' : 'Angebot' ) . ' ' . ( $nr ? $nr : '(Entwurf)' );
+	return ( 'rechnung' === $typ ? kilic_rechnungsart_name( $id ) : 'Angebot' ) . ' ' . ( $nr ? $nr : '(Entwurf)' );
+}
+
+/** Abschlagsrechnungen zu einem Auftrag (Angebot). */
+function kilic_abschlaege( $angebot_id ) {
+	return get_posts( array(
+		'post_type'   => 'kilic_beleg',
+		'numberposts' => -1,
+		'fields'      => 'ids',
+		'orderby'     => 'ID',
+		'order'       => 'ASC',
+		'meta_query'  => array(
+			array( 'key' => '_bezug', 'value' => $angebot_id ),
+			array( 'key' => '_rechnungsart', 'value' => 'abschlag' ),
+			array( 'key' => '_status', 'value' => 'storniert', 'compare' => '!=' ),
+		),
+	) );
 }
 
 function kilic_beleg_gesperrt( $id ) {
@@ -231,6 +298,21 @@ function kilic_beleg_kopf_box( $post ) {
 			</td>
 		</tr>
 		<tr>
+			<th><label for="kb_zahlungsart">Zahlungsart</label></th>
+			<td>
+				<?php $za = get_post_meta( $id, '_zahlungsart', true ); $za = $za && 'Überweisung' !== $za ? $za : 'Auf Rechnung (Überweisung)'; ?>
+				<select id="kb_zahlungsart" name="kilic_beleg[zahlungsart]" <?php disabled( $gesperrt ); ?>>
+					<?php foreach ( kilic_zahlungsarten_beleg() as $a ) : ?>
+						<option <?php selected( $za, $a ); ?>><?php echo esc_html( $a ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<span class="kilic-inline"><label for="kb_skonto">Skonto</label>
+					<input type="text" id="kb_skonto" name="kilic_beleg[skonto_prozent]" value="<?php echo esc_attr( (float) get_post_meta( $id, '_skonto_prozent', true ) ? kilic_num( get_post_meta( $id, '_skonto_prozent', true ), 2 ) : '' ); ?>" placeholder="0" style="width:70px" <?php disabled( $gesperrt ); ?>> % bei Zahlung innerhalb
+					<input type="number" min="0" name="kilic_beleg[skonto_tage]" value="<?php echo esc_attr( get_post_meta( $id, '_skonto_tage', true ) ); ?>" placeholder="7" style="width:80px" aria-label="Skonto-Tage" <?php disabled( $gesperrt ); ?>> Tagen</span>
+				<p class="description">Bei „Bar“ oder „EC-Karte“ steht auf der Rechnung „Betrag dankend erhalten“, sobald die Zahlung erfasst ist.</p>
+			</td>
+		</tr>
+		<tr>
 			<th><label for="kb_oben">Einleitungstext</label></th>
 			<td><textarea id="kb_oben" name="kilic_beleg[text_oben]" rows="2" class="large-text" <?php disabled( $gesperrt ); ?>><?php echo esc_textarea( $oben ); ?></textarea></td>
 		</tr>
@@ -257,7 +339,7 @@ function kilic_beleg_pos_box( $post ) {
 	$mwst = '' === $mwst ? kilic_opt( 'mwst' ) : $mwst;
 	?>
 	<table class="widefat kilic-pos" data-locked="<?php echo $gesperrt ? '1' : '0'; ?>" data-mwst="<?php echo esc_attr( $mwst ); ?>">
-		<thead><tr><th style="width:36px">Pos.</th><th>Leistung / Beschreibung</th><th style="width:90px">Menge</th><th style="width:100px">Einheit</th><th style="width:120px">Einzelpreis netto</th><th style="width:120px;text-align:right">Gesamt netto</th><th style="width:40px"></th></tr></thead>
+		<thead><tr><th style="width:36px">Pos.</th><th>Leistung / Beschreibung</th><th style="width:90px">Menge</th><th style="width:100px">Einheit</th><th style="width:120px">Einzelpreis netto</th><th style="width:80px">Rabatt %</th><th style="width:120px;text-align:right">Gesamt netto</th><th style="width:40px"></th></tr></thead>
 		<tbody>
 		<?php foreach ( $pos as $i => $p ) : ?>
 			<tr class="kilic-pos-row">
@@ -270,13 +352,14 @@ function kilic_beleg_pos_box( $post ) {
 					<?php endforeach; ?>
 				</select></td>
 				<td><input type="text" name="kilic_pos[preis][]" value="<?php echo esc_attr( number_format( (int) $p['preis'] / 100, 2, ',', '' ) ); ?>" <?php disabled( $gesperrt ); ?>></td>
+				<td><input type="text" name="kilic_pos[rabatt][]" value="<?php echo esc_attr( ! empty( $p['rabatt'] ) ? kilic_num( $p['rabatt'], 2 ) : '' ); ?>" placeholder="0" <?php disabled( $gesperrt ); ?>></td>
 				<td class="kilic-pos-sum" style="text-align:right"></td>
 				<td><?php if ( ! $gesperrt ) : ?><button type="button" class="button-link kilic-pos-del" aria-label="Position entfernen">✕</button><?php endif; ?></td>
 			</tr>
 		<?php endforeach; ?>
 		</tbody>
 		<tfoot>
-			<tr><td colspan="5"><?php if ( ! $gesperrt ) : ?><button type="button" class="button kilic-pos-add">+ Position hinzufügen</button>
+			<tr><td colspan="6"><?php if ( ! $gesperrt ) : ?><button type="button" class="button kilic-pos-add">+ Position hinzufügen</button>
 				<span class="kilic-vorlagen"><label for="kilic-katalog">Aus Leistungskatalog:</label>
 					<select id="kilic-katalog" class="kilic-pos-vorlage">
 						<option value="">– Leistung wählen –</option>
@@ -291,9 +374,21 @@ function kilic_beleg_pos_box( $post ) {
 					<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=kilic_leistung' ) ); ?>" target="_blank">Katalog bearbeiten</a>
 				</span><?php endif; ?></td>
 				<td colspan="2"></td></tr>
-			<tr class="kilic-sum"><td colspan="5" style="text-align:right">Summe netto</td><td class="kilic-netto" style="text-align:right"></td><td></td></tr>
-			<tr class="kilic-sum"><td colspan="5" style="text-align:right">zzgl. MwSt. <span class="kilic-satz"></span> %</td><td class="kilic-mwst" style="text-align:right"></td><td></td></tr>
-			<tr class="kilic-sum kilic-sum-total"><td colspan="5" style="text-align:right">Gesamtbetrag</td><td class="kilic-brutto" style="text-align:right"></td><td></td></tr>
+			<tr class="kilic-sum"><td colspan="6" style="text-align:right">Zwischensumme netto</td><td class="kilic-zwischen" style="text-align:right"></td><td></td></tr>
+			<tr class="kilic-sum kilic-rabatt-zeile"><td colspan="6" style="text-align:right">
+				<?php $ra = get_post_meta( $post->ID, '_rabatt_art', true ); $rw = (float) get_post_meta( $post->ID, '_rabatt_wert', true ); ?>
+				<label for="kb_rabatt_art"><strong>Rabatt auf den Beleg</strong></label>
+				<select id="kb_rabatt_art" name="kilic_beleg[rabatt_art]" <?php disabled( $gesperrt ); ?>>
+					<option value="">kein Rabatt</option>
+					<option value="prozent" <?php selected( $ra, 'prozent' ); ?>>in %</option>
+					<option value="betrag" <?php selected( $ra, 'betrag' ); ?>>in € (netto)</option>
+				</select>
+				<input type="text" id="kb_rabatt_wert" name="kilic_beleg[rabatt_wert]" value="<?php echo esc_attr( $rw ? ( 'betrag' === $ra ? number_format( $rw / 100, 2, ',', '' ) : kilic_num( $rw, 2 ) ) : '' ); ?>" placeholder="0" style="width:90px" <?php disabled( $gesperrt ); ?>>
+				<input type="text" name="kilic_beleg[rabatt_text]" value="<?php echo esc_attr( get_post_meta( $post->ID, '_rabatt_text', true ) ); ?>" placeholder="Bezeichnung, z. B. Treuerabatt" style="width:200px" <?php disabled( $gesperrt ); ?>>
+			</td><td class="kilic-rabatt" style="text-align:right"></td><td></td></tr>
+			<tr class="kilic-sum"><td colspan="6" style="text-align:right">Summe netto</td><td class="kilic-netto" style="text-align:right"></td><td></td></tr>
+			<tr class="kilic-sum"><td colspan="6" style="text-align:right">zzgl. MwSt. <span class="kilic-satz"></span> %</td><td class="kilic-mwst" style="text-align:right"></td><td></td></tr>
+			<tr class="kilic-sum kilic-sum-total"><td colspan="6" style="text-align:right">Gesamtbetrag</td><td class="kilic-brutto" style="text-align:right"></td><td></td></tr>
 		</tfoot>
 	</table>
 	<?php
@@ -378,7 +473,12 @@ function kilic_beleg_save( $post_id, $post ) {
 		update_post_meta( $post_id, '_termin_bis', sanitize_text_field( $d['termin_bis'] ?? '' ) );
 	}
 	if ( 'rechnung' === $typ ) {
+		$vorher = count( kilic_zahlungen( $post_id ) );
 		kilic_zahlungen_speichern( $post_id );
+		if ( count( kilic_zahlungen( $post_id ) ) > $vorher && 'entwurf' === get_post_meta( $post_id, '_status', true ) ) {
+			update_post_meta( $post_id, '_status', 'offen' );
+			$status = 'offen';
+		}
 	}
 
 	if ( ! $gesperrt ) {
@@ -397,6 +497,14 @@ function kilic_beleg_save( $post_id, $post ) {
 		update_post_meta( $post_id, '_text_oben', sanitize_textarea_field( $d['text_oben'] ?? '' ) );
 		update_post_meta( $post_id, '_text_unten', sanitize_textarea_field( $d['text_unten'] ?? '' ) );
 		update_post_meta( $post_id, '_lohn', kilic_to_cents( $d['lohn'] ?? '' ) );
+		$ra = in_array( $d['rabatt_art'] ?? '', array( 'prozent', 'betrag' ), true ) ? $d['rabatt_art'] : '';
+		update_post_meta( $post_id, '_rabatt_art', $ra );
+		update_post_meta( $post_id, '_rabatt_wert', 'betrag' === $ra ? kilic_to_cents( $d['rabatt_wert'] ?? '' ) : max( 0, min( 100, kilic_to_float( $d['rabatt_wert'] ?? 0 ) ) ) );
+		update_post_meta( $post_id, '_rabatt_text', sanitize_text_field( $d['rabatt_text'] ?? '' ) );
+		$za = sanitize_text_field( $d['zahlungsart'] ?? '' );
+		update_post_meta( $post_id, '_zahlungsart', in_array( $za, kilic_zahlungsarten_beleg(), true ) ? $za : 'Auf Rechnung (Überweisung)' );
+		update_post_meta( $post_id, '_skonto_prozent', max( 0, min( 10, kilic_to_float( $d['skonto_prozent'] ?? 0 ) ) ) );
+		update_post_meta( $post_id, '_skonto_tage', absint( $d['skonto_tage'] ?? 0 ) );
 
 		$raw = isset( $_POST['kilic_pos'] ) ? (array) wp_unslash( $_POST['kilic_pos'] ) : array();
 		$pos = array();
@@ -412,6 +520,7 @@ function kilic_beleg_save( $post_id, $post ) {
 				'menge'   => kilic_to_float( $raw['menge'][ $i ] ?? 1 ),
 				'einheit' => in_array( $einheit, kilic_einheiten(), true ) ? $einheit : 'Stk.',
 				'preis'   => kilic_to_cents( $raw['preis'][ $i ] ?? 0 ),
+				'rabatt'  => max( 0, min( 100, kilic_to_float( $raw['rabatt'][ $i ] ?? 0 ) ) ),
 			);
 		}
 		update_post_meta( $post_id, '_positionen', $pos );
@@ -471,7 +580,7 @@ function kilic_beleg_kopie( $quelle, $typ ) {
 	if ( ! $new || is_wp_error( $new ) ) {
 		return 0;
 	}
-	foreach ( array( '_kunde', '_leistung', '_mwst', '_positionen', '_lohn', '_anfrage' ) as $k ) {
+	foreach ( array( '_kunde', '_leistung', '_mwst', '_positionen', '_lohn', '_anfrage', '_rabatt_art', '_rabatt_wert', '_rabatt_text', '_zahlungsart', '_skonto_prozent', '_skonto_tage' ) as $k ) {
 		update_post_meta( $new, $k, get_post_meta( $quelle, $k, true ) );
 	}
 	update_post_meta( $new, '_typ', $typ );
@@ -492,6 +601,11 @@ add_action( 'admin_post_kilic_umwandeln', function () {
 	}
 	$new = kilic_beleg_kopie( $id, 'rechnung' );
 	update_post_meta( $new, '_bezug', $id );
+	$abs = kilic_abschlaege( $id );
+	if ( $abs ) {
+		update_post_meta( $new, '_rechnungsart', 'schluss' );
+		update_post_meta( $new, '_abzuege', $abs );
+	}
 	update_post_meta( $id, '_rechnung', $new );
 	kilic_log_beleg( $new, 'Rechnungsentwurf aus ' . kilic_beleg_label( $id ) . ' erstellt', 'rechnung' );
 	if ( in_array( get_post_meta( $id, '_status', true ), array( 'entwurf', 'offen' ), true ) ) {
@@ -660,7 +774,7 @@ add_filter( 'post_row_actions', function ( $actions, $post ) {
 /* ---------- Zahlungsverkehr ---------- */
 
 function kilic_zahlarten() {
-	return array( 'Überweisung', 'Bar', 'EC-Karte', 'PayPal', 'Verrechnung' );
+	return array( 'Überweisung', 'Bar', 'EC-Karte', 'Kreditkarte', 'PayPal', 'Lastschrift', 'Scheck', 'Verrechnung', 'Sonstiges' );
 }
 
 function kilic_zahlungen( $id ) {
@@ -673,7 +787,13 @@ function kilic_beleg_bezahlt( $id ) {
 }
 
 function kilic_beleg_rest( $id ) {
-	return max( 0, kilic_beleg_summen( $id )['brutto'] - kilic_beleg_bezahlt( $id ) );
+	$sum = kilic_beleg_summen( $id );
+	$bez = kilic_beleg_bezahlt( $id );
+	// Skonto gezogen: Zahlung abzüglich Skonto gilt als vollständig.
+	if ( $sum['skonto'] && $bez > 0 && $bez >= $sum['zahlbetrag'] - $sum['skonto'] ) {
+		return 0;
+	}
+	return max( 0, $sum['zahlbetrag'] - $bez );
 }
 
 /** Zahlung hinzufügen (Cent). */
@@ -700,7 +820,7 @@ function kilic_zahlstatus_abgleichen( $id ) {
 	if ( 'bezahlt' === $status && ! $z ) {
 		// Manuell auf „bezahlt“ gesetzt: vollständige Zahlung vermerken.
 		$datum = get_post_meta( $id, '_bezahlt_am', true );
-		update_post_meta( $id, '_zahlungen', array( array( 'datum' => $datum ? $datum : current_time( 'Y-m-d' ), 'betrag' => kilic_beleg_summen( $id )['brutto'], 'art' => 'Überweisung', 'notiz' => '' ) ) );
+		update_post_meta( $id, '_zahlungen', array( array( 'datum' => $datum ? $datum : current_time( 'Y-m-d' ), 'betrag' => kilic_beleg_summen( $id )['zahlbetrag'], 'art' => 'Überweisung', 'notiz' => '' ) ) );
 		$z = kilic_zahlungen( $id );
 	}
 	if ( $z && kilic_beleg_rest( $id ) <= 0 ) {
@@ -744,7 +864,7 @@ function kilic_beleg_zahlungen_box( $post ) {
 	$z   = kilic_zahlungen( $id );
 	$sum = kilic_beleg_summen( $id );
 	$rest = kilic_beleg_rest( $id );
-	echo '<p><strong>Rechnungsbetrag:</strong> ' . esc_html( kilic_eur( $sum['brutto'] ) ) . ' &nbsp;·&nbsp; <strong>bezahlt:</strong> ' . esc_html( kilic_eur( kilic_beleg_bezahlt( $id ) ) ) . ' &nbsp;·&nbsp; <strong>offen:</strong> <span class="' . ( $rest ? 'kilic-ueberfaellig' : '' ) . '">' . esc_html( kilic_eur( $rest ) ) . '</span></p>';
+	echo '<p><strong>' . ( $sum['abzuege'] ? 'Zu zahlen (nach Abschlägen)' : 'Rechnungsbetrag' ) . ':</strong> ' . esc_html( kilic_eur( $sum['zahlbetrag'] ) ) . ' &nbsp;·&nbsp; <strong>bezahlt:</strong> ' . esc_html( kilic_eur( kilic_beleg_bezahlt( $id ) ) ) . ' &nbsp;·&nbsp; <strong>offen:</strong> <span class="' . ( $rest ? 'kilic-ueberfaellig' : '' ) . '">' . esc_html( kilic_eur( $rest ) ) . '</span></p>';
 	if ( $z ) {
 		echo '<table class="widefat striped"><thead><tr><th>Datum</th><th>Art</th><th>Notiz</th><th style="text-align:right">Betrag</th><th>Löschen</th></tr></thead><tbody>';
 		foreach ( $z as $i => $row ) {
@@ -760,22 +880,92 @@ function kilic_beleg_zahlungen_box( $post ) {
 		echo '</tbody></table>';
 	}
 	if ( 'entwurf' === get_post_meta( $id, '_status', true ) ) {
-		echo '<p class="description">Zahlungen können erfasst werden, sobald die Rechnung abgeschlossen ist (Status „Offen“).</p>';
-		return;
+		echo '<p class="description">Wird eine Zahlung erfasst (z. B. bar vor Ort), wird die Rechnung beim Speichern automatisch abgeschlossen und nummeriert.</p>';
 	}
 	if ( $rest > 0 ) {
+		$vor = get_post_meta( $id, '_zahlungsart', true );
+		$vor = ( ! $vor || 0 === strpos( $vor, 'Auf Rechnung' ) || 'Vorkasse' === $vor ) ? 'Überweisung' : $vor;
 		echo '<h4>Zahlungseingang erfassen</h4><p class="kilic-zahlung-neu">';
 		echo '<input type="date" name="kilic_zahlung[datum]" value="' . esc_attr( current_time( 'Y-m-d' ) ) . '" aria-label="Datum"> ';
 		echo '<input type="text" name="kilic_zahlung[betrag]" placeholder="' . esc_attr( number_format( $rest / 100, 2, ',', '' ) ) . '" style="width:110px" aria-label="Betrag"> € ';
 		echo '<select name="kilic_zahlung[art]" aria-label="Zahlungsart">';
 		foreach ( kilic_zahlarten() as $a ) {
-			echo '<option>' . esc_html( $a ) . '</option>';
+			echo '<option ' . selected( $vor, $a, false ) . '>' . esc_html( $a ) . '</option>';
 		}
 		echo '</select> <input type="text" name="kilic_zahlung[notiz]" placeholder="Notiz (optional)" aria-label="Notiz"> ';
 		echo '<button type="button" class="button kilic-rest-uebernehmen" data-rest="' . esc_attr( number_format( $rest / 100, 2, ',', '' ) ) . '">Restbetrag einsetzen</button>';
+		if ( $sum['skonto'] && kilic_beleg_bezahlt( $id ) === 0 ) {
+			echo ' <button type="button" class="button kilic-rest-uebernehmen" data-rest="' . esc_attr( number_format( ( $sum['zahlbetrag'] - $sum['skonto'] ) / 100, 2, ',', '' ) ) . '">mit Skonto (' . esc_html( kilic_eur( $sum['zahlbetrag'] - $sum['skonto'] ) ) . ')</button>';
+		}
 		echo '</p><p class="description">Dann oben rechts „Speichern“. Ist alles bezahlt, steht die Rechnung automatisch auf „Bezahlt“.</p>';
 	}
 	if ( 'offen' === get_post_meta( $id, '_status', true ) ) {
 		echo '<p><a class="button" target="_blank" href="' . esc_url( kilic_druck_url( $id, 'mahnung' ) ) . '">Zahlungserinnerung drucken</a></p>';
 	}
 }
+
+
+/* ---------- Abschlagsrechnung ---------- */
+
+add_action( 'admin_menu', function () {
+	add_submenu_page( '', 'Abschlagsrechnung', 'Abschlagsrechnung', 'kilic_buero', 'kilic-abschlag', 'kilic_render_abschlag' );
+}, 30 );
+
+function kilic_render_abschlag() {
+	$id = absint( $_GET['id'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification
+	if ( 'angebot' !== kilic_beleg_typ( $id ) || ! current_user_can( 'edit_post', $id ) ) {
+		wp_die( 'Auftrag nicht gefunden.' );
+	}
+	$sum = kilic_beleg_summen( $id );
+	$abs = kilic_abschlaege( $id );
+	$schon = 0;
+	foreach ( $abs as $a ) {
+		$schon += kilic_beleg_summen( $a )['netto'];
+	}
+	?>
+	<div class="wrap kilic-admin">
+		<h1>Abschlagsrechnung erstellen</h1>
+		<p>Auftrag: <strong><?php echo esc_html( kilic_beleg_label( $id ) . ' · ' . kilic_kunde_name( $id ) ); ?></strong> · Auftragssumme netto <strong><?php echo esc_html( kilic_eur( $sum['netto'] ) ); ?></strong><?php if ( $abs ) : ?> · bereits abgerechnet: <?php echo count( $abs ); ?> Abschlag/Abschläge über <?php echo esc_html( kilic_eur( $schon ) ); ?> netto<?php endif; ?></p>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="postbox" style="padding:20px;max-width:640px">
+			<input type="hidden" name="action" value="kilic_abschlag">
+			<input type="hidden" name="id" value="<?php echo (int) $id; ?>">
+			<?php wp_nonce_field( 'kilic_abschlag_' . $id ); ?>
+			<table class="form-table kilic-form"><tbody>
+				<tr><th><label for="ab_art">Höhe</label></th><td>
+					<select id="ab_art" name="art"><option value="prozent">Prozent der Auftragssumme</option><option value="betrag">Fester Betrag (netto)</option></select>
+					<input type="text" name="wert" value="30" style="width:110px" required>
+				</td></tr>
+				<tr><th><label for="ab_text">Text</label></th><td><input type="text" id="ab_text" name="text" class="large-text" value="<?php echo esc_attr( ( count( $abs ) + 1 ) . '. Abschlagszahlung gemäß Auftrag ' . get_post_meta( $id, '_nummer', true ) ); ?>"></td></tr>
+			</tbody></table>
+			<p><button type="submit" class="button button-primary button-hero">Abschlagsrechnung erstellen</button></p>
+			<p class="description">Die Schlussrechnung („Rechnung erstellen“ beim Auftrag) zieht alle Abschlagsrechnungen automatisch ab.</p>
+		</form>
+	</div>
+	<?php
+}
+
+add_action( 'admin_post_kilic_abschlag', function () {
+	$id = absint( $_POST['id'] ?? 0 );
+	check_admin_referer( 'kilic_abschlag_' . $id );
+	if ( ! current_user_can( 'edit_post', $id ) ) {
+		wp_die( 'Keine Berechtigung.' );
+	}
+	$sum  = kilic_beleg_summen( $id );
+	$wert = kilic_to_float( wp_unslash( $_POST['wert'] ?? 0 ) );
+	$art  = 'betrag' === ( $_POST['art'] ?? '' ) ? 'betrag' : 'prozent';
+	$netto = 'betrag' === $art ? (int) round( $wert * 100 ) : (int) round( $sum['netto'] * min( 100, $wert ) / 100 );
+	$text  = sanitize_text_field( wp_unslash( $_POST['text'] ?? 'Abschlagszahlung' ) );
+	if ( 'prozent' === $art ) {
+		$text .= ' (' . kilic_num( $wert, 2 ) . ' % von ' . kilic_eur( $sum['netto'] ) . ' netto)';
+	}
+	$new = kilic_beleg_kopie( $id, 'rechnung' );
+	update_post_meta( $new, '_bezug', $id );
+	update_post_meta( $new, '_rechnungsart', 'abschlag' );
+	update_post_meta( $new, '_positionen', array( array( 'text' => $text, 'menge' => 1, 'einheit' => 'pauschal', 'preis' => $netto, 'rabatt' => 0 ) ) );
+	update_post_meta( $new, '_rabatt_art', '' );
+	update_post_meta( $new, '_lohn', 0 );
+	kilic_beleg_titel_setzen( $new );
+	kilic_log_beleg( $new, 'Abschlagsrechnung über ' . kilic_eur( $netto ) . ' netto erstellt', 'rechnung' );
+	wp_safe_redirect( get_edit_post_link( $new, 'url' ) );
+	exit;
+} );

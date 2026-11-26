@@ -121,7 +121,7 @@ function kilic_render_cockpit() {
 	$offen_sum = 0;
 	foreach ( $rechnungen as $r ) {
 		if ( 'offen' === get_post_meta( $r->ID, '_status', true ) ) {
-			$offen_sum += kilic_beleg_summen( $r->ID )['brutto'];
+			$offen_sum += kilic_beleg_rest( $r->ID );
 		}
 	}
 	// Zahlen für die Kennzahlen-Leiste.
@@ -245,9 +245,10 @@ function kilic_render_cockpit() {
 					$termin = $von ? 'Termin: ' . kilic_date( $von ) . ( $bis && $bis !== $von ? ' – ' . kilic_date( $bis ) : '' ) : '<span class="kc-warn">Termin noch offen</span>';
 					kilic_karte(
 						kilic_kunde_name( $b->ID ),
-						array( $termin, esc_html( get_post_meta( $b->ID, '_leistung', true ) ), esc_html( kilic_beleg_label( $b->ID ) ) . ' · ' . esc_html( kilic_eur( kilic_beleg_summen( $b->ID )['brutto'] ) ) ),
+						array( $termin, esc_html( get_post_meta( $b->ID, '_leistung', true ) ), esc_html( kilic_beleg_label( $b->ID ) ) . ' · ' . esc_html( kilic_eur( kilic_beleg_summen( $b->ID )['brutto'] ) ), kilic_abschlaege( $b->ID ) ? count( kilic_abschlaege( $b->ID ) ) . ' Abschlagsrechnung(en) gestellt' : '' ),
 						array(
-							array( 'Rechnung erstellen', wp_nonce_url( admin_url( 'admin-post.php?action=kilic_umwandeln&id=' . $b->ID ), 'kilic_umwandeln_' . $b->ID ), 'primary' ),
+							array( kilic_abschlaege( $b->ID ) ? 'Schlussrechnung' : 'Rechnung erstellen', wp_nonce_url( admin_url( 'admin-post.php?action=kilic_umwandeln&id=' . $b->ID ), 'kilic_umwandeln_' . $b->ID ), 'primary' ),
+							array( 'Abschlagsrechnung', admin_url( 'admin.php?page=kilic-abschlag&id=' . $b->ID ) ),
 							array( 'Termin eintragen', get_edit_post_link( $b->ID, 'url' ) . '#kb_termin_von' ),
 							array( 'Auftragsbestätigung senden', kilic_senden_url( $b->ID, 'ab' ) ),
 						),
