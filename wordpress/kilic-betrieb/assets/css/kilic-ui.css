@@ -328,3 +328,11 @@ body.kilic-ui {
   .kilic-ui .kk-duo { max-width: none; }
   .kilic-ui .kk-form .kk-duo input.kk-klein, .kilic-ui .kk-duo .kk-klein { flex-basis: 90px; width: 90px; }
 }
+
+/* Pflichtfelder */
+.kilic-ui .kk-legende { margin: 4px 10px 0; font-size: 13px; color: var(--k-muted); }
+.kilic-ui .kk-fehlt { margin: 10px 0; padding: 12px 14px; border-radius: 12px; background: #fdecec; color: #8f1d22; font-size: 14px; }
+.kilic-ui .kk-fehlt a { color: #8f1d22; font-weight: 600; }
+.kilic-ui input.kk-rot, .kilic-ui .kk-form input.kk-rot { border: 2px solid var(--k-red) !important; background: #fff6f6 !important; }
+.kilic-ui .kk-fehlt-badge { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 999px; background: #fdecec; color: #8f1d22; font-size: 12px; font-weight: 600; }
+.kilic-ui .kilic-neuer-kunde input:required:placeholder-shown { border-left: 3px solid var(--k-accent); }

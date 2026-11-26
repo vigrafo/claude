@@ -21,6 +21,25 @@ function kilic_kunde_fields() {
 	);
 }
 
+/** Pflichtangaben, die beim Kunden noch fehlen (Labels). Telefon: Telefon oder Mobil genügt. */
+function kilic_kunde_fehlende( $id ) {
+	$a = kilic_kunde_adressteile( $id );
+	$f = array();
+	$pruef = array( 'str' => 'Straße', 'hausnr' => 'Hausnummer', 'plz' => 'PLZ', 'ort' => 'Ort' );
+	foreach ( $pruef as $k => $label ) {
+		if ( '' === trim( (string) $a[ $k ] ) ) {
+			$f[] = $label;
+		}
+	}
+	if ( '' === trim( (string) get_post_meta( $id, '_email', true ) ) ) {
+		$f[] = 'E-Mail';
+	}
+	if ( '' === trim( get_post_meta( $id, '_telefon', true ) . get_post_meta( $id, '_mobil', true ) ) ) {
+		$f[] = 'Telefon';
+	}
+	return $f;
+}
+
 /** „Am Wiesental 5a“ → array( 'Am Wiesental', '5a' ). */
 function kilic_strasse_teilen( $s ) {
 	$s = trim( (string) $s );
@@ -81,6 +100,13 @@ function kilic_kunde_box( $post ) {
 		echo '<tr class="kk-abschnitt ' . esc_attr( $klasse ) . '"><th colspan="2">' . esc_html( $titel ) . '</th></tr>';
 	};
 
+	if ( 'auto-draft' !== $post->post_status ) {
+		$fehlt = kilic_kunde_fehlende( $id );
+		if ( $fehlt ) {
+			echo '<div class="kk-fehlt" role="alert"><strong>Bitte noch ergänzen:</strong> ' . esc_html( implode( ', ', $fehlt ) ) . '</div>';
+		}
+	}
+	echo '<p class="kk-legende"><span class="kk-pflicht">*</span> = Pflichtfeld</p>';
 	echo '<table class="form-table kilic-form kk-form"><tbody>';
 	if ( $nr ) {
 		echo '<tr><th>Kundennummer</th><td><strong>' . esc_html( $nr ) . '</strong></td></tr>';
@@ -102,13 +128,13 @@ function kilic_kunde_box( $post ) {
 	echo '<tr class="kk-firma-link' . ( $ist_firma ? ' is-hidden' : '' ) . '"><th></th><td><button type="button" class="button-link kk-firma-zeigen">+ Firmenangaben (Firma, USt-IdNr., Steuernummer)</button></td></tr>';
 
 	$abschnitt( 'Adresse' );
-	echo '<tr><th><label for="kk_str">Straße / Hausnummer</label></th><td><div class="kk-duo">' . $feld( 'str', $adr['str'], 'class="kk-gross" placeholder="Straße" autocomplete="address-line1"' ) . $feld( 'hausnr', $adr['hausnr'], 'class="kk-klein" placeholder="Nr." aria-label="Hausnummer"' ) . '</div></td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput
-	echo '<tr><th><label for="kk_plz">PLZ / Ort</label></th><td><div class="kk-duo">' . $feld( 'plz', $adr['plz'], 'class="kk-klein" placeholder="PLZ" inputmode="numeric" autocomplete="postal-code"' ) . $feld( 'ort', $adr['ort'], 'class="kk-gross" placeholder="Ort" aria-label="Ort" autocomplete="address-level2"' ) . '</div></td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput
+	echo '<tr><th><label for="kk_str">Straße / Hausnummer <span class="kk-pflicht">*</span></label></th><td><div class="kk-duo">' . $feld( 'str', $adr['str'], 'class="kk-gross" placeholder="Straße" autocomplete="address-line1" required' ) . $feld( 'hausnr', $adr['hausnr'], 'class="kk-klein" placeholder="Nr." aria-label="Hausnummer" required' ) . '</div></td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput
+	echo '<tr><th><label for="kk_plz">PLZ / Ort <span class="kk-pflicht">*</span></label></th><td><div class="kk-duo">' . $feld( 'plz', $adr['plz'], 'class="kk-klein" placeholder="PLZ" inputmode="numeric" autocomplete="postal-code" required' ) . $feld( 'ort', $adr['ort'], 'class="kk-gross" placeholder="Ort" aria-label="Ort" autocomplete="address-level2" required' ) . '</div></td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput
 	echo '<tr><th><label for="kk_land">Land</label></th><td>' . $feld( 'land', $m( 'land' ), 'placeholder="Deutschland" autocomplete="country-name"' ) . '<p class="description">Nur ausfüllen, wenn nicht Deutschland.</p></td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput
 
 	$abschnitt( 'Kontakt' );
-	echo '<tr><th><label for="kk_email">E-Mail</label></th><td><input type="email" id="kk_email" name="kilic_kunde[email]" value="' . esc_attr( $m( 'email' ) ) . '" autocomplete="email"><p class="description">Hierhin werden Angebote und Rechnungen geschickt.</p></td></tr>';
-	echo '<tr><th><label for="kk_telefon">Telefon</label></th><td><input type="tel" id="kk_telefon" name="kilic_kunde[telefon]" value="' . esc_attr( $m( 'telefon' ) ) . '" autocomplete="tel"></td></tr>';
+	echo '<tr><th><label for="kk_email">E-Mail <span class="kk-pflicht">*</span></label></th><td><input type="email" id="kk_email" name="kilic_kunde[email]" value="' . esc_attr( $m( 'email' ) ) . '" autocomplete="email" required><p class="description">Hierhin werden Angebote und Rechnungen geschickt.</p></td></tr>';
+	echo '<tr><th><label for="kk_telefon">Telefon <span class="kk-pflicht">*</span></label></th><td><input type="tel" id="kk_telefon" name="kilic_kunde[telefon]" value="' . esc_attr( $m( 'telefon' ) ) . '" autocomplete="tel"><p class="description">Festnetz oder Mobil – eine Nummer genügt.</p></td></tr>';
 	echo '<tr><th><label for="kk_mobil">Mobil</label></th><td><input type="tel" id="kk_mobil" name="kilic_kunde[mobil]" value="' . esc_attr( $m( 'mobil' ) ) . '"></td></tr>';
 
 	$abschnitt( 'Sonstiges' );
@@ -298,7 +324,11 @@ add_action( 'manage_kilic_kunde_posts_custom_column', function ( $col, $id ) {
 			echo esc_html( get_post_meta( $id, '_kundennr', true ) );
 			break;
 		case 'kontakt':
-			echo esc_html( get_post_meta( $id, '_telefon', true ) ) . '<br>' . esc_html( get_post_meta( $id, '_email', true ) );
+			echo esc_html( get_post_meta( $id, '_telefon', true ) ?: get_post_meta( $id, '_mobil', true ) ) . '<br>' . esc_html( get_post_meta( $id, '_email', true ) );
+			$fehlt = kilic_kunde_fehlende( $id );
+			if ( $fehlt ) {
+				echo '<br><span class="kk-fehlt-badge" title="' . esc_attr( 'Fehlt: ' . implode( ', ', $fehlt ) ) . '">Angaben fehlen: ' . esc_html( implode( ', ', $fehlt ) ) . '</span>';
+			}
 			break;
 		case 'ort':
 			echo esc_html( get_post_meta( $id, '_plz_ort', true ) );

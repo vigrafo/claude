@@ -109,6 +109,7 @@
   function toggle() {
     if (!box) return;
     box.hidden = sel.value !== "neu";
+    box.querySelectorAll("[data-pflicht]").forEach(function (i) { i.required = !box.hidden; });
     if (!box.hidden) box.querySelector("input").focus();
   }
   sel.addEventListener("change", toggle);
@@ -196,15 +197,38 @@
     var m = str.value.trim().match(/^(.*?)[\s,]+(\d+\s*[a-zA-Z]?)$/);
     if (m && !nr.value.trim()) { str.value = m[1]; nr.value = m[2].replace(/\s/g, ""); }
   });
+  form.noValidate = true;
   form.addEventListener("submit", function (e) {
-    var n = document.getElementById("kk_nachname"), f = document.getElementById("kk_firma");
-    if (n && !n.value.trim() && !(f && f.value.trim())) {
+    var fehlt = [], erstes = null;
+    function pruef(id, label, ok) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var gut = ok !== undefined ? ok : !!el.value.trim();
+      el.classList.toggle("kk-rot", !gut);
+      el.setAttribute("aria-invalid", gut ? "false" : "true");
+      if (!gut) { fehlt.push(label); if (!erstes) erstes = el; }
+    }
+    var f = document.getElementById("kk_firma"), n = document.getElementById("kk_nachname");
+    pruef("kk_nachname", "Nachname (oder Firma)", !!(n && n.value.trim()) || !!(f && f.value.trim()));
+    pruef("kk_str", "Straße"); pruef("kk_hausnr", "Hausnummer");
+    pruef("kk_plz", "PLZ"); pruef("kk_ort", "Ort");
+    var em = document.getElementById("kk_email");
+    pruef("kk_email", "E-Mail", !!(em && em.value.trim() && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.value.trim())));
+    var mo = document.getElementById("kk_mobil"), te = document.getElementById("kk_telefon");
+    pruef("kk_telefon", "Telefon", !!(te && te.value.trim()) || !!(mo && mo.value.trim()));
+    if (fehlt.length) {
       e.preventDefault();
-      n.focus();
-      n.style.borderColor = "#d7262f";
-      alert("Bitte den Nachnamen (oder bei Firmen die Firma) eintragen.");
+      var box = document.querySelector(".kk-fehlt-live");
+      if (!box) {
+        box = document.createElement("div"); box.className = "kk-fehlt kk-fehlt-live"; box.setAttribute("role", "alert");
+        var t = form.querySelector(".kk-form"); t.parentNode.insertBefore(box, t);
+      }
+      box.innerHTML = "<strong>Bitte noch ausfüllen:</strong> " + fehlt.join(", ");
+      erstes.focus();
+      erstes.scrollIntoView({ block: "center" });
     }
   });
+  form.addEventListener("input", function (e) { if (e.target.classList) e.target.classList.remove("kk-rot"); });
 })();
 
 /* Fotos-Seite: Vorschau, entfernen, Belege nach Kunde filtern */
