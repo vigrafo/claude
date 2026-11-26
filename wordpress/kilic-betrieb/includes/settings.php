@@ -90,6 +90,17 @@ function kilic_render_settings() {
 	<div class="wrap kilic-admin">
 		<h1>Einstellungen</h1>
 		<p>Diese Angaben erscheinen auf der Website (Telefon, Notdienst, Adresse) und auf Angeboten und Rechnungen. Sie müssen sie nur hier ändern.</p>
+		<?php
+		$ph = array();
+		foreach ( array( 'email' => 'E-Mail', 'ust_id' => 'USt-IdNr.', 'steuernr' => 'Steuernummer', 'bank' => 'Bank', 'iban' => 'IBAN', 'bic' => 'BIC' ) as $k => $l ) {
+			if ( kilic_ist_platzhalter( $k ) ) {
+				$ph[] = $l;
+			}
+		}
+		if ( $ph ) :
+			?>
+			<div class="notice notice-warning inline"><p><strong>Noch Platzhalter:</strong> <?php echo esc_html( implode( ', ', $ph ) ); ?>. Bitte vor dem Versand echter Rechnungen ersetzen. Benachrichtigungen über neue Anfragen gehen bis dahin an die WordPress-Admin-E-Mail.</p></div>
+		<?php endif; ?>
 		<form method="post" action="options.php">
 			<?php settings_fields( 'kilic_settings' ); ?>
 			<?php foreach ( kilic_settings_fields() as $section => $fields ) : ?>

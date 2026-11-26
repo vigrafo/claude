@@ -276,8 +276,14 @@ function kilic_beleg_pos_box( $post ) {
 
 function kilic_beleg_aktionen_box( $post ) {
 	$id = $post->ID;
-	if ( ! kilic_opt( 'steuernr' ) && ! kilic_opt( 'ust_id' ) ) {
-		echo '<div class="notice notice-warning inline"><p>Auf Rechnungen fehlt noch die Steuernummer bzw. USt-IdNr. Bitte unter <a href="' . esc_url( admin_url( 'admin.php?page=kilic-einstellungen' ) ) . '">Einstellungen</a> eintragen (Pflichtangabe nach § 14 UStG).</p></div>';
+	$fehlt = array();
+	foreach ( array( 'steuernr' => 'Steuernummer', 'ust_id' => 'USt-IdNr.', 'iban' => 'IBAN', 'email' => 'E-Mail' ) as $k => $l ) {
+		if ( ! kilic_opt( $k ) || kilic_ist_platzhalter( $k ) ) {
+			$fehlt[] = $l;
+		}
+	}
+	if ( $fehlt ) {
+		echo '<div class="notice notice-warning inline"><p>Noch Platzhalter: ' . esc_html( implode( ', ', $fehlt ) ) . '. Vor dem Versand echter Rechnungen unter <a href="' . esc_url( admin_url( 'admin.php?page=kilic-einstellungen' ) ) . '">Einstellungen</a> eintragen.</p></div>';
 	}
 	echo '<div class="kilic-actions">';
 	echo '<button type="submit" name="save" class="button button-primary button-large" style="width:100%">Speichern</button>';

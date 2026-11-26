@@ -15,14 +15,14 @@ function kilic_defaults() {
 		'plz_ort'        => '74821 Mosbach-Diedesheim',
 		'telefon'        => '+49 6261 670200',
 		'notdienst'      => '+49 6261 670200',
-		'email'          => '',
-		'web'            => '',
+		'email'          => 'info@kilic-estrich.de',
+		'web'            => 'kilic.vigrafo.de',
 		'oeffnungszeiten'=> 'Mo–Fr 7:00–17:00 Uhr',
-		'ust_id'         => '',
-		'steuernr'       => '',
-		'bank'           => '',
-		'iban'           => '',
-		'bic'            => '',
+		'ust_id'         => 'DE000000000 (Platzhalter)',
+		'steuernr'       => '00000/00000 (Platzhalter)',
+		'bank'           => 'Musterbank (Platzhalter)',
+		'iban'           => 'DE00 0000 0000 0000 0000 00 (Platzhalter)',
+		'bic'            => 'XXXXDEXXXXX (Platzhalter)',
 		'mwst'           => '19',
 		'zahlungsziel'   => '14',
 		're_prefix'      => 'RE',
@@ -48,6 +48,11 @@ function kilic_opt( $key ) {
 	return $def[ $key ] ?? '';
 }
 
+/** Steht für dieses Feld noch der Platzhalter aus der Einrichtung drin? */
+function kilic_ist_platzhalter( $key ) {
+	return kilic_opt( $key ) === ( kilic_defaults()[ $key ] ?? null ) && in_array( $key, array( 'email', 'ust_id', 'steuernr', 'bank', 'iban', 'bic' ), true );
+}
+
 /** Telefonnummer für tel:-Links. */
 function kilic_tel_href( $number ) {
 	$n = preg_replace( '/[^0-9+]/', '', (string) $number );
@@ -57,7 +62,7 @@ function kilic_tel_href( $number ) {
 /** E-Mail-Empfänger für Anfragen. */
 function kilic_empfaenger() {
 	$e = kilic_opt( 'empfaenger' );
-	if ( ! $e ) {
+	if ( ! $e && ! kilic_ist_platzhalter( 'email' ) ) {
 		$e = kilic_opt( 'email' );
 	}
 	return $e ? $e : get_option( 'admin_email' );
