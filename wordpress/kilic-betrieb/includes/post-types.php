@@ -78,7 +78,7 @@ function kilic_register_post_types() {
 		'show_in_rest' => true,
 		'has_archive'  => false,
 		'rewrite'      => array( 'slug' => 'projekt' ),
-		'supports'     => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
+		'supports'     => array( 'title', 'editor', 'thumbnail' ),
 	) );
 
 	register_taxonomy( 'kilic_ref_kat', 'kilic_referenz', array(

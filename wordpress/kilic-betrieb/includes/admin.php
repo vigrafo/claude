@@ -183,7 +183,7 @@ function kilic_masken() {
 		'kilic_kunde'    => array( 'name' => 'Name des Kunden', 'platzhalter' => 'Vor- und Nachname, z. B. Max Mustermann', 'speichern' => 'Kunde speichern', 'neu' => 'Kunde angelegt.', 'gespeichert' => 'Kunde gespeichert.', 'loeschen' => 'Kunde löschen' ),
 		'kilic_anfrage'  => array( 'name' => 'Kurzbeschreibung der Anfrage', 'platzhalter' => 'z. B. Estrich EFH Neubau – Herr Muster', 'speichern' => 'Anfrage speichern', 'neu' => 'Anfrage erfasst.', 'gespeichert' => 'Anfrage gespeichert.', 'loeschen' => 'Anfrage löschen' ),
 		'kilic_leistung' => array( 'name' => 'Bezeichnung der Leistung', 'platzhalter' => 'z. B. Heizestrich CAF', 'speichern' => 'Leistung speichern', 'neu' => 'Leistung zum Katalog hinzugefügt.', 'gespeichert' => 'Leistung gespeichert.', 'loeschen' => 'Leistung löschen' ),
-		'kilic_referenz' => array( 'name' => 'Projektname', 'platzhalter' => 'z. B. Einfamilienhaus mit Fußbodenheizung', 'speichern' => 'Referenz speichern & anzeigen', 'neu' => 'Referenz gespeichert – sie erscheint jetzt auf der Website.', 'gespeichert' => 'Referenz gespeichert.', 'loeschen' => 'Referenz löschen' ),
+		'kilic_referenz' => array( 'name' => 'Projektname', 'platzhalter' => 'z. B. Einfamilienhaus mit Fußbodenheizung', 'speichern' => 'Referenz speichern', 'neu' => 'Referenz gespeichert – sie erscheint jetzt auf der Website.', 'gespeichert' => 'Referenz gespeichert.', 'loeschen' => 'Referenz löschen' ),
 	);
 }
 

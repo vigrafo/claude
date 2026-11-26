@@ -112,6 +112,11 @@ add_filter( 'use_block_editor_for_post', function ( $use, $post ) {
 	return $use;
 }, 10, 2 );
 
+/** Referenzen im eigenen, einfachen Formular statt im Block-Editor bearbeiten. */
+add_filter( 'use_block_editor_for_post_type', function ( $use, $type ) {
+	return 'kilic_referenz' === $type ? false : $use;
+}, 10, 2 );
+
 /* ---------- Header & Footer ---------- */
 
 function kilic_logo( $footer = false ) {

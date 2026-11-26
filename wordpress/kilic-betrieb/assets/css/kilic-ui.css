@@ -336,3 +336,6 @@ body.kilic-ui {
 .kilic-ui input.kk-rot, .kilic-ui .kk-form input.kk-rot { border: 2px solid var(--k-red) !important; background: #fff6f6 !important; }
 .kilic-ui .kk-fehlt-badge { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 999px; background: #fdecec; color: #8f1d22; font-size: 12px; font-weight: 600; }
 .kilic-ui .kilic-neuer-kunde input:required:placeholder-shown { border-left: 3px solid var(--k-accent); }
+
+/* Großer Speichern-Knopf: Text darf umbrechen, nie abgeschnitten */
+.kilic-ui .kilic-save-btn { white-space: normal !important; height: auto !important; line-height: 1.25 !important; padding: 12px 18px !important; box-sizing: border-box; max-width: 100%; }
