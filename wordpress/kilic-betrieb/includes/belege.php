@@ -252,8 +252,9 @@ function kilic_beleg_kopf_box( $post ) {
 				<?php endif; ?>
 				<div class="kilic-neuer-kunde" hidden>
 					<p><strong>Neuer Kunde</strong> – wird beim Speichern angelegt:</p>
-					<p><input type="text" name="kilic_neukunde[name]" placeholder="Name (z. B. Max Mustermann) *" class="regular-text"> <input type="text" name="kilic_neukunde[firma]" placeholder="Firma (optional)" class="regular-text"></p>
-					<p><input type="text" name="kilic_neukunde[strasse]" placeholder="Straße, Nr." class="regular-text"> <input type="text" name="kilic_neukunde[plz_ort]" placeholder="PLZ, Ort" class="regular-text"></p>
+					<p><input type="text" name="kilic_neukunde[name]" placeholder="Vor- und Nachname *" aria-label="Vor- und Nachname" class="regular-text"> <input type="text" name="kilic_neukunde[firma]" placeholder="Firma (optional)" aria-label="Firma" class="regular-text"></p>
+					<p class="kk-duo"><input type="text" name="kilic_neukunde[str]" placeholder="Straße" aria-label="Straße" class="kk-gross"> <input type="text" name="kilic_neukunde[hausnr]" placeholder="Nr." aria-label="Hausnummer" class="kk-klein"></p>
+					<p class="kk-duo"><input type="text" name="kilic_neukunde[plz]" placeholder="PLZ" aria-label="PLZ" inputmode="numeric" class="kk-klein"> <input type="text" name="kilic_neukunde[ort]" placeholder="Ort" aria-label="Ort" class="kk-gross"></p>
 					<p><input type="email" name="kilic_neukunde[email]" placeholder="E-Mail" class="regular-text"> <input type="text" name="kilic_neukunde[telefon]" placeholder="Telefon" class="regular-text"></p>
 					<p><label><input type="checkbox" name="kilic_neukunde[privat]" value="1" checked> Privatkunde</label></p>
 				</div>

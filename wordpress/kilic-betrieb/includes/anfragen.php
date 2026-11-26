@@ -328,7 +328,8 @@ add_action( 'admin_post_kilic_anfrage_angebot', function () {
 	$kunde = kilic_kunde_finden_oder_anlegen( $d['name'] ?? '', array(
 		'firma'   => $d['firma'] ?? '',
 		'strasse' => $d['strasse'] ?? '',
-		'plz_ort' => trim( ( $d['plz'] ?? '' ) . ' ' . ( $d['ort'] ?? '' ) ),
+		'plz'     => $d['plz'] ?? '',
+		'ort'     => $d['ort'] ?? '',
 		'email'   => $d['email'] ?? '',
 		'telefon' => $d['tel'] ?? '',
 		'privat'  => empty( $d['firma'] ) ? '1' : '0',

@@ -139,6 +139,11 @@ $absender = trim( $firma . ' · ' . kilic_opt( 'strasse' ) . ' · ' . kilic_opt(
 			<?php if ( $kunde && get_post_meta( $kunde, '_kundennr', true ) ) : ?>
 				<tr><td>Kunden-Nr.</td><td class="v"><?php echo esc_html( get_post_meta( $kunde, '_kundennr', true ) ); ?></td></tr>
 			<?php endif; ?>
+			<?php if ( $kunde && get_post_meta( $kunde, '_ust_id', true ) ) : ?>
+				<tr><td>Ihre USt-IdNr.</td><td class="v"><?php echo esc_html( get_post_meta( $kunde, '_ust_id', true ) ); ?></td></tr>
+			<?php elseif ( $kunde && get_post_meta( $kunde, '_steuernr', true ) ) : ?>
+				<tr><td>Ihre St.-Nr.</td><td class="v"><?php echo esc_html( get_post_meta( $kunde, '_steuernr', true ) ); ?></td></tr>
+			<?php endif; ?>
 			<?php if ( 'rechnung' === $typ ) : ?>
 				<tr><td>Fällig am</td><td class="v"><?php echo esc_html( kilic_date( kilic_beleg_faellig( $id ) ) ); ?></td></tr>
 			<?php endif; ?>

@@ -171,10 +171,31 @@
   });
 })();
 
-/* Kunde: Nachname oder Firma ist Pflicht */
+/* Kunde: Nachname oder Firma ist Pflicht; Firmenangaben ein-/ausblenden */
 (function () {
   var form = document.querySelector(".post-type-kilic_kunde #post");
   if (!form) return;
+  var anrede = document.getElementById("kk_anrede");
+  function firma(zeigen) {
+    form.querySelectorAll(".kk-firma").forEach(function (r) { r.classList.toggle("is-hidden", !zeigen); });
+    form.querySelectorAll(".kk-firma-link").forEach(function (r) { r.classList.toggle("is-hidden", zeigen); });
+    form.querySelectorAll(".kk-nur-firma").forEach(function (r) { r.hidden = !zeigen; });
+  }
+  if (anrede) anrede.addEventListener("change", function () { if (anrede.value === "Firma") { firma(true); } });
+  form.querySelectorAll(".kk-firma-zeigen").forEach(function (b) {
+    b.addEventListener("click", function () { firma(true); var f = document.getElementById("kk_firma"); if (f) f.focus(); });
+  });
+  /* PLZ eingetippt mit Ort („74821 Mosbach“) → automatisch aufteilen */
+  var plz = document.getElementById("kk_plz"), ort = document.getElementById("kk_ort");
+  if (plz && ort) plz.addEventListener("change", function () {
+    var m = plz.value.trim().match(/^(\d{4,5})[\s,]+(.+)$/);
+    if (m) { plz.value = m[1]; if (!ort.value.trim()) ort.value = m[2]; }
+  });
+  var str = document.getElementById("kk_str"), nr = document.getElementById("kk_hausnr");
+  if (str && nr) str.addEventListener("change", function () {
+    var m = str.value.trim().match(/^(.*?)[\s,]+(\d+\s*[a-zA-Z]?)$/);
+    if (m && !nr.value.trim()) { str.value = m[1]; nr.value = m[2].replace(/\s/g, ""); }
+  });
   form.addEventListener("submit", function (e) {
     var n = document.getElementById("kk_nachname"), f = document.getElementById("kk_firma");
     if (n && !n.value.trim() && !(f && f.value.trim())) {

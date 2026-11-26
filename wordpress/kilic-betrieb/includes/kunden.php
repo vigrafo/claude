@@ -7,12 +7,51 @@ defined( 'ABSPATH' ) || exit;
 
 function kilic_kunde_fields() {
 	return array(
-		'firma'    => 'Firma (optional)',
-		'strasse'  => 'Straße, Nr.',
-		'plz_ort'  => 'PLZ, Ort',
+		'firma'    => 'Firma',
+		'str'      => 'Straße',
+		'hausnr'   => 'Hausnummer',
+		'plz'      => 'PLZ',
+		'ort'      => 'Ort',
+		'land'     => 'Land',
 		'email'    => 'E-Mail',
 		'telefon'  => 'Telefon',
+		'mobil'    => 'Mobil',
+		'ust_id'   => 'USt-IdNr.',
+		'steuernr' => 'Steuernummer',
 	);
+}
+
+/** „Am Wiesental 5a“ → array( 'Am Wiesental', '5a' ). */
+function kilic_strasse_teilen( $s ) {
+	$s = trim( (string) $s );
+	if ( preg_match( '/^(.*?)[\s,]+(\d+\s*[a-zA-Z]?(?:\s*[-\/]\s*\d+\s*[a-zA-Z]?)?)$/u', $s, $m ) ) {
+		return array( trim( $m[1], " ,\t" ), str_replace( ' ', '', $m[2] ) );
+	}
+	return array( $s, '' );
+}
+
+/** „74838, Limbach“ → array( '74838', 'Limbach' ). */
+function kilic_plz_ort_teilen( $s ) {
+	$s = trim( (string) $s );
+	if ( preg_match( '/^(\d{4,5})[\s,]*(.*)$/u', $s, $m ) ) {
+		return array( $m[1], trim( $m[2], " ,\t" ) );
+	}
+	return array( '', $s );
+}
+
+/** Adressfelder eines Kunden – ältere Kunden (Straße/PLZ in einem Feld) werden aufgeteilt. */
+function kilic_kunde_adressteile( $id ) {
+	$str = get_post_meta( $id, '_str', true );
+	$hnr = get_post_meta( $id, '_hausnr', true );
+	$plz = get_post_meta( $id, '_plz', true );
+	$ort = get_post_meta( $id, '_ort', true );
+	if ( '' === $str . $hnr ) {
+		list( $str, $hnr ) = kilic_strasse_teilen( get_post_meta( $id, '_strasse', true ) );
+	}
+	if ( '' === $plz . $ort ) {
+		list( $plz, $ort ) = kilic_plz_ort_teilen( get_post_meta( $id, '_plz_ort', true ) );
+	}
+	return array( 'str' => $str, 'hausnr' => $hnr, 'plz' => $plz, 'ort' => $ort );
 }
 
 add_action( 'add_meta_boxes_kilic_kunde', function () {
@@ -22,39 +61,59 @@ add_action( 'add_meta_boxes_kilic_kunde', function () {
 
 function kilic_kunde_box( $post ) {
 	wp_nonce_field( 'kilic_kunde_save', 'kilic_kunde_nonce' );
-	$nr = get_post_meta( $post->ID, '_kundennr', true );
-	echo '<table class="form-table kilic-form"><tbody>';
+	$id  = $post->ID;
+	$m   = function ( $k ) use ( $id ) {
+		return (string) get_post_meta( $id, '_' . $k, true );
+	};
+	$nr  = $m( 'kundennr' );
+	$adr = kilic_kunde_adressteile( $id );
+	$vorname  = $m( 'vorname' );
+	$nachname = $m( 'nachname' );
+	if ( ! $vorname && ! $nachname && 'auto-draft' !== $post->post_status && $post->post_title !== $m( 'firma' ) ) {
+		$nachname = $post->post_title;
+	}
+	$anrede = $m( 'anrede' );
+	$ist_firma = 'Firma' === $anrede || '' !== $m( 'firma' ) || '' !== $m( 'ust_id' ) || '' !== $m( 'steuernr' );
+	$feld = function ( $key, $wert, $attr = '' ) {
+		return sprintf( '<input type="text" id="kk_%1$s" name="kilic_kunde[%1$s]" value="%2$s" %3$s>', esc_attr( $key ), esc_attr( $wert ), $attr );
+	};
+	$abschnitt = function ( $titel, $klasse = '' ) {
+		echo '<tr class="kk-abschnitt ' . esc_attr( $klasse ) . '"><th colspan="2">' . esc_html( $titel ) . '</th></tr>';
+	};
+
+	echo '<table class="form-table kilic-form kk-form"><tbody>';
 	if ( $nr ) {
 		echo '<tr><th>Kundennummer</th><td><strong>' . esc_html( $nr ) . '</strong></td></tr>';
 	}
-	// Name: Anrede, Vorname, Nachname (bei alten Kunden Nachname aus dem Titel).
-	$anrede  = get_post_meta( $post->ID, '_anrede', true );
-	$vorname = get_post_meta( $post->ID, '_vorname', true );
-	$nachname = get_post_meta( $post->ID, '_nachname', true );
-	if ( ! $vorname && ! $nachname && 'auto-draft' !== $post->post_status && $post->post_title !== get_post_meta( $post->ID, '_firma', true ) ) {
-		$nachname = $post->post_title;
-	}
+
+	$abschnitt( 'Person' );
 	echo '<tr><th><label for="kk_anrede">Anrede</label></th><td><select id="kk_anrede" name="kilic_kunde[anrede]">';
 	foreach ( array( '', 'Herr', 'Frau', 'Familie', 'Firma' ) as $a ) {
 		echo '<option value="' . esc_attr( $a ) . '" ' . selected( $anrede, $a, false ) . '>' . esc_html( $a ? $a : '– bitte wählen –' ) . '</option>';
 	}
 	echo '</select></td></tr>';
-	echo '<tr><th><label for="kk_vorname">Vorname</label></th><td><input type="text" id="kk_vorname" name="kilic_kunde[vorname]" value="' . esc_attr( $vorname ) . '" class="regular-text" autocomplete="given-name"></td></tr>';
-	echo '<tr><th><label for="kk_nachname">Nachname <span style="color:#d7262f">*</span></label></th><td><input type="text" id="kk_nachname" name="kilic_kunde[nachname]" value="' . esc_attr( $nachname ) . '" class="regular-text" autocomplete="family-name"><p class="description">Bei Firmenkunden kann der Nachname leer bleiben, wenn die Firma ausgefüllt ist.</p></td></tr>';
-	foreach ( kilic_kunde_fields() as $key => $label ) {
-		$val = get_post_meta( $post->ID, '_' . $key, true );
-		$type = 'email' === $key ? 'email' : 'text';
-		printf(
-			'<tr><th><label for="kk_%1$s">%2$s</label></th><td><input type="%3$s" id="kk_%1$s" name="kilic_kunde[%1$s]" value="%4$s" class="regular-text"></td></tr>',
-			esc_attr( $key ),
-			esc_html( $label ),
-			esc_attr( $type ),
-			esc_attr( $val )
-		);
-	}
-	$privat = get_post_meta( $post->ID, '_privat', true );
-	echo '<tr><th>Kundenart</th><td><label><input type="checkbox" name="kilic_kunde[privat]" value="1" ' . checked( '1', $privat, false ) . '> Privatkunde</label><p class="description">Bei Privatkunden wird auf Rechnungen der Hinweis zur Aufbewahrungspflicht (§ 14 UStG) und der Lohnanteil für § 35a EStG ausgewiesen.</p></td></tr>';
-	echo '<tr><th><label for="kk_notizen">Notizen</label></th><td><textarea id="kk_notizen" name="kilic_kunde[notizen]" rows="4" class="large-text">' . esc_textarea( get_post_meta( $post->ID, '_notizen', true ) ) . '</textarea></td></tr>';
+	echo '<tr><th><label for="kk_vorname">Vorname</label></th><td>' . $feld( 'vorname', $vorname, 'autocomplete="given-name"' ) . '</td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput
+	echo '<tr><th><label for="kk_nachname">Nachname <span class="kk-pflicht">*</span></label></th><td>' . $feld( 'nachname', $nachname, 'autocomplete="family-name"' ) . '<p class="description kk-nur-firma"' . ( $ist_firma ? '' : ' hidden' ) . '>Bei Firmen = Ansprechpartner, kann leer bleiben.</p></td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput
+
+	$abschnitt( 'Firma', 'kk-firma' . ( $ist_firma ? '' : ' is-hidden' ) );
+	echo '<tr class="kk-firma' . ( $ist_firma ? '' : ' is-hidden' ) . '"><th><label for="kk_firma">Firmenname</label></th><td>' . $feld( 'firma', $m( 'firma' ), 'autocomplete="organization"' ) . '</td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput
+	echo '<tr class="kk-firma' . ( $ist_firma ? '' : ' is-hidden' ) . '"><th><label for="kk_ust_id">USt-IdNr. <span class="kk-opt">optional</span></label></th><td>' . $feld( 'ust_id', $m( 'ust_id' ), 'placeholder="z. B. DE123456789"' ) . '</td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput
+	echo '<tr class="kk-firma' . ( $ist_firma ? '' : ' is-hidden' ) . '"><th><label for="kk_steuernr">Steuernummer <span class="kk-opt">optional</span></label></th><td>' . $feld( 'steuernr', $m( 'steuernr' ), 'placeholder="z. B. 12345/67890"' ) . '<p class="description">Eines von beiden genügt. Steht dann auf Angebot und Rechnung.</p></td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput
+	echo '<tr class="kk-firma-link' . ( $ist_firma ? ' is-hidden' : '' ) . '"><th></th><td><button type="button" class="button-link kk-firma-zeigen">+ Firmenangaben (Firma, USt-IdNr., Steuernummer)</button></td></tr>';
+
+	$abschnitt( 'Adresse' );
+	echo '<tr><th><label for="kk_str">Straße / Hausnummer</label></th><td><div class="kk-duo">' . $feld( 'str', $adr['str'], 'class="kk-gross" placeholder="Straße" autocomplete="address-line1"' ) . $feld( 'hausnr', $adr['hausnr'], 'class="kk-klein" placeholder="Nr." aria-label="Hausnummer"' ) . '</div></td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput
+	echo '<tr><th><label for="kk_plz">PLZ / Ort</label></th><td><div class="kk-duo">' . $feld( 'plz', $adr['plz'], 'class="kk-klein" placeholder="PLZ" inputmode="numeric" autocomplete="postal-code"' ) . $feld( 'ort', $adr['ort'], 'class="kk-gross" placeholder="Ort" aria-label="Ort" autocomplete="address-level2"' ) . '</div></td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput
+	echo '<tr><th><label for="kk_land">Land</label></th><td>' . $feld( 'land', $m( 'land' ), 'placeholder="Deutschland" autocomplete="country-name"' ) . '<p class="description">Nur ausfüllen, wenn nicht Deutschland.</p></td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput
+
+	$abschnitt( 'Kontakt' );
+	echo '<tr><th><label for="kk_email">E-Mail</label></th><td><input type="email" id="kk_email" name="kilic_kunde[email]" value="' . esc_attr( $m( 'email' ) ) . '" autocomplete="email"><p class="description">Hierhin werden Angebote und Rechnungen geschickt.</p></td></tr>';
+	echo '<tr><th><label for="kk_telefon">Telefon</label></th><td><input type="tel" id="kk_telefon" name="kilic_kunde[telefon]" value="' . esc_attr( $m( 'telefon' ) ) . '" autocomplete="tel"></td></tr>';
+	echo '<tr><th><label for="kk_mobil">Mobil</label></th><td><input type="tel" id="kk_mobil" name="kilic_kunde[mobil]" value="' . esc_attr( $m( 'mobil' ) ) . '"></td></tr>';
+
+	$abschnitt( 'Sonstiges' );
+	echo '<tr><th>Kundenart</th><td><label><input type="checkbox" name="kilic_kunde[privat]" value="1" ' . checked( '1', $m( 'privat' ), false ) . '> Privatkunde</label><p class="description">Bei Privatkunden stehen auf der Rechnung der Hinweis zur Aufbewahrungspflicht (§ 14 UStG) und der Lohnanteil für § 35a EStG.</p></td></tr>';
+	echo '<tr><th><label for="kk_notizen">Notizen</label></th><td><textarea id="kk_notizen" name="kilic_kunde[notizen]" rows="4" class="large-text">' . esc_textarea( $m( 'notizen' ) ) . '</textarea></td></tr>';
 	echo '</tbody></table>';
 }
 
@@ -128,10 +187,28 @@ function kilic_kunde_label( $kunde_id ) {
 }
 
 function kilic_kunde_save_data( $post_id, $data ) {
-	foreach ( array_keys( kilic_kunde_fields() ) as $key ) {
-		$v = $data[ $key ] ?? '';
-		update_post_meta( $post_id, '_' . $key, 'email' === $key ? sanitize_email( $v ) : sanitize_text_field( $v ) );
+	// Ältere Formulare liefern „strasse“ bzw. „plz_ort“ in einem Feld → aufteilen.
+	if ( ! isset( $data['str'] ) && isset( $data['strasse'] ) ) {
+		list( $data['str'], $data['hausnr'] ) = kilic_strasse_teilen( $data['strasse'] );
 	}
+	if ( ! isset( $data['plz'] ) && isset( $data['plz_ort'] ) ) {
+		list( $data['plz'], $data['ort'] ) = kilic_plz_ort_teilen( $data['plz_ort'] );
+	}
+	foreach ( array_keys( kilic_kunde_fields() ) as $key ) {
+		if ( ! array_key_exists( $key, $data ) && in_array( $key, array( 'land', 'mobil', 'ust_id', 'steuernr' ), true ) ) {
+			continue; // Formulare ohne diese Felder überschreiben sie nicht.
+		}
+		$v = $data[ $key ] ?? '';
+		$v = 'email' === $key ? sanitize_email( $v ) : sanitize_text_field( $v );
+		if ( 'ust_id' === $key ) {
+			$v = strtoupper( str_replace( ' ', '', $v ) );
+		}
+		update_post_meta( $post_id, '_' . $key, $v );
+	}
+	// Zusammengesetzte Felder für Anschrift, Listen und Suche.
+	$ort  = trim( get_post_meta( $post_id, '_plz', true ) . ' ' . get_post_meta( $post_id, '_ort', true ) );
+	update_post_meta( $post_id, '_strasse', trim( get_post_meta( $post_id, '_str', true ) . ' ' . get_post_meta( $post_id, '_hausnr', true ) ) );
+	update_post_meta( $post_id, '_plz_ort', $ort );
 	foreach ( array( 'anrede', 'vorname', 'nachname' ) as $k ) {
 		if ( isset( $data[ $k ] ) ) {
 			update_post_meta( $post_id, '_' . $k, sanitize_text_field( $data[ $k ] ) );
@@ -195,6 +272,10 @@ function kilic_kunde_adresse( $kunde_id ) {
 		get_post_meta( $kunde_id, '_strasse', true ),
 		get_post_meta( $kunde_id, '_plz_ort', true ),
 	);
+	$land = trim( (string) get_post_meta( $kunde_id, '_land', true ) );
+	if ( $land && ! preg_match( '/^(deutschland|germany|de|d)$/i', $land ) ) {
+		$lines[] = strtoupper( $land );
+	}
 	// Leere Zeilen und doppelte Angaben (z. B. Name = Firma) weglassen.
 	$lines = array_values( array_unique( array_filter( array_map( 'trim', $lines ) ) ) );
 	return $lines;
@@ -264,5 +345,21 @@ function kilic_kunden_namen_reparieren() {
 				update_post_meta( $id, '_anrede', 'Firma' );
 			}
 		}
+	}
+}
+
+/** Beim Update: alte Kunden (Straße/PLZ in einem Feld) in Einzelfelder aufteilen. */
+function kilic_kunden_adressen_teilen() {
+	$ids = get_posts( array( 'post_type' => 'kilic_kunde', 'numberposts' => -1, 'fields' => 'ids', 'post_status' => 'any' ) );
+	foreach ( $ids as $id ) {
+		if ( '' !== get_post_meta( $id, '_str', true ) . get_post_meta( $id, '_plz', true ) . get_post_meta( $id, '_ort', true ) ) {
+			continue;
+		}
+		$a = kilic_kunde_adressteile( $id );
+		foreach ( $a as $k => $v ) {
+			update_post_meta( $id, '_' . $k, $v );
+		}
+		update_post_meta( $id, '_strasse', trim( $a['str'] . ' ' . $a['hausnr'] ) );
+		update_post_meta( $id, '_plz_ort', trim( $a['plz'] . ' ' . $a['ort'] ) );
 	}
 }

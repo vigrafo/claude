@@ -309,3 +309,22 @@ body.kilic-ui {
 .kf-recent-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; display: block; margin-bottom: 4px; }
 .kf-recent-grid small { color: var(--a-sub); }
 @media (max-width: 960px) { .kf-grid { grid-template-columns: 1fr; } }
+
+/* Kundenmaske: Abschnitte, Straße/Nr. und PLZ/Ort nebeneinander */
+.kilic-ui .kk-form input[type=text], .kilic-ui .kk-form input[type=email], .kilic-ui .kk-form input[type=tel] { width: 100%; max-width: 500px; }
+.kilic-ui .kk-abschnitt th { padding: 22px 10px 8px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--k-accent-d); }
+.kilic-ui .kk-form tr.is-hidden, .kilic-ui .kk-form .is-hidden { display: none; }
+.kilic-ui .kk-duo { display: flex; gap: 10px; max-width: 500px; margin: 0; }
+.kilic-ui .kk-form .kk-duo input.kk-gross, .kilic-ui .kk-duo .kk-gross { flex: 1 1 auto; min-width: 0; width: auto; }
+.kilic-ui .kk-form .kk-duo input.kk-klein, .kilic-ui .kk-duo .kk-klein { flex: 0 0 110px; width: 110px; }
+.kilic-ui .kk-opt { font-size: 12px; font-weight: 400; color: var(--k-muted); margin-left: 4px; }
+.kilic-ui .kk-pflicht { color: #d7262f; }
+.kilic-ui .kk-firma-zeigen { font-size: 15px; font-weight: 600; color: var(--k-accent-d); text-decoration: none; min-height: 44px; }
+.kilic-ui .kk-form input, .kilic-ui .kk-form select, .kilic-ui .kk-form textarea { box-sizing: border-box; }
+@media (max-width: 782px) {
+  .kilic-ui .kk-form, .kilic-ui .kk-form tbody, .kilic-ui .kk-form tr, .kilic-ui .kk-form th, .kilic-ui .kk-form td { display: block; width: auto; }
+  .kilic-ui .kk-form tr.is-hidden { display: none; }
+  .kilic-ui .kk-form td { padding-top: 6px; }
+  .kilic-ui .kk-duo { max-width: none; }
+  .kilic-ui .kk-form .kk-duo input.kk-klein, .kilic-ui .kk-duo .kk-klein { flex-basis: 90px; width: 90px; }
+}
