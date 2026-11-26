@@ -281,33 +281,53 @@ add_action( 'add_meta_boxes_kilic_beleg', function ( $post ) {
 }, 20 );
 
 function kilic_beleg_versand_box( $post ) {
-	$v = get_post_meta( $post->ID, '_versand', true );
-	echo '<p><a class="button button-primary" href="' . esc_url( kilic_senden_url( $post->ID ) ) . '"><span class="dashicons dashicons-email" style="vertical-align:text-bottom"></span> ' . ( $v ? 'Erneut an den Kunden senden' : 'Per E-Mail an den Kunden senden' ) . '</a>';
-	if ( 'angebot' === kilic_beleg_typ( $post->ID ) && 'angenommen' === get_post_meta( $post->ID, '_status', true ) ) {
-		echo ' <a class="button" href="' . esc_url( kilic_senden_url( $post->ID, 'ab' ) ) . '">Auftragsbestätigung senden</a>';
+	$id    = $post->ID;
+	$v     = get_post_meta( $id, '_versand', true );
+	$v     = is_array( $v ) ? $v : array();
+	$typ   = kilic_beleg_typ( $id );
+	$kunde = (int) get_post_meta( $id, '_kunde', true );
+	$email = $kunde ? (string) get_post_meta( $kunde, '_email', true ) : '';
+	$doc   = 'rechnung' === $typ ? 'Rechnung' : 'Angebot';
+	$letzt = $v ? end( $v ) : null;
+
+	echo '<div class="kv">';
+	// Status
+	if ( $letzt ) {
+		echo '<div class="kv-status is-ok"><span class="kv-ic dashicons dashicons-yes-alt"></span><div><strong>' . esc_html( $doc ) . ' wurde ' . count( $v ) . '× gesendet</strong><span>Zuletzt am ' . esc_html( mysql2date( 'd.m.Y \u\m H:i', $letzt['zeit'] ) ) . ' Uhr an ' . esc_html( $letzt['an'] ) . '</span></div></div>';
+	} else {
+		echo '<div class="kv-status"><span class="kv-ic dashicons dashicons-email-alt"></span><div><strong>Noch nicht gesendet</strong><span>' . ( $email ? 'Geht als PDF im Firmendesign an ' . esc_html( $email ) : 'Beim Kunden ist noch keine E-Mail-Adresse hinterlegt – sie kann beim Senden eingetragen werden.' ) . '</span></div></div>';
 	}
-	if ( 'rechnung' === kilic_beleg_typ( $post->ID ) && 'offen' === get_post_meta( $post->ID, '_status', true ) ) {
-		echo ' <a class="button" href="' . esc_url( kilic_senden_url( $post->ID, 'mahnung' ) ) . '">Zahlungserinnerung senden</a>';
+	// Aktionen
+	echo '<div class="kv-aktionen">';
+	echo '<a class="kv-btn kv-primaer" href="' . esc_url( kilic_senden_url( $id ) ) . '"><span class="dashicons dashicons-email"></span>' . ( $v ? 'Erneut senden' : esc_html( $doc ) . ' per E-Mail senden' ) . '</a>';
+	if ( 'angebot' === $typ && 'angenommen' === get_post_meta( $id, '_status', true ) ) {
+		echo '<a class="kv-btn" href="' . esc_url( kilic_senden_url( $id, 'ab' ) ) . '"><span class="dashicons dashicons-yes"></span>Auftragsbestätigung senden</a>';
 	}
-	echo '</p>';
-	if ( ! is_array( $v ) || ! $v ) {
-		echo '<p>Noch nicht per E-Mail gesendet.</p>';
-		return;
+	if ( 'rechnung' === $typ && 'offen' === get_post_meta( $id, '_status', true ) ) {
+		echo '<a class="kv-btn" href="' . esc_url( kilic_senden_url( $id, 'mahnung' ) ) . '"><span class="dashicons dashicons-bell"></span>Zahlungserinnerung senden</a>';
 	}
-	echo '<table class="widefat striped"><thead><tr><th>Gesendet</th><th>An</th><th>Betreff</th><th>Von</th><th>Kopie</th></tr></thead><tbody>';
-	foreach ( array_reverse( $v, true ) as $i => $e ) {
-		$url = wp_nonce_url( admin_url( 'admin-post.php?action=kilic_kopie&id=' . $post->ID . '&i=' . $i ), 'kilic_kopie_' . $post->ID . '_' . $i );
-		printf(
-			'<tr><td>%s%s</td><td>%s</td><td>%s</td><td>%s</td><td><a href="%s" target="_blank">PDF öffnen</a></td></tr>',
-			esc_html( mysql2date( 'd.m.Y H:i', $e['zeit'] ) ),
-			$e['ok'] ? '' : ' <span class="kilic-ueberfaellig">(fehlgeschlagen)</span>',
-			esc_html( $e['an'] ),
-			esc_html( $e['betreff'] ),
-			esc_html( $e['wer'] ),
-			esc_url( $url )
-		);
+	echo '<a class="kv-btn" target="_blank" href="' . esc_url( kilic_druck_url( $id, '' ) ) . '"><span class="dashicons dashicons-printer"></span>Drucken / PDF</a>';
+	echo '</div>';
+	// Verlauf
+	if ( $v ) {
+		echo '<h4 class="kv-titel">Gesendete Kopien</h4><ul class="kv-liste">';
+		foreach ( array_reverse( $v, true ) as $i => $e ) {
+			$url = wp_nonce_url( admin_url( 'admin-post.php?action=kilic_kopie&id=' . $id . '&i=' . $i ), 'kilic_kopie_' . $id . '_' . $i );
+			printf(
+				'<li><span class="kv-datum">%s</span><span class="kv-info"><strong>%s</strong><small>an %s · von %s%s</small></span><a class="kv-pdf" href="%s" target="_blank"><span class="dashicons dashicons-pdf"></span>PDF</a></li>',
+				esc_html( mysql2date( 'd.m.Y', $e['zeit'] ) . ' · ' . mysql2date( 'H:i', $e['zeit'] ) ),
+				esc_html( $e['betreff'] ),
+				esc_html( $e['an'] ),
+				esc_html( $e['wer'] ),
+				$e['ok'] ? '' : ' · <b class="kilic-ueberfaellig">nicht zugestellt</b>',
+				esc_url( $url )
+			);
+		}
+		echo '</ul><p class="kv-hinweis">Jede gesendete Fassung bleibt hier gespeichert – auch wenn der Beleg später geändert wird.</p>';
+	} else {
+		echo '<p class="kv-hinweis">Nach dem Senden liegt hier automatisch eine Kopie jeder versendeten Fassung.</p>';
 	}
-	echo '</tbody></table><p class="description">Jede gesendete Fassung bleibt hier gespeichert – auch wenn der Beleg später geändert wird.</p>';
+	echo '</div>';
 }
 
 add_action( 'admin_post_kilic_kopie', function () {

@@ -345,3 +345,29 @@ body.kilic-ui {
 .kilic-ui .kb-lohn-feld { display: flex; align-items: center; gap: 8px; }
 .kilic-ui .kb-lohn-feld input { width: 180px; box-sizing: border-box; }
 .kilic-ui .kb-lohn-vorschau { margin: 10px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--k-accent-soft); font-size: 14px; line-height: 1.5; max-width: 720px; }
+
+/* Versand & Kopien */
+.kilic-ui .kv { display: grid; gap: 16px; }
+.kilic-ui .kv-status { display: flex; gap: 14px; align-items: center; padding: 14px 16px; border-radius: 14px; background: var(--k-concrete); }
+.kilic-ui .kv-status.is-ok { background: #e9f6ee; }
+.kilic-ui .kv-status strong { display: block; font-size: 16px; color: var(--k-ink); }
+.kilic-ui .kv-status span:not(.kv-ic) { display: block; margin-top: 2px; font-size: 14px; color: var(--k-muted); }
+.kilic-ui .kv-ic { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 50%; background: #fff; color: var(--k-accent-d); font-size: 24px; line-height: 44px; text-align: center; }
+.kilic-ui .kv-status.is-ok .kv-ic { color: var(--k-green); }
+.kilic-ui .kv-aktionen { display: flex; flex-wrap: wrap; gap: 10px; }
+.kilic-ui .kv-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px; background: #fff; border: 1px solid var(--k-line); color: var(--k-ink); font-size: 15px; font-weight: 600; text-decoration: none; box-sizing: border-box; }
+.kilic-ui .kv-btn:hover, .kilic-ui .kv-btn:focus { border-color: var(--k-accent); color: var(--k-accent-d); }
+.kilic-ui .kv-btn .dashicons { font-size: 18px; width: 18px; height: 18px; line-height: 18px; }
+.kilic-ui .kv-btn.kv-primaer { background: var(--k-accent); border-color: var(--k-accent); color: #fff; }
+.kilic-ui .kv-btn.kv-primaer:hover, .kilic-ui .kv-btn.kv-primaer:focus { background: var(--k-accent-d); border-color: var(--k-accent-d); color: #fff; }
+.kilic-ui .kv-titel { margin: 4px 0 0; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--k-muted); }
+.kilic-ui .kv-liste { margin: 0; padding: 0; list-style: none; border: 1px solid var(--k-line); border-radius: 14px; overflow: hidden; }
+.kilic-ui .kv-liste li { display: flex; align-items: center; gap: 14px; margin: 0; padding: 12px 14px; border-top: 1px solid var(--k-line); }
+.kilic-ui .kv-liste li:first-child { border-top: 0; }
+.kilic-ui .kv-datum { flex: 0 0 auto; font-size: 13px; color: var(--k-muted); font-variant-numeric: tabular-nums; }
+.kilic-ui .kv-info { flex: 1 1 auto; min-width: 0; }
+.kilic-ui .kv-info strong { display: block; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kilic-ui .kv-info small { display: block; color: var(--k-muted); font-size: 13px; }
+.kilic-ui .kv-pdf { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 12px; border-radius: 999px; background: var(--k-accent-soft); color: var(--k-accent-d); font-weight: 600; text-decoration: none; }
+.kilic-ui .kv-hinweis { margin: 0; font-size: 13px; color: var(--k-muted); }
+@media (max-width: 600px) { .kilic-ui .kv-liste li { flex-wrap: wrap; } .kilic-ui .kv-btn { flex: 1 1 100%; justify-content: center; } }
