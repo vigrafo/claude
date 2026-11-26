@@ -1295,3 +1295,11 @@ body.kilic-site #kilic-main :is(.grid, .contact-cards, .btn-row, .related, .exam
 /* Hinweis für angemeldete Bearbeiter */
 .kilic-edit-hint { background: #fff4cc; border: 1px dashed #d9a400; color: #6b4a00; padding: 10px 14px; border-radius: var(--radius); font-size: .85rem; margin-bottom: 20px; }
 .kilic-edit-hint a { font-weight: 600; }
+
+/* Divi-Standards für Zitate überschreiben */
+body.kilic-site #kilic-main blockquote.quote { border-left: 0; margin: 0; padding: 32px; }
+body.kilic-site #kilic-main .example blockquote { border-left: 3px solid var(--accent); margin: 0 0 20px; padding: 14px 16px; }
+
+/* Divi-Editor: Kopf/Fuß im Hauptfenster ausblenden (siehe kilic_header) */
+.kilic-fb-top .topbar, .kilic-fb-top .site-header, .kilic-fb-top .site-footer,
+.kilic-fb-top .mobile-bar, .kilic-fb-top .to-top { display: none !important; }

@@ -132,6 +132,11 @@ function kilic_seite_url( $pfad ) {
 function kilic_header() {
 	$notdienst = kilic_opt( 'notdienst' );
 	?>
+	<script>
+	/* Divi-Editor: Das Hauptfenster zeigt die Seite zusätzlich im Vorschaufenster.
+	   Kopf- und Fußbereich nur dort anzeigen, damit sie nicht doppelt erscheinen. */
+	if (/[?&]et_fb=1/.test(location.search) && window.self === window.top) { document.documentElement.classList.add('kilic-fb-top'); }
+	</script>
 	<a class="screen-reader-text skip-link" href="#kilic-main">Zum Inhalt springen</a>
 	<div class="topbar">
 		<div class="wrap">
