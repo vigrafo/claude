@@ -140,3 +140,140 @@ html.wp-toolbar:has(body.kilic-ui) { padding-top: 0 !important; }
 .kilic-ui .kui-nav a:hover, .kilic-ui .kui-user a:hover, .kilic-ui .kui-nav a.is-active { color: #fff; }
 /* Anfrage & Kunde: Titel entsteht automatisch */
 body.kilic-ui.post-type-kilic_anfrage #titlediv, body.kilic-ui.post-type-kilic_kunde #titlediv { display: none; }
+
+/* ==========================================================================
+   Stil „wie beim iPhone“: hell, ruhig, abgerundet – Akzent bleibt Kilic-Orange
+   ========================================================================== */
+body.kilic-ui {
+  --a-bg: #f5f5f7; --a-card: #ffffff; --a-text: #1d1d1f; --a-sub: #6e6e73; --a-sep: #e5e5ea; --a-fill: #f2f2f7;
+  background: var(--a-bg);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Kilic Inter", "Segoe UI", Roboto, sans-serif;
+  color: var(--a-text);
+  -webkit-font-smoothing: antialiased;
+}
+.kilic-ui h1, .kilic-ui h2, .kilic-ui h3, .kilic-ui h4, .kilic-ui .wrap > h1, .kilic-ui .wrap h1.wp-heading-inline {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Kilic Inter", "Segoe UI", sans-serif;
+  text-transform: none; letter-spacing: -0.01em;
+}
+.kilic-ui .wrap > h1, .kilic-ui .wrap h1.wp-heading-inline { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; }
+
+/* Kopfleiste aus Milchglas */
+.kui-bar { background: rgba(255,255,255,.78); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); color: var(--a-text); border-bottom: 1px solid rgba(0,0,0,.08); min-height: 60px; }
+.kui-brand .kilic-logo-text strong { color: #1d1d1f !important; }
+.kilic-ui .kui-nav a, .kilic-ui .kui-user a { color: #3a3a3c; font: 500 14px/1 -apple-system, BlinkMacSystemFont, "Kilic Inter", sans-serif; text-transform: none; letter-spacing: 0; padding: 9px 12px; border-radius: 999px; }
+.kilic-ui .kui-nav a .dashicons, .kilic-ui .kui-user a .dashicons { color: #8e8e93; }
+.kilic-ui .kui-nav a:hover, .kilic-ui .kui-user a:hover { background: rgba(0,0,0,.05); color: #1d1d1f; }
+.kilic-ui .kui-nav a.is-active { background: #fff1e3; color: #c96f17; }
+.kilic-ui .kui-nav a.is-active .dashicons { color: #e8892b; }
+.kui-name { color: #8e8e93; }
+.kui-burger { color: #1d1d1f; }
+
+/* Karten */
+.kilic-ui .postbox { border-radius: 18px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 28px rgba(0,0,0,.06); }
+.kilic-ui .postbox .postbox-header { background: transparent; border-bottom: 0; }
+.kilic-ui .postbox .postbox-header h2 { font: 600 19px/1.2 -apple-system, BlinkMacSystemFont, "Kilic Inter", sans-serif; text-transform: none; letter-spacing: -0.01em; padding: 18px 20px 4px; }
+.kilic-ui #kilic_speichern .postbox-header, .kilic-ui #kilic_beleg_aktionen .postbox-header { background: transparent; }
+.kilic-ui #kilic_speichern .postbox-header h2, .kilic-ui #kilic_beleg_aktionen .postbox-header h2 { color: var(--a-text); }
+.kilic-ui .kilic-gruppe { font: 600 13px/1.3 -apple-system, "Kilic Inter", sans-serif; text-transform: uppercase; letter-spacing: .04em; color: var(--a-sub); border: 0; margin: 24px 0 6px; }
+.post-type-kilic_kunde #kilic_kunde_daten .postbox-header h2::after { content: ""; }
+
+/* Formulare wie die iPhone-Einstellungen */
+.kilic-ui .form-table { border-collapse: separate; border-spacing: 0; background: var(--a-card); }
+.kilic-ui .form-table tr { border: 0; }
+.kilic-ui .form-table th, .kilic-ui .form-table td { border-bottom: 1px solid var(--a-sep); padding: 12px 10px; vertical-align: middle; }
+.kilic-ui .form-table tr:last-child th, .kilic-ui .form-table tr:last-child td { border-bottom: 0; }
+.kilic-ui .form-table th { color: var(--a-text); font-weight: 500; font-size: 15px; width: 210px; }
+.kilic-ui input[type=text], .kilic-ui input[type=email], .kilic-ui input[type=tel], .kilic-ui input[type=number],
+.kilic-ui input[type=date], .kilic-ui input[type=url], .kilic-ui input[type=search], .kilic-ui select, .kilic-ui textarea {
+  background: var(--a-fill); border: 1px solid transparent; border-radius: 10px; min-height: 44px; font-size: 16px; color: var(--a-text);
+}
+.kilic-ui select { background: var(--a-fill) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238e8e93' stroke-width='2'/%3E%3C/svg%3E") right 12px center no-repeat; -webkit-appearance: none; appearance: none; }
+.kilic-ui input:focus, .kilic-ui select:focus, .kilic-ui textarea:focus { background-color: #fff; }
+.kilic-ui .description { font-size: 13px; color: var(--a-sub); }
+
+/* Knöpfe als Pillen */
+.kilic-ui .button, .kilic-ui .button-secondary { border-radius: 999px; border: 0; background: var(--a-fill); color: #1d1d1f; min-height: 40px; padding: 0 18px; font-weight: 500; }
+.kilic-ui .button:hover { background: #e5e5ea; }
+.kilic-ui .button-primary, .kilic-ui .page-title-action { border-radius: 999px !important; text-transform: none; letter-spacing: 0; font-weight: 600; box-shadow: 0 4px 14px rgba(232,137,43,.35) !important; }
+.kilic-ui .kilic-save-btn, .kilic-ui #kilic_beleg_aktionen .button-primary { min-height: 50px; font-size: 17px; }
+
+/* Listen */
+.kilic-ui .wp-list-table { border-radius: 18px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 28px rgba(0,0,0,.06); }
+.kilic-ui .wp-list-table thead th, .kilic-ui .wp-list-table tfoot th { background: #fafafa; color: var(--a-sub); font-weight: 500; font-size: 13px; border-bottom: 1px solid var(--a-sep); }
+.kilic-ui .wp-list-table thead th a, .kilic-ui .wp-list-table tfoot th a { color: var(--a-sub); }
+.kilic-ui .wp-list-table tbody tr:hover { background: #fafafa; }
+.kilic-ui .striped > tbody > :nth-child(odd) { background: #fff; }
+.kilic-ui .wp-list-table td { border-bottom: 1px solid var(--a-sep); }
+.kilic-ui .wp-list-table .row-title { font-weight: 600; }
+
+/* Cockpit hell */
+.kilic-ui .kc-big { background: var(--a-card); color: var(--a-text); border: 0; border-radius: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.06); padding-left: 62px; min-height: 60px; justify-content: center; }
+.kilic-ui .kc-big .dashicons { left: 14px; width: 36px; height: 36px; font-size: 20px; line-height: 36px; text-align: center; border-radius: 10px; background: #fff1e3; color: #e8892b; }
+.kilic-ui .kc-big small { color: var(--a-sub); }
+.kilic-ui .kc-big:hover { background: #fff; color: var(--a-text); transform: translateY(-1px); box-shadow: 0 10px 26px rgba(0,0,0,.1); }
+.kilic-ui .kc-big:hover .dashicons { color: #e8892b; }
+.kilic-ui .kc-big:hover small { color: var(--a-sub); }
+.kilic-ui .kc-kpi { border: 0; border-radius: 18px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.06); padding: 16px 20px; }
+.kilic-ui .kc-kpi span { text-transform: none; letter-spacing: 0; font-size: 13px; }
+.kilic-ui .kc-kpi strong { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+.kilic-ui .kc-kpi.ok strong { color: #1f9d55; }
+.kilic-ui .kc-flow li { background: var(--a-card); color: var(--a-sub); box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+.kilic-ui .kc-flow li span { color: #aeaeb2; }
+.kilic-ui .kc-col { background: #ebebef; border-radius: 20px; padding: 14px; }
+.kilic-ui .kc-col h2 { text-transform: none; letter-spacing: -0.01em; font-size: 17px; }
+.kilic-ui .kc-count { background: #fff; color: var(--a-text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.kilic-ui .kc-card { border-radius: 14px; border-left: 0; box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 14px rgba(0,0,0,.05); position: relative; }
+.kilic-ui .kc-card::before { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 3px; background: transparent; }
+.kilic-ui .kc-card.is-new::before, .kilic-ui .kc-card.is-over::before { background: #ff3b30; }
+.kilic-ui .kc-card.is-job::before { background: #007aff; }
+.kilic-ui .kc-card.is-over { background: #fff; }
+.kilic-ui .kc-btn { border: 0; border-radius: 999px; background: var(--a-fill); font-weight: 500; padding: 7px 12px; }
+.kilic-ui .kc-btn.primary { background: #e8892b; }
+.kilic-ui .kc-btn.ok { background: #34c759; }
+.kilic-ui .kc-btn.warn { background: #ffe5e3; color: #c4261d; }
+.kilic-ui .kc-payments, .kilic-ui .kc-foot { border: 0; border-radius: 18px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.06); }
+.kilic-ui .kc-payments h2 { text-transform: none; font-size: 17px; }
+
+/* Tab-Leiste unten (Handy) */
+.kui-tabbar { display: none; }
+@media (max-width: 960px) {
+  .kui-tabbar {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 120;
+    background: rgba(255,255,255,.86); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+    border-top: 1px solid rgba(0,0,0,.1);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+  .kui-tabbar a { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; color: #8e8e93; text-decoration: none; position: relative; padding: 4px 0; }
+  .kui-tabbar a .dashicons { font-size: 24px; width: 24px; height: 24px; }
+  .kui-tabbar a.is-active { color: #e8892b; }
+  .kui-tabbar .kui-badge { position: absolute; top: 0; left: 55%; }
+  .kilic-ui #wpbody-content { padding-bottom: 90px; }
+  .kilic-ui .wrap > h1, .kilic-ui .wrap h1.wp-heading-inline { font-size: 28px; }
+  .kilic-ui .form-table th { width: auto; padding-bottom: 0; border-bottom: 0; }
+  .kilic-ui #wpfooter { display: none; }
+}
+
+/* Cockpit-Karten: Texte dunkel, Knöpfe lesbar */
+.kilic-ui .kc-card-title a { color: var(--a-text); }
+.kilic-ui .kc-card-title a:hover { color: #c96f17; }
+.kilic-ui a.kc-btn { color: #1d1d1f; }
+.kilic-ui a.kc-btn.primary, .kilic-ui a.kc-btn.ok { color: #fff; }
+.kilic-ui a.kc-btn.warn { color: #c4261d; }
+
+/* Erste Schritte */
+.kc-start { background: #fff; border-radius: 18px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 28px rgba(0,0,0,.06); padding: 18px 22px; margin-bottom: 16px; }
+.kc-start-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.kc-start h2 { margin: 0; font-size: 19px; }
+.kc-start-bar { flex: 1; min-width: 160px; max-width: 320px; height: 8px; border-radius: 8px; background: #f2f2f7; overflow: hidden; }
+.kc-start-bar span { display: block; height: 100%; background: linear-gradient(90deg, #e8892b, #f3a65a); border-radius: 8px; }
+.kc-start ol { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+.kc-start li { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: #f5f5f7; margin: 0; }
+.kc-start li.done { opacity: .55; }
+.kc-start li .ck { flex: none; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #c7c7cc; display: grid; place-items: center; font-size: 13px; color: #fff; }
+.kc-start li.done .ck { background: #34c759; border-color: #34c759; }
+.kc-start li strong { display: block; font-size: 14px; }
+.kc-start li small { color: #6e6e73; display: block; margin: 2px 0 6px; line-height: 1.4; }
+.kc-start li a { font-weight: 600; text-decoration: none; }
+.kilic-ui .kc { margin: 24px 28px 40px; }
+@media (max-width: 960px) { .kilic-ui .kc { margin: 14px 12px 30px; } }

@@ -173,6 +173,8 @@ function kilic_render_cockpit() {
 
 		<?php if ( $msg ) : ?><div class="kc-msg" role="status"><?php echo esc_html( $msg ); ?></div><?php endif; ?>
 
+		<?php kilic_erste_schritte(); ?>
+
 		<div class="kc-kpis">
 			<div class="kc-kpi"><span>Offen (alle Rechnungen)</span><strong><?php echo esc_html( kilic_eur( $k_offen ) ); ?></strong></div>
 			<div class="kc-kpi<?php echo $k_ueber ? ' warn' : ''; ?>"><span>davon überfällig</span><strong><?php echo esc_html( kilic_eur( $k_ueber ) ); ?></strong></div>
@@ -419,4 +421,53 @@ add_filter( 'login_headertext', function () {
 	$name  = preg_replace( '/\s+Meisterbetrieb$/i', '', kilic_opt( 'firma' ) );
 	$parts = explode( ' ', $name, 2 );
 	return esc_html( $parts[0] ) . ( isset( $parts[1] ) ? ' <span>' . esc_html( $parts[1] ) . '</span>' : '' ) . '<small>Büro · Anmeldung</small>';
+} );
+
+
+/* ---------- Erste Schritte (Einrichtungs-Checkliste) ---------- */
+
+function kilic_erste_schritte() {
+	if ( get_option( 'kilic_start_ausgeblendet' ) ) {
+		return;
+	}
+	$preise = get_posts( array( 'post_type' => 'kilic_leistung', 'numberposts' => 1, 'fields' => 'ids', 'meta_query' => array( array( 'key' => '_preis', 'value' => 0, 'compare' => '>', 'type' => 'NUMERIC' ) ) ) );
+	$kunden = get_posts( array( 'post_type' => 'kilic_kunde', 'numberposts' => 1, 'fields' => 'ids' ) );
+	$send   = get_posts( array( 'post_type' => 'kilic_beleg', 'numberposts' => 1, 'fields' => 'ids', 'meta_key' => '_versand' ) );
+	$buero  = get_users( array( 'role' => 'kilic_buero', 'number' => 1, 'fields' => 'ID' ) );
+	$schritte = array(
+		array( ! kilic_ist_platzhalter( 'steuernr' ) && ! kilic_ist_platzhalter( 'iban' ) && ! kilic_ist_platzhalter( 'email' ), 'Firmendaten eintragen', 'Steuernummer, Bankverbindung und E-Mail – erscheinen auf jeder Rechnung.', 'Zu den Einstellungen', admin_url( 'admin.php?page=kilic-einstellungen' ), 'manage_options' ),
+		array( (bool) $preise, 'Preise im Leistungskatalog', 'Einmal Ihre Preise eintragen – danach sind Angebote in Sekunden fertig.', 'Katalog öffnen', admin_url( 'edit.php?post_type=kilic_leistung' ), '' ),
+		array( (bool) $kunden, 'Ersten Kunden anlegen', 'Name, Adresse und Telefon – oder einfach aus einer Anfrage übernehmen.', 'Kunde anlegen', admin_url( 'post-new.php?post_type=kilic_kunde' ), '' ),
+		array( (bool) $send, 'Erstes Angebot senden', 'Angebot erstellen und per Knopf als PDF an den Kunden mailen.', 'Angebot erstellen', admin_url( 'post-new.php?post_type=kilic_beleg&kilic_typ=angebot' ), '' ),
+		array( (bool) $buero, 'Büro-Zugang anlegen', 'Eigener Zugang für Mitarbeiter – sieht nur diese Büro-Software.', 'Benutzer anlegen', admin_url( 'user-new.php' ), 'create_users' ),
+	);
+	$schritte = array_values( array_filter( $schritte, function ( $x ) {
+		return ! $x[5] || current_user_can( $x[5] );
+	} ) );
+	$fertig = count( array_filter( wp_list_pluck( $schritte, 0 ) ) );
+	if ( $fertig === count( $schritte ) ) {
+		return;
+	}
+	$weg = wp_nonce_url( admin_url( 'admin-post.php?action=kilic_start_aus' ), 'kilic_start_aus' );
+	echo '<section class="kc-start"><div class="kc-start-head"><h2>Erste Schritte – ' . (int) $fertig . ' von ' . count( $schritte ) . ' erledigt</h2>';
+	echo '<div class="kc-start-bar" aria-hidden="true"><span style="width:' . (int) round( $fertig / max( 1, count( $schritte ) ) * 100 ) . '%"></span></div>';
+	echo '<a href="' . esc_url( $weg ) . '" class="kc-btn ghost">Ausblenden</a></div><ol>';
+	foreach ( $schritte as $x ) {
+		printf(
+			'<li class="%s"><span class="ck">%s</span><div><strong>%s</strong><small>%s</small>%s</div></li>',
+			$x[0] ? 'done' : '',
+			$x[0] ? '✓' : '',
+			esc_html( $x[1] ),
+			esc_html( $x[2] ),
+			$x[0] ? '<span class="kc-ok">Erledigt</span>' : '<a href="' . esc_url( $x[4] ) . '">' . esc_html( $x[3] ) . ' →</a>'
+		);
+	}
+	echo '</ol></section>';
+}
+
+add_action( 'admin_post_kilic_start_aus', function () {
+	check_admin_referer( 'kilic_start_aus' );
+	update_option( 'kilic_start_ausgeblendet', 1 );
+	wp_safe_redirect( admin_url( 'admin.php?page=kilic' ) );
+	exit;
 } );

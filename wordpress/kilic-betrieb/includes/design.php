@@ -61,7 +61,7 @@ add_action( 'in_admin_header', function () {
 	$u      = wp_get_current_user();
 	?>
 	<header class="kui-bar">
-		<a class="kui-brand" href="<?php echo esc_url( admin_url( 'admin.php?page=kilic' ) ); ?>"><?php echo kilic_logo_html( 'dunkel' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+		<a class="kui-brand" href="<?php echo esc_url( admin_url( 'admin.php?page=kilic' ) ); ?>"><?php echo kilic_logo_html( 'hell' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
 		<button type="button" class="kui-burger" aria-label="Menü" onclick="document.body.classList.toggle('kui-nav-open')"><span class="dashicons dashicons-menu"></span></button>
 		<nav class="kui-nav" aria-label="Kilic Betrieb">
 			<?php foreach ( kilic_nav_punkte() as $n ) : ?>
@@ -77,6 +77,20 @@ add_action( 'in_admin_header', function () {
 			<a href="<?php echo esc_url( wp_logout_url( home_url( '/buero' ) ) ); ?>"><span class="dashicons dashicons-exit"></span>Abmelden</a>
 		</div>
 	</header>
+	<nav class="kui-tabbar" aria-label="Schnellnavigation">
+		<?php
+		$tabs = array(
+			array( 'Cockpit', admin_url( 'admin.php?page=kilic' ), 'page:kilic', 'dashboard' ),
+			array( 'Anfragen', admin_url( 'edit.php?post_type=kilic_anfrage' ), 'kilic_anfrage', 'email-alt' ),
+			array( 'Belege', admin_url( 'edit.php?post_type=kilic_beleg' ), 'kilic_beleg', 'media-document' ),
+			array( 'Kunden', admin_url( 'edit.php?post_type=kilic_kunde' ), 'kilic_kunde', 'groups' ),
+			array( 'Fotos', admin_url( 'admin.php?page=kilic-fotos' ), 'page:kilic-fotos', 'camera' ),
+		);
+		foreach ( $tabs as $t ) :
+			?>
+			<a href="<?php echo esc_url( $t[1] ); ?>" class="<?php echo $aktiv === $t[2] ? 'is-active' : ''; ?>"><span class="dashicons dashicons-<?php echo esc_attr( $t[3] ); ?>"></span><?php echo esc_html( $t[0] ); ?><?php if ( 'kilic_anfrage' === $t[2] && $neu ) : ?><b class="kui-badge"><?php echo (int) $neu; ?></b><?php endif; ?></a>
+		<?php endforeach; ?>
+	</nav>
 	<?php
 } );
 
