@@ -22,7 +22,8 @@ WordPress-Website mit Büro-Verwaltung für Fikret Kilic, Heidelberger Str. 57, 
 - Anfragen aus dem Formular (inkl. Fotos), Status, Notizen, E-Mail-Benachrichtigung, Eingangsbestätigung an Kunden
 - „Kunde anlegen & Angebot erstellen“ mit einem Klick aus der Anfrage
 - Kunden mit Kundennummer, Privat-/Gewerbekunde, Belegübersicht
-- Angebote & Rechnungen: Positionen mit Vorlagen, MwSt., fortlaufende Nummern (AN-/RE-Jahr-Nummer), Status, Zahlungseingang, Angebot → Rechnung, Kopieren
+- Leistungskatalog (Text, Einheit, Preis) zum Auswählen in Angeboten und Rechnungen
+- Angebote & Rechnungen: Positionen aus dem Katalog, MwSt., fortlaufende Nummern (AN-/RE-Jahr-Nummer), Status, Zahlungseingang, Angebot → Rechnung, Kopieren
 - Druckansicht DIN A4 → „Als PDF speichern“, mit Pflichtangaben (§ 14 UStG), § 35a-Lohnanteil und Aufbewahrungshinweis für Privatkunden
 - Abgeschlossene Rechnungen sind gesperrt und nicht löschbar (GoBD) – Korrektur über Storno
 - Referenzen mit Foto, Projektarten-Filter

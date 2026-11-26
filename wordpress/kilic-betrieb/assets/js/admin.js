@@ -35,7 +35,7 @@
     table.querySelector(".kilic-mwst").textContent = eur(steuer);
     table.querySelector(".kilic-brutto").textContent = eur(netto + steuer);
   }
-  function addRow(text, einheit) {
+  function addRow(text, einheit, preis) {
     var tpl = body.querySelector(".kilic-pos-row");
     var row = tpl.cloneNode(true);
     row.querySelectorAll("textarea, input").forEach(function (el) { el.value = ""; });
@@ -43,6 +43,7 @@
     row.querySelector('[name="kilic_pos[preis][]"]').value = "0,00";
     if (text) row.querySelector("textarea").value = text;
     if (einheit) row.querySelector("select").value = einheit;
+    if (preis) row.querySelector('[name="kilic_pos[preis][]"]').value = preis;
     body.appendChild(row);
     calc();
     row.querySelector("textarea").focus();
@@ -70,9 +71,10 @@
       if (rows.length === 1 && !first.value.trim()) {
         first.value = opt.value;
         rows[0].querySelector("select").value = opt.dataset.e;
+        if (opt.dataset.p) rows[0].querySelector('[name="kilic_pos[preis][]"]').value = opt.dataset.p;
         calc();
       } else {
-        addRow(opt.value, opt.dataset.e);
+        addRow(opt.value, opt.dataset.e, opt.dataset.p);
       }
       v.selectedIndex = 0;
     });

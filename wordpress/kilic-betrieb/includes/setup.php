@@ -14,6 +14,7 @@ function kilic_activate() {
 	}
 	kilic_setup_pages();
 	kilic_setup_referenzen();
+	kilic_setup_katalog();
 	if ( ! get_option( 'permalink_structure' ) ) {
 		update_option( 'permalink_structure', '/%postname%/' );
 	}
@@ -228,6 +229,7 @@ add_action( 'admin_post_kilic_reset_pages', function () {
 add_action( 'admin_init', function () {
 	if ( get_option( 'kilic_version' ) !== KILIC_VERSION ) {
 		kilic_install_roles();
+		kilic_setup_katalog();
 		update_option( 'kilic_version', KILIC_VERSION );
 	}
 } );

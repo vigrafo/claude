@@ -21,7 +21,7 @@ add_action( 'admin_menu', function () {
 	if ( empty( $submenu['kilic'] ) ) {
 		return;
 	}
-	$order = array( 'kilic', 'edit.php?post_type=kilic_anfrage', 'edit.php?post_type=kilic_beleg', 'edit.php?post_type=kilic_kunde', 'edit.php?post_type=kilic_referenz', 'edit-tags.php?taxonomy=kilic_ref_kat&post_type=kilic_referenz', 'kilic-einstellungen' );
+	$order = array( 'kilic', 'edit.php?post_type=kilic_anfrage', 'edit.php?post_type=kilic_beleg', 'edit.php?post_type=kilic_leistung', 'edit.php?post_type=kilic_kunde', 'edit.php?post_type=kilic_referenz', 'edit-tags.php?taxonomy=kilic_ref_kat&post_type=kilic_referenz', 'kilic-einstellungen' );
 	usort( $submenu['kilic'], function ( $a, $b ) use ( $order ) {
 		$ia = array_search( $a[2], $order, true );
 		$ib = array_search( $b[2], $order, true );
@@ -40,7 +40,7 @@ add_filter( 'parent_file', function ( $parent ) {
 
 add_action( 'admin_enqueue_scripts', function ( $hook ) {
 	$screen = get_current_screen();
-	$ours   = $screen && ( in_array( $screen->post_type, array( 'kilic_anfrage', 'kilic_kunde', 'kilic_beleg', 'kilic_referenz' ), true ) || false !== strpos( (string) $hook, 'kilic' ) );
+	$ours   = $screen && ( in_array( $screen->post_type, array( 'kilic_anfrage', 'kilic_kunde', 'kilic_beleg', 'kilic_referenz', 'kilic_leistung' ), true ) || false !== strpos( (string) $hook, 'kilic' ) );
 	if ( ! $ours ) {
 		return;
 	}

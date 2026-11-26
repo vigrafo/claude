@@ -258,25 +258,18 @@ function kilic_beleg_pos_box( $post ) {
 		</tbody>
 		<tfoot>
 			<tr><td colspan="5"><?php if ( ! $gesperrt ) : ?><button type="button" class="button kilic-pos-add">+ Position hinzufügen</button>
-				<span class="kilic-vorlagen">Vorlage:
-					<select class="kilic-pos-vorlage">
-						<option value="">– wählen –</option>
-						<option data-e="m²">Zementestrich CT-C25-F4 als schwimmender Estrich, Dicke ca. 50 mm, inkl. Randdämmstreifen und PE-Folie</option>
-						<option data-e="m²">Calciumsulfat-Fließestrich CAF-C25-F5 als Heizestrich, ca. 45 mm über Rohr, inkl. Randdämmstreifen</option>
-						<option data-e="m²">Schnellestrich, belegreif nach Herstellerangabe, Dicke ca. 50 mm</option>
-						<option data-e="m²">Wärmedämmung EPS 035 DEO, Dicke nach Vorgabe, liefern und verlegen</option>
-						<option data-e="m²">Trittschalldämmung EPS-T 30-2, liefern und verlegen</option>
-						<option data-e="m²">Altestrich abbrechen, laden und entsorgen</option>
-						<option data-e="m²">Ausgleichsmasse/Nivellierung, Schichtdicke bis 10 mm</option>
-						<option data-e="lfm">Risse verharzen (Rissverklammerung)</option>
-						<option data-e="m²">Vinyl-Designbelag liefern und verlegen</option>
-						<option data-e="pauschal">Baustelleneinrichtung, An- und Abfahrt Estrichpumpe</option>
-						<option data-e="pauschal">CM-Messung und Belegreife-Protokoll</option>
-						<option data-e="Std.">Rohrreinigung, Monteur inkl. Maschine</option>
-						<option data-e="pauschal">Notdienst-Zuschlag (Nacht/Sonn-/Feiertag)</option>
-						<option data-e="pauschal">Kanal-TV-Inspektion inkl. Dokumentation</option>
-						<option data-e="pauschal">Anfahrt</option>
+				<span class="kilic-vorlagen"><label for="kilic-katalog">Aus Leistungskatalog:</label>
+					<select id="kilic-katalog" class="kilic-pos-vorlage">
+						<option value="">– Leistung wählen –</option>
+						<?php foreach ( kilic_katalog() as $bereich => $items ) : ?>
+							<optgroup label="<?php echo esc_attr( kilic_katalog_bereiche()[ $bereich ] ); ?>">
+								<?php foreach ( $items as $it ) : ?>
+									<option value="<?php echo esc_attr( $it['text'] ); ?>" data-e="<?php echo esc_attr( $it['einheit'] ); ?>" data-p="<?php echo esc_attr( number_format( $it['preis'] / 100, 2, ',', '' ) ); ?>"><?php echo esc_html( $it['titel'] . ' – ' . ( $it['preis'] ? kilic_eur( $it['preis'] ) : 'ohne Preis' ) . ' / ' . $it['einheit'] ); ?></option>
+								<?php endforeach; ?>
+							</optgroup>
+						<?php endforeach; ?>
 					</select>
+					<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=kilic_leistung' ) ); ?>" target="_blank">Katalog bearbeiten</a>
 				</span><?php endif; ?></td>
 				<td colspan="2"></td></tr>
 			<tr class="kilic-sum"><td colspan="5" style="text-align:right">Summe netto</td><td class="kilic-netto" style="text-align:right"></td><td></td></tr>
