@@ -87,7 +87,31 @@ add_action( 'save_post_kilic_kunde', function ( $post_id ) {
 	}
 	$data = isset( $_POST['kilic_kunde'] ) ? (array) wp_unslash( $_POST['kilic_kunde'] ) : array();
 	kilic_kunde_save_data( $post_id, $data );
+	kilic_kunde_name_sichern( $post_id );
 } );
+
+/** Kunde ohne Namen: Firma, E-Mail oder Kundennummer als Namen verwenden. */
+function kilic_kunde_name_sichern( $post_id ) {
+	if ( '' !== trim( get_post_field( 'post_title', $post_id ) ) ) {
+		return;
+	}
+	$name = get_post_meta( $post_id, '_firma', true );
+	$name = $name ? $name : get_post_meta( $post_id, '_email', true );
+	$name = $name ? $name : 'Kunde ' . get_post_meta( $post_id, '_kundennr', true );
+	remove_all_actions( 'save_post_kilic_kunde' );
+	wp_update_post( array( 'ID' => $post_id, 'post_title' => $name ) );
+}
+
+/** Anzeigename für Auswahllisten: „K-0001 · Max Muster · Firma · 74821 Mosbach“. */
+function kilic_kunde_label( $kunde_id ) {
+	$teile = array_filter( array(
+		get_post_meta( $kunde_id, '_kundennr', true ),
+		trim( get_the_title( $kunde_id ) ),
+		get_post_meta( $kunde_id, '_firma', true ),
+		get_post_meta( $kunde_id, '_plz_ort', true ),
+	) );
+	return $teile ? implode( ' · ', array_unique( $teile ) ) : 'Kunde #' . $kunde_id;
+}
 
 function kilic_kunde_save_data( $post_id, $data ) {
 	foreach ( array_keys( kilic_kunde_fields() ) as $key ) {

@@ -85,3 +85,31 @@
   var t = document.querySelector(".post-type-kilic_beleg #title");
   if (t) { t.readOnly = true; t.style.background = "#f6f7f7"; }
 })();
+
+/* Kundenauswahl: Suche und „Neuen Kunden hier anlegen“ */
+(function () {
+  var sel = document.getElementById("kb_kunde");
+  if (!sel) return;
+  var box = document.querySelector(".kilic-neuer-kunde");
+  function toggle() {
+    if (!box) return;
+    box.hidden = sel.value !== "neu";
+    if (!box.hidden) box.querySelector("input").focus();
+  }
+  sel.addEventListener("change", toggle);
+  toggle();
+  var suche = document.querySelector(".kilic-kunde-suche");
+  if (suche) {
+    suche.addEventListener("input", function () {
+      var q = suche.value.toLowerCase().trim();
+      var first = null;
+      [].forEach.call(sel.options, function (o) {
+        if (!o.value || o.value === "neu") return;
+        var hit = !q || o.text.toLowerCase().indexOf(q) !== -1;
+        o.hidden = !hit;
+        if (hit && !first) first = o;
+      });
+      if (q && first) sel.value = first.value;
+    });
+  }
+})();

@@ -160,13 +160,26 @@ function kilic_beleg_kopf_box( $post ) {
 		<tr>
 			<th><label for="kb_kunde">Kunde</label></th>
 			<td>
-				<select id="kb_kunde" name="kilic_beleg[kunde]" <?php disabled( $gesperrt ); ?>>
+				<?php if ( ! $gesperrt && count( $kunden ) > 8 ) : ?>
+					<input type="search" class="kilic-kunde-suche regular-text" placeholder="Kunde suchen (Name, Ort, Nummer) …" aria-label="Kunde suchen" style="margin-bottom:6px"><br>
+				<?php endif; ?>
+				<select id="kb_kunde" name="kilic_beleg[kunde]" <?php disabled( $gesperrt ); ?> style="min-width:340px">
 					<option value="">– Kunde wählen –</option>
+					<?php if ( ! $gesperrt ) : ?><option value="neu">+ Neuen Kunden hier anlegen</option><?php endif; ?>
 					<?php foreach ( $kunden as $k ) : ?>
-						<option value="<?php echo esc_attr( $k->ID ); ?>" <?php selected( $kunde, $k->ID ); ?>><?php echo esc_html( $k->post_title . ( get_post_meta( $k->ID, '_plz_ort', true ) ? ' – ' . get_post_meta( $k->ID, '_plz_ort', true ) : '' ) ); ?></option>
+						<option value="<?php echo esc_attr( $k->ID ); ?>" <?php selected( $kunde, $k->ID ); ?>><?php echo esc_html( kilic_kunde_label( $k->ID ) ); ?></option>
 					<?php endforeach; ?>
 				</select>
-				<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=kilic_kunde' ) ); ?>" target="_blank">Neuen Kunden anlegen</a>
+				<?php if ( $kunde ) : ?>
+					<a href="<?php echo esc_url( get_edit_post_link( $kunde ) ); ?>" target="_blank">Kundendaten öffnen</a>
+				<?php endif; ?>
+				<div class="kilic-neuer-kunde" hidden>
+					<p><strong>Neuer Kunde</strong> – wird beim Speichern angelegt:</p>
+					<p><input type="text" name="kilic_neukunde[name]" placeholder="Name (z. B. Max Mustermann) *" class="regular-text"> <input type="text" name="kilic_neukunde[firma]" placeholder="Firma (optional)" class="regular-text"></p>
+					<p><input type="text" name="kilic_neukunde[strasse]" placeholder="Straße, Nr." class="regular-text"> <input type="text" name="kilic_neukunde[plz_ort]" placeholder="PLZ, Ort" class="regular-text"></p>
+					<p><input type="email" name="kilic_neukunde[email]" placeholder="E-Mail" class="regular-text"> <input type="text" name="kilic_neukunde[telefon]" placeholder="Telefon" class="regular-text"></p>
+					<p><label><input type="checkbox" name="kilic_neukunde[privat]" value="1" checked> Privatkunde</label></p>
+				</div>
 			</td>
 		</tr>
 		<tr>
@@ -344,7 +357,14 @@ function kilic_beleg_save( $post_id, $post ) {
 	}
 
 	if ( ! $gesperrt ) {
-		update_post_meta( $post_id, '_kunde', absint( $d['kunde'] ?? 0 ) );
+		$kunde_id = absint( $d['kunde'] ?? 0 );
+		if ( 'neu' === ( $d['kunde'] ?? '' ) ) {
+			$nk = isset( $_POST['kilic_neukunde'] ) ? (array) wp_unslash( $_POST['kilic_neukunde'] ) : array();
+			if ( '' !== trim( $nk['name'] ?? '' ) || '' !== trim( $nk['firma'] ?? '' ) ) {
+				$kunde_id = kilic_kunde_finden_oder_anlegen( sanitize_text_field( trim( $nk['name'] ?? '' ) ? $nk['name'] : $nk['firma'] ), $nk );
+			}
+		}
+		update_post_meta( $post_id, '_kunde', $kunde_id );
 		update_post_meta( $post_id, '_datum', sanitize_text_field( $d['datum'] ?? current_time( 'Y-m-d' ) ) );
 		update_post_meta( $post_id, '_leistung', sanitize_text_field( $d['leistung'] ?? '' ) );
 		update_post_meta( $post_id, '_ziel', (string) absint( $d['ziel'] ?? 14 ) );

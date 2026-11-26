@@ -43,7 +43,7 @@ function kilic_register_post_types() {
 			'edit_item'     => 'Kunde bearbeiten',
 			'search_items'  => 'Kunden durchsuchen',
 			'not_found'     => 'Noch keine Kunden.',
-			'title_placeholder' => 'Name oder Firma',
+			'title_placeholder' => 'Name des Kunden (z. B. Max Mustermann)',
 		),
 	) ) );
 
