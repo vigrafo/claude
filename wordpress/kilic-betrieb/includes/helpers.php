@@ -10,6 +10,7 @@ function kilic_defaults() {
 	return array(
 		'firma'          => 'Kilic Estrich Meisterbetrieb',
 		'firma2'         => 'K & K Rohrreinigung',
+		'logo'           => '',
 		'inhaber'        => 'Fikret Kilic',
 		'strasse'        => 'Heidelberger Str. 57',
 		'plz_ort'        => '74821 Mosbach-Diedesheim',
@@ -199,4 +200,25 @@ function kilic_icon_css() {
 /** Leistungen des Anfrage-Assistenten. */
 function kilic_leistungen() {
 	return array( 'Estrich', 'Bodensanierung', 'Bodenverlegung', 'Rohrreinigung', 'Kontakt' );
+}
+
+/**
+ * Logo im Firmendesign (Zeichen + Wortmarke) – oder ein eigenes Logo aus den
+ * Einstellungen. $variante: 'hell' für helle, 'dunkel' für dunkle Hintergründe.
+ */
+function kilic_logo_html( $variante = 'hell' ) {
+	$eigen = kilic_opt( 'logo' );
+	if ( $eigen ) {
+		return '<img class="kilic-logo-img" src="' . esc_url( $eigen ) . '" alt="' . esc_attr( kilic_opt( 'firma' ) ) . '">';
+	}
+	$name  = preg_replace( '/\s+Meisterbetrieb$/i', '', kilic_opt( 'firma' ) );
+	$parts = explode( ' ', $name, 2 );
+	$ort   = trim( preg_replace( '/^\d+\s*/', '', explode( '-', kilic_opt( 'plz_ort' ) )[0] ) );
+	$farbe = 'dunkel' === $variante ? '#ffffff' : '#1b1f23';
+	return kilic_logo_zeichen() . '<span class="kilic-logo-text"><strong style="color:' . $farbe . '">' . esc_html( $parts[0] ) . ( isset( $parts[1] ) ? ' <em>' . esc_html( $parts[1] ) . '</em>' : '' ) . '</strong><small>Meisterbetrieb · ' . esc_html( $ort ) . '</small></span>';
+}
+
+/** Bildzeichen: drei Estrichschichten mit „K K“. */
+function kilic_logo_zeichen( $class = 'logo-mark' ) {
+	return '<svg class="' . esc_attr( $class ) . '" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="8" fill="#1b1f23"/><rect x="8" y="30" width="32" height="6" rx="1" fill="#e8892b"/><rect x="8" y="22" width="32" height="5" rx="1" fill="#8f8c87"/><rect x="8" y="15" width="32" height="4" rx="1" fill="#c9c5bd"/><path d="M14 8v6M14 11l6-3M14 11l6 3" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/><path d="M26 8v6M26 11l6-3M26 11l6 3" stroke="#e8892b" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>';
 }

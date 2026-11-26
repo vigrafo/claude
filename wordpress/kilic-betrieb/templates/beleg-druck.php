@@ -31,9 +31,17 @@ $absender = trim( $firma . ' · ' . kilic_opt( 'strasse' ) . ' · ' . kilic_opt(
 	body { margin: 0; background: #e9e7e3; font: 10pt/1.45 "Helvetica Neue", Arial, sans-serif; color: #1b1f23; }
 	.sheet { width: 210mm; min-height: 297mm; margin: 10mm auto; background: #fff; padding: 0 20mm 28mm 25mm; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,.12); }
 	.head { height: 45mm; display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 6mm; border-bottom: 3px solid #e8892b; }
-	.brand strong { display: block; font-size: 20pt; letter-spacing: .04em; text-transform: uppercase; }
-	.brand strong em { font-style: normal; color: #e8892b; }
-	.brand span { font-size: 8pt; letter-spacing: .2em; text-transform: uppercase; color: #6b7279; }
+	@font-face { font-family: "Kilic Barlow Condensed"; font-weight: 700; src: url(<?php echo esc_url( KILIC_URL . 'assets/fonts/barlow-condensed-latin-700-normal.woff2' ); ?>) format("woff2"); }
+	@font-face { font-family: "Kilic Inter"; font-weight: 500; src: url(<?php echo esc_url( KILIC_URL . 'assets/fonts/inter-latin-500-normal.woff2' ); ?>) format("woff2"); }
+	.kilic-logo { display: flex; align-items: center; gap: 4mm; }
+	.kilic-logo .logo-mark { width: 16mm; height: 16mm; flex: none; }
+	.kilic-logo-text { display: flex; flex-direction: column; line-height: 1; }
+	.kilic-logo-text strong { font-family: "Kilic Barlow Condensed", "Arial Narrow", sans-serif; font-size: 26pt; letter-spacing: .05em; text-transform: uppercase; }
+	.kilic-logo-text strong em { font-style: normal; color: #e8892b; }
+	.kilic-logo-text small { font-family: "Kilic Inter", Arial, sans-serif; font-size: 7.5pt; letter-spacing: .26em; text-transform: uppercase; color: #6b7279; margin-top: 1.5mm; }
+	.kilic-logo-img { max-height: 20mm; max-width: 90mm; display: block; }
+	.brand .sub { display: block; margin-top: 3mm; font-size: 7.5pt; letter-spacing: .08em; text-transform: uppercase; color: #6b7279; }
+	* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 	.head .kontakt { text-align: right; font-size: 8.5pt; color: #3b434b; }
 	.adresse { position: absolute; top: 50mm; left: 25mm; width: 85mm; }
 	.adresse .absender { font-size: 7pt; color: #6b7279; border-bottom: 1px solid #ccc; padding-bottom: 1mm; margin-bottom: 3mm; }
@@ -70,8 +78,8 @@ $absender = trim( $firma . ' · ' . kilic_opt( 'strasse' ) . ' · ' . kilic_opt(
 	<?php if ( 'storniert' === $status ) : ?><div class="wm">STORNIERT</div><?php endif; ?>
 	<div class="head">
 		<div class="brand">
-			<strong><?php echo esc_html( $firma ); ?></strong>
-			<span><?php echo esc_html( kilic_opt( 'firma2' ) ); ?> · Inh. <?php echo esc_html( kilic_opt( 'inhaber' ) ); ?></span>
+			<div class="kilic-logo"><?php echo kilic_logo_html(); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+			<span class="sub"><?php echo esc_html( kilic_opt( 'firma' ) ); ?> · <?php echo esc_html( kilic_opt( 'firma2' ) ); ?> · Inh. <?php echo esc_html( kilic_opt( 'inhaber' ) ); ?></span>
 		</div>
 		<div class="kontakt">
 			<?php echo esc_html( kilic_opt( 'strasse' ) ); ?><br>

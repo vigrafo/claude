@@ -1303,3 +1303,7 @@ body.kilic-site #kilic-main .example blockquote { border-left: 3px solid var(--a
 /* Divi-Editor: Kopf/Fuß im Hauptfenster ausblenden (siehe kilic_header) */
 .kilic-fb-top .topbar, .kilic-fb-top .site-header, .kilic-fb-top .site-footer,
 .kilic-fb-top .mobile-bar, .kilic-fb-top .to-top { display: none !important; }
+
+/* Eigenes Logo aus den Einstellungen */
+.logo .logo-img { display: block; max-height: 54px; width: auto; }
+.site-footer .logo .logo-img { max-height: 48px; background: #fff; padding: 6px; border-radius: 6px; }

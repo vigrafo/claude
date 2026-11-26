@@ -115,3 +115,27 @@
     });
   }
 })();
+
+/* Einstellungen: Logo aus der Mediathek wählen */
+(function () {
+  document.querySelectorAll(".kilic-media-waehlen").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      if (!window.wp || !wp.media) return;
+      var frame = wp.media({ title: "Logo wählen", button: { text: "Als Logo verwenden" }, library: { type: "image" }, multiple: false });
+      frame.on("select", function () {
+        var a = frame.state().get("selection").first().toJSON();
+        document.getElementById(btn.dataset.target).value = a.url;
+        var v = btn.parentNode.querySelector(".kilic-media-vorschau");
+        if (v) v.innerHTML = '<img src="' + a.url + '" style="max-height:60px">';
+      });
+      frame.open();
+    });
+  });
+  document.querySelectorAll(".kilic-media-entfernen").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      document.getElementById(btn.dataset.target).value = "";
+      var v = btn.parentNode.querySelector(".kilic-media-vorschau");
+      if (v) v.innerHTML = "<em>Logo im Firmendesign wird verwendet (nach dem Speichern).</em>";
+    });
+  });
+})();

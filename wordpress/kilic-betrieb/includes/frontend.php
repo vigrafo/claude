@@ -115,6 +115,9 @@ add_filter( 'use_block_editor_for_post', function ( $use, $post ) {
 /* ---------- Header & Footer ---------- */
 
 function kilic_logo( $footer = false ) {
+	if ( kilic_opt( 'logo' ) ) {
+		return '<a class="logo" href="' . esc_url( home_url( '/' ) ) . '" aria-label="' . esc_attr( kilic_opt( 'firma' ) ) . ' – Startseite"><img class="logo-img" src="' . esc_url( kilic_opt( 'logo' ) ) . '" alt="' . esc_attr( kilic_opt( 'firma' ) ) . '"></a>';
+	}
 	$mark = '<svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="8" fill="#1b1f23"/><rect x="8" y="30" width="32" height="6" rx="1" fill="#e8892b"/><rect x="8" y="22" width="32" height="5" rx="1" fill="#8f8c87"/><rect x="8" y="15" width="32" height="4" rx="1" fill="#c9c5bd"/><path d="M14 8v6M14 11l6-3M14 11l6 3" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/><path d="M26 8v6M26 11l6-3M26 11l6 3" stroke="#e8892b" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>';
 	$name  = kilic_opt( 'firma' );
 	$parts = explode( ' ', preg_replace( '/\s+Meisterbetrieb$/i', '', $name ), 2 );

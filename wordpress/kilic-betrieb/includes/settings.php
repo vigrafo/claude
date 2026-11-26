@@ -10,6 +10,7 @@ function kilic_settings_fields() {
 		'Firma & Kontakt' => array(
 			'firma'           => array( 'Firmenname', 'text' ),
 			'firma2'          => array( 'Zweitfirma (Rohrreinigung)', 'text' ),
+			'logo'            => array( 'Eigenes Logo (optional)', 'media', 'Leer = Logo im Firmendesign (Zeichen + „KILIC ESTRICH“). Mit eigenem Logo erscheint dieses auf Rechnungen, Angeboten und im Website-Kopf.' ),
 			'inhaber'         => array( 'Inhaber', 'text' ),
 			'strasse'         => array( 'Straße, Nr.', 'text' ),
 			'plz_ort'         => array( 'PLZ, Ort', 'text' ),
@@ -73,6 +74,9 @@ function kilic_sanitize_settings( $input ) {
 				case 'checkbox':
 					$out[ $key ] = empty( $v ) ? '0' : '1';
 					break;
+				case 'media':
+					$out[ $key ] = esc_url_raw( $v );
+					break;
 				default:
 					$out[ $key ] = sanitize_text_field( $v );
 			}
@@ -116,6 +120,13 @@ function kilic_render_settings() {
 							<td>
 								<?php if ( 'textarea' === $f[1] ) : ?>
 									<textarea id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" rows="3" class="large-text"><?php echo esc_textarea( $val ); ?></textarea>
+								<?php elseif ( 'media' === $f[1] ) : ?>
+									<div class="kilic-media">
+										<input type="url" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $val ); ?>" class="regular-text">
+										<button type="button" class="button kilic-media-waehlen" data-target="<?php echo esc_attr( $id ); ?>">Aus Mediathek wählen</button>
+										<button type="button" class="button-link kilic-media-entfernen" data-target="<?php echo esc_attr( $id ); ?>">Entfernen</button>
+										<div class="kilic-media-vorschau"><?php echo kilic_logo_html(); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+									</div>
 								<?php elseif ( 'checkbox' === $f[1] ) : ?>
 									<input type="hidden" name="<?php echo esc_attr( $name ); ?>" value="0">
 									<label><input type="checkbox" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="1" <?php checked( '1', $val ); ?>> Ja</label>

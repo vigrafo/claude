@@ -160,18 +160,14 @@ function kilic_kunde_adresse( $kunde_id ) {
 	if ( ! $kunde_id ) {
 		return array();
 	}
-	$lines = array();
-	$firma = get_post_meta( $kunde_id, '_firma', true );
-	if ( $firma ) {
-		$lines[] = $firma;
-	}
-	$lines[] = get_the_title( $kunde_id );
-	foreach ( array( '_strasse', '_plz_ort' ) as $k ) {
-		$v = get_post_meta( $kunde_id, $k, true );
-		if ( $v ) {
-			$lines[] = $v;
-		}
-	}
+	$lines = array(
+		get_post_meta( $kunde_id, '_firma', true ),
+		get_the_title( $kunde_id ),
+		get_post_meta( $kunde_id, '_strasse', true ),
+		get_post_meta( $kunde_id, '_plz_ort', true ),
+	);
+	// Leere Zeilen und doppelte Angaben (z. B. Name = Firma) weglassen.
+	$lines = array_values( array_unique( array_filter( array_map( 'trim', $lines ) ) ) );
 	return $lines;
 }
 

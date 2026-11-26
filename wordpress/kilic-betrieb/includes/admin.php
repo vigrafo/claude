@@ -44,6 +44,9 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
 	if ( ! $ours ) {
 		return;
 	}
+	if ( false !== strpos( (string) $hook, 'kilic-einstellungen' ) ) {
+		wp_enqueue_media();
+	}
 	wp_enqueue_style( 'kilic-admin', KILIC_URL . 'assets/css/admin.css', array(), KILIC_VERSION );
 	wp_enqueue_script( 'kilic-admin', KILIC_URL . 'assets/js/admin.js', array(), KILIC_VERSION, true );
 } );

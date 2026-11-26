@@ -31,3 +31,10 @@
 .kilic-dash .postbox h2 { padding: 0; margin: 6px 0 12px; font-size: 15px; }
 .kilic-quick .button { margin: 0 6px 6px 0; }
 #toplevel_page_kilic .wp-menu-image:before { color: #e8892b; }
+.kilic-media-vorschau { margin-top: 10px; display: flex; align-items: center; gap: 10px; }
+.kilic-media-vorschau .logo-mark { width: 44px; height: 44px; }
+.kilic-media-vorschau .kilic-logo-text { display: flex; flex-direction: column; line-height: 1.1; }
+.kilic-media-vorschau strong { font-size: 20px; text-transform: uppercase; letter-spacing: .05em; }
+.kilic-media-vorschau strong em { font-style: normal; color: #e8892b; }
+.kilic-media-vorschau small { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #646970; }
+.kilic-media-vorschau img { max-height: 60px; }
