@@ -339,3 +339,9 @@ body.kilic-ui {
 
 /* Großer Speichern-Knopf: Text darf umbrechen, nie abgeschnitten */
 .kilic-ui .kilic-save-btn { white-space: normal !important; height: auto !important; line-height: 1.25 !important; padding: 12px 18px !important; box-sizing: border-box; max-width: 100%; }
+
+/* Arbeitskosten § 35a */
+.kilic-ui .kb-lohn-intro { margin: 0 0 10px; font-size: 14px; line-height: 1.5; color: var(--k-ink2); max-width: 720px; }
+.kilic-ui .kb-lohn-feld { display: flex; align-items: center; gap: 8px; }
+.kilic-ui .kb-lohn-feld input { width: 180px; box-sizing: border-box; }
+.kilic-ui .kb-lohn-vorschau { margin: 10px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--k-accent-soft); font-size: 14px; line-height: 1.5; max-width: 720px; }

@@ -278,3 +278,29 @@
   document.querySelector(".kf-neu").addEventListener("input", update);
   filterBelege(); update();
 })();
+
+/* Arbeitskosten (§ 35a): Vorschau, was auf der Rechnung steht und was der Kunde spart */
+(function () {
+  var f = document.getElementById("kb_lohn");
+  if (!f) return;
+  var box = document.querySelector(".kb-lohn-vorschau"), firma = document.querySelector(".kb-lohn-firma");
+  var mw = document.getElementById("kb_mwst"), kunde = document.getElementById("kb_kunde");
+  function zahl(v) { v = (v || "").replace(/[€\s]/g, ""); if (v.indexOf(",") !== -1) v = v.replace(/\./g, "").replace(",", "."); var n = parseFloat(v); return isNaN(n) ? 0 : n; }
+  function eur(n) { return n.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €"; }
+  function upd() {
+    var netto = zahl(f.value), satz = mw ? zahl(mw.value) : 19;
+    if (netto <= 0) { box.hidden = true; } else {
+      var brutto = netto * (1 + satz / 100);
+      box.hidden = false;
+      box.innerHTML = "Auf der Rechnung steht: <em>„In diesem Rechnungsbetrag sind Arbeitskosten in Höhe von <strong>" + eur(brutto) + "</strong> (inkl. MwSt.) enthalten …“</em><br>Ihr Kunde spart damit bis zu <strong>" + eur(brutto * 0.2) + "</strong> Steuern.";
+    }
+    if (firma && kunde) {
+      var o = kunde.options[kunde.selectedIndex];
+      firma.hidden = !(netto > 0 && o && o.dataset && o.dataset.privat === "0");
+    }
+  }
+  f.addEventListener("input", upd);
+  if (mw) mw.addEventListener("input", upd);
+  if (kunde) kunde.addEventListener("change", upd);
+  upd();
+})();

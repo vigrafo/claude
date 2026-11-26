@@ -244,7 +244,7 @@ function kilic_beleg_kopf_box( $post ) {
 					<option value="">– Kunde wählen –</option>
 					<?php if ( ! $gesperrt ) : ?><option value="neu">+ Neuen Kunden hier anlegen</option><?php endif; ?>
 					<?php foreach ( $kunden as $k ) : ?>
-						<option value="<?php echo esc_attr( $k->ID ); ?>" <?php selected( $kunde, $k->ID ); ?>><?php echo esc_html( kilic_kunde_label( $k->ID ) ); ?></option>
+						<option value="<?php echo esc_attr( $k->ID ); ?>" data-privat="<?php echo esc_attr( get_post_meta( $k->ID, '_privat', true ) ); ?>" <?php selected( $kunde, $k->ID ); ?>><?php echo esc_html( kilic_kunde_label( $k->ID ) ); ?></option>
 					<?php endforeach; ?>
 				</select>
 				<?php if ( $kunde ) : ?>
@@ -326,9 +326,14 @@ function kilic_beleg_kopf_box( $post ) {
 			<td><textarea id="kb_unten" name="kilic_beleg[text_unten]" rows="2" class="large-text" <?php disabled( $gesperrt ); ?>><?php echo esc_textarea( $unten ); ?></textarea></td>
 		</tr>
 		<tr<?php echo 'rechnung' === $typ ? '' : ' hidden'; ?>>
-			<th><label for="kb_lohn">Lohnanteil netto (§ 35a EStG)</label></th>
-			<td><input type="text" id="kb_lohn" name="kilic_beleg[lohn]" value="<?php echo esc_attr( get_post_meta( $id, '_lohn', true ) ? number_format( get_post_meta( $id, '_lohn', true ) / 100, 2, ',', '' ) : '' ); ?>" class="small-text" placeholder="0,00" <?php disabled( $gesperrt ); ?>> €
-			<p class="description">Optional. Wird bei Privatkunden auf der Rechnung als enthaltene Arbeitskosten (brutto) ausgewiesen.</p></td>
+			<th><label for="kb_lohn">Arbeitskosten für den Steuerbonus</label><br><span class="kk-opt" style="margin:0">nur bei Privatkunden, freiwillig</span></th>
+			<td>
+				<p class="kb-lohn-intro">Privatkunden können <strong>20 % der Arbeitskosten</strong> von der Steuer abziehen (Handwerkerbonus, § 35a EStG). Material zählt nicht, nur Lohn, Maschinen und Anfahrt.<br>Tragen Sie hier ein, wie viel vom Rechnungsbetrag (netto) reine Arbeitskosten sind.</p>
+				<div class="kb-lohn-feld"><input type="text" inputmode="decimal" id="kb_lohn" name="kilic_beleg[lohn]" value="<?php echo esc_attr( get_post_meta( $id, '_lohn', true ) ? number_format( get_post_meta( $id, '_lohn', true ) / 100, 2, ',', '' ) : '' ); ?>" placeholder="z. B. 1.000,00" <?php disabled( $gesperrt ); ?>> <span>€ netto</span></div>
+				<div class="kb-lohn-vorschau" aria-live="polite" hidden></div>
+				<p class="description">Leer lassen = kein Hinweis auf der Rechnung.</p>
+				<p class="kk-fehlt kb-lohn-firma" hidden>Dieser Kunde ist kein Privatkunde – der Hinweis wird nicht gedruckt.</p>
+			</td>
 		</tr>
 	</tbody></table>
 	<?php
