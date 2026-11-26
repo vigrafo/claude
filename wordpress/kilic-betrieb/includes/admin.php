@@ -175,3 +175,73 @@ function kilic_render_dashboard() {
 	</div>
 	<?php
 }
+
+/* ---------- Klare Eingabemasken statt „Veröffentlichen“ ---------- */
+
+function kilic_masken() {
+	return array(
+		'kilic_kunde'    => array( 'name' => 'Name des Kunden', 'platzhalter' => 'Vor- und Nachname, z. B. Max Mustermann', 'speichern' => 'Kunde speichern', 'neu' => 'Kunde angelegt.', 'gespeichert' => 'Kunde gespeichert.', 'loeschen' => 'Kunde löschen' ),
+		'kilic_anfrage'  => array( 'name' => 'Kurzbeschreibung der Anfrage', 'platzhalter' => 'z. B. Estrich EFH Neubau – Herr Muster', 'speichern' => 'Anfrage speichern', 'neu' => 'Anfrage erfasst.', 'gespeichert' => 'Anfrage gespeichert.', 'loeschen' => 'Anfrage löschen' ),
+		'kilic_leistung' => array( 'name' => 'Bezeichnung der Leistung', 'platzhalter' => 'z. B. Heizestrich CAF', 'speichern' => 'Leistung speichern', 'neu' => 'Leistung zum Katalog hinzugefügt.', 'gespeichert' => 'Leistung gespeichert.', 'loeschen' => 'Leistung löschen' ),
+		'kilic_referenz' => array( 'name' => 'Projektname', 'platzhalter' => 'z. B. Einfamilienhaus mit Fußbodenheizung', 'speichern' => 'Referenz speichern & anzeigen', 'neu' => 'Referenz gespeichert – sie erscheint jetzt auf der Website.', 'gespeichert' => 'Referenz gespeichert.', 'loeschen' => 'Referenz löschen' ),
+	);
+}
+
+add_filter( 'enter_title_here', function ( $text, $post ) {
+	$m = kilic_masken();
+	return isset( $m[ $post->post_type ] ) ? $m[ $post->post_type ]['platzhalter'] : $text;
+}, 20, 2 );
+
+/** Beschriftung über dem Namensfeld. */
+add_action( 'edit_form_top', function ( $post ) {
+	$m = kilic_masken();
+	if ( isset( $m[ $post->post_type ] ) && ! in_array( $post->post_type, array( 'kilic_kunde', 'kilic_anfrage' ), true ) ) {
+		echo '<label for="title" class="kilic-titel-label">' . esc_html( $m[ $post->post_type ]['name'] ) . ' <span style="color:#d7262f">*</span></label>';
+	}
+} );
+
+add_action( 'add_meta_boxes', function ( $post_type, $post ) {
+	$m = kilic_masken();
+	if ( ! isset( $m[ $post_type ] ) ) {
+		return;
+	}
+	remove_meta_box( 'submitdiv', $post_type, 'side' );
+	add_meta_box( 'kilic_speichern', 'Speichern', function ( $post ) use ( $m ) {
+		$c = $m[ $post->post_type ];
+		echo '<input type="hidden" name="post_status" value="publish">';
+		echo '<input type="hidden" name="original_publish" value="publish">';
+		echo '<button type="submit" name="publish" class="button button-primary button-hero kilic-save-btn">' . esc_html( $c['speichern'] ) . '</button>';
+		echo '<p><a href="' . esc_url( admin_url( 'admin.php?page=kilic' ) ) . '">← Zurück zum Cockpit</a></p>';
+		if ( 'kilic_kunde' === $post->post_type && 'auto-draft' !== $post->post_status ) {
+			echo '<p><a href="' . esc_url( admin_url( 'post-new.php?post_type=kilic_beleg&kilic_typ=angebot&kilic_kunde=' . $post->ID ) ) . '">+ Angebot für diesen Kunden</a><br><a href="' . esc_url( admin_url( 'post-new.php?post_type=kilic_beleg&kilic_typ=rechnung&kilic_kunde=' . $post->ID ) ) . '">+ Rechnung für diesen Kunden</a><br><a href="' . esc_url( admin_url( 'admin.php?page=kilic-fotos&kunde=' . $post->ID ) ) . '">+ Fotos hochladen</a></p>';
+		}
+		if ( 'auto-draft' !== $post->post_status && current_user_can( 'delete_post', $post->ID ) ) {
+			echo '<p class="kilic-loeschen"><a href="' . esc_url( get_delete_post_link( $post->ID ) ) . '">' . esc_html( $c['loeschen'] ) . '</a></p>';
+		}
+	}, $post_type, 'side', 'high' );
+}, 10, 2 );
+
+/** Meldungen nach dem Speichern. */
+add_filter( 'post_updated_messages', function ( $messages ) {
+	foreach ( kilic_masken() as $type => $c ) {
+		$msg = $c['gespeichert'] . ' <a href="' . esc_url( admin_url( 'admin.php?page=kilic' ) ) . '">Zurück zum Cockpit</a>';
+		$messages[ $type ] = array_fill( 0, 11, $msg );
+		$messages[ $type ][6] = $c['neu'] . ' <a href="' . esc_url( admin_url( 'admin.php?page=kilic' ) ) . '">Zurück zum Cockpit</a>';
+	}
+	$messages['kilic_beleg'] = array_fill( 0, 11, 'Gespeichert. <a href="' . esc_url( admin_url( 'admin.php?page=kilic' ) ) . '">Zurück zum Cockpit</a>' );
+	return $messages;
+} );
+
+/** Ohne Namen nicht speichern – mit verständlicher Meldung. */
+add_filter( 'wp_insert_post_data', function ( $data, $raw ) {
+	if ( 'kilic_kunde' === $data['post_type'] && isset( $_POST['kilic_kunde'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		// Kundenname aus Vorname + Nachname bilden (sonst Firma, sonst E-Mail).
+		$k    = (array) wp_unslash( $_POST['kilic_kunde'] ); // phpcs:ignore WordPress.Security.NonceVerification
+		$name = trim( ( $k['vorname'] ?? '' ) . ' ' . ( $k['nachname'] ?? '' ) );
+		$name = $name ? $name : ( ! empty( $k['firma'] ) ? $k['firma'] : ( $k['email'] ?? '' ) );
+		if ( '' !== $name ) {
+			$data['post_title'] = sanitize_text_field( $name );
+		}
+	}
+	return $data;
+}, 10, 2 );

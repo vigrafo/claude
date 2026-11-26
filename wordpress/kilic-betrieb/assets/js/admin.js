@@ -157,3 +157,18 @@
     b.addEventListener("click", function () { var f = document.querySelector('[name="kilic_zahlung[betrag]"]'); if (f) f.value = b.dataset.rest; });
   });
 })();
+
+/* Kunde: Nachname oder Firma ist Pflicht */
+(function () {
+  var form = document.querySelector(".post-type-kilic_kunde #post");
+  if (!form) return;
+  form.addEventListener("submit", function (e) {
+    var n = document.getElementById("kk_nachname"), f = document.getElementById("kk_firma");
+    if (n && !n.value.trim() && !(f && f.value.trim())) {
+      e.preventDefault();
+      n.focus();
+      n.style.borderColor = "#d7262f";
+      alert("Bitte den Nachnamen (oder bei Firmen die Firma) eintragen.");
+    }
+  });
+})();

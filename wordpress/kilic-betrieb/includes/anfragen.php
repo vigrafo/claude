@@ -175,7 +175,7 @@ function kilic_anfrage_uploads( $anfrage_id ) {
 /* ---------- Backend ---------- */
 
 add_action( 'add_meta_boxes_kilic_anfrage', function () {
-	add_meta_box( 'kilic_anfrage_daten', 'Angaben des Kunden', 'kilic_anfrage_box', 'kilic_anfrage', 'normal', 'high' );
+	add_meta_box( 'kilic_anfrage_daten', 'Anfrage', 'kilic_anfrage_box', 'kilic_anfrage', 'normal', 'high' );
 	add_meta_box( 'kilic_anfrage_status', 'Bearbeitung', 'kilic_anfrage_status_box', 'kilic_anfrage', 'side', 'high' );
 } );
 
@@ -185,16 +185,42 @@ function kilic_anfrage_box( $post ) {
 	$felder = kilic_anfrage_felder();
 	if ( 'auto-draft' === $post->post_status || ! $data ) {
 		// Manuelle Erfassung (z. B. Telefonanruf).
-		echo '<p>Anfrage manuell erfassen, z. B. nach einem Anruf:</p><table class="form-table kilic-form"><tbody>';
-		foreach ( array( 'leistung', 'objekt', 'flaeche', 'estrichart', 'name', 'email', 'tel', 'strasse', 'plz', 'ort', 'nachricht' ) as $k ) {
-			$v = $data[ $k ] ?? '';
-			if ( 'nachricht' === $k ) {
-				echo '<tr><th>' . esc_html( $felder[ $k ] ) . '</th><td><textarea name="kilic_daten[' . esc_attr( $k ) . ']" rows="4" class="large-text">' . esc_textarea( $v ) . '</textarea></td></tr>';
-			} else {
-				echo '<tr><th>' . esc_html( $felder[ $k ] ) . '</th><td><input type="text" name="kilic_daten[' . esc_attr( $k ) . ']" value="' . esc_attr( $v ) . '" class="regular-text"></td></tr>';
+		$auswahl = array(
+			'leistung'   => array( 'Estrich', 'Bodensanierung', 'Bodenverlegung', 'Rohrreinigung', 'Sonstiges' ),
+			'objekt'     => array( '', 'Einfamilienhaus', 'Mehrfamilienhaus', 'Wohnung', 'Gewerbe / Halle', 'Garage / Keller' ),
+			'estrichart' => array( '', 'Fließestrich (CAF)', 'Zementestrich (CT)', 'Schnellestrich', 'Trockenestrich', 'Industrie-/Gefälleestrich', 'Beratung gewünscht' ),
+			'termin'     => array( '', 'So schnell wie möglich', 'In 2–4 Wochen', 'In 1–3 Monaten', 'Später / noch offen' ),
+		);
+		$gruppen = array(
+			'Was wird gebraucht?' => array( 'leistung', 'objekt', 'flaeche', 'estrichart', 'termin' ),
+			'Wer fragt an?'       => array( 'name', 'tel', 'email' ),
+			'Wo ist das Objekt?'  => array( 'strasse', 'plz', 'ort' ),
+			'Notizen zum Gespräch'=> array( 'nachricht' ),
+		);
+		echo '<p class="description">Nach einem Anruf alles Wichtige eintragen – die Anfrage erscheint dann im Cockpit unter „Anfragen“.</p>';
+		foreach ( $gruppen as $titel => $keys ) {
+			echo '<h3 class="kilic-gruppe">' . esc_html( $titel ) . '</h3><table class="form-table kilic-form"><tbody>';
+			foreach ( $keys as $k ) {
+				$v  = $data[ $k ] ?? '';
+				$id = 'ka_' . $k;
+				$req = in_array( $k, array( 'name' ), true ) ? ' <span style="color:#d7262f">*</span>' : '';
+				echo '<tr><th><label for="' . esc_attr( $id ) . '">' . esc_html( $felder[ $k ] ) . $req . '</label></th><td>'; // phpcs:ignore WordPress.Security.EscapeOutput
+				if ( isset( $auswahl[ $k ] ) ) {
+					echo '<select id="' . esc_attr( $id ) . '" name="kilic_daten[' . esc_attr( $k ) . ']">';
+					foreach ( $auswahl[ $k ] as $o ) {
+						echo '<option value="' . esc_attr( $o ) . '" ' . selected( $v, $o, false ) . '>' . esc_html( $o ? $o : '– bitte wählen –' ) . '</option>';
+					}
+					echo '</select>';
+				} elseif ( 'nachricht' === $k ) {
+					echo '<textarea id="' . esc_attr( $id ) . '" name="kilic_daten[nachricht]" rows="5" class="large-text" placeholder="Was wurde besprochen? Besonderheiten, Wünsche, Rückrufzeit …">' . esc_textarea( $v ) . '</textarea>';
+				} else {
+					$type = 'email' === $k ? 'email' : ( 'tel' === $k ? 'tel' : ( 'flaeche' === $k ? 'number' : 'text' ) );
+					echo '<input type="' . esc_attr( $type ) . '" id="' . esc_attr( $id ) . '" name="kilic_daten[' . esc_attr( $k ) . ']" value="' . esc_attr( $v ) . '" class="regular-text"' . ( 'flaeche' === $k ? ' step="0.1" min="0" style="width:140px"> m²' : '>' );
+				}
+				echo '</td></tr>';
 			}
+			echo '</tbody></table>';
 		}
-		echo '</tbody></table>';
 		return;
 	}
 	echo '<table class="widefat striped kilic-daten"><tbody>';
@@ -277,9 +303,16 @@ add_action( 'save_post_kilic_anfrage', function ( $post_id ) {
 } );
 
 add_filter( 'wp_insert_post_data', function ( $post ) {
-	if ( 'kilic_anfrage' === $post['post_type'] && '' === trim( $post['post_title'] ) && ! empty( $_POST['kilic_daten'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+	if ( 'kilic_anfrage' === $post['post_type'] && ! empty( $_POST['kilic_daten'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 		$d = (array) wp_unslash( $_POST['kilic_daten'] ); // phpcs:ignore WordPress.Security.NonceVerification
-		$post['post_title'] = sanitize_text_field( trim( ( $d['leistung'] ?? 'Anfrage' ) . ' · ' . ( $d['name'] ?? '' ), ' ·' ) );
+		$t = array( $d['leistung'] ?? 'Anfrage' );
+		if ( ! empty( $d['flaeche'] ) ) {
+			$t[] = $d['flaeche'] . ' m²';
+		}
+		if ( ! empty( $d['name'] ) ) {
+			$t[] = $d['name'];
+		}
+		$post['post_title'] = sanitize_text_field( implode( ' · ', $t ) . ' (Telefon)' );
 	}
 	return $post;
 } );

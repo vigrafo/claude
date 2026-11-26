@@ -27,6 +27,20 @@ function kilic_kunde_box( $post ) {
 	if ( $nr ) {
 		echo '<tr><th>Kundennummer</th><td><strong>' . esc_html( $nr ) . '</strong></td></tr>';
 	}
+	// Name: Anrede, Vorname, Nachname (bei alten Kunden Nachname aus dem Titel).
+	$anrede  = get_post_meta( $post->ID, '_anrede', true );
+	$vorname = get_post_meta( $post->ID, '_vorname', true );
+	$nachname = get_post_meta( $post->ID, '_nachname', true );
+	if ( ! $vorname && ! $nachname && 'auto-draft' !== $post->post_status && $post->post_title !== get_post_meta( $post->ID, '_firma', true ) ) {
+		$nachname = $post->post_title;
+	}
+	echo '<tr><th><label for="kk_anrede">Anrede</label></th><td><select id="kk_anrede" name="kilic_kunde[anrede]">';
+	foreach ( array( '', 'Herr', 'Frau', 'Familie', 'Firma' ) as $a ) {
+		echo '<option value="' . esc_attr( $a ) . '" ' . selected( $anrede, $a, false ) . '>' . esc_html( $a ? $a : '– bitte wählen –' ) . '</option>';
+	}
+	echo '</select></td></tr>';
+	echo '<tr><th><label for="kk_vorname">Vorname</label></th><td><input type="text" id="kk_vorname" name="kilic_kunde[vorname]" value="' . esc_attr( $vorname ) . '" class="regular-text" autocomplete="given-name"></td></tr>';
+	echo '<tr><th><label for="kk_nachname">Nachname <span style="color:#d7262f">*</span></label></th><td><input type="text" id="kk_nachname" name="kilic_kunde[nachname]" value="' . esc_attr( $nachname ) . '" class="regular-text" autocomplete="family-name"><p class="description">Bei Firmenkunden kann der Nachname leer bleiben, wenn die Firma ausgefüllt ist.</p></td></tr>';
 	foreach ( kilic_kunde_fields() as $key => $label ) {
 		$val = get_post_meta( $post->ID, '_' . $key, true );
 		$type = 'email' === $key ? 'email' : 'text';
@@ -118,6 +132,11 @@ function kilic_kunde_save_data( $post_id, $data ) {
 		$v = $data[ $key ] ?? '';
 		update_post_meta( $post_id, '_' . $key, 'email' === $key ? sanitize_email( $v ) : sanitize_text_field( $v ) );
 	}
+	foreach ( array( 'anrede', 'vorname', 'nachname' ) as $k ) {
+		if ( isset( $data[ $k ] ) ) {
+			update_post_meta( $post_id, '_' . $k, sanitize_text_field( $data[ $k ] ) );
+		}
+	}
 	update_post_meta( $post_id, '_privat', empty( $data['privat'] ) ? '0' : '1' );
 	if ( isset( $data['notizen'] ) ) {
 		update_post_meta( $post_id, '_notizen', sanitize_textarea_field( $data['notizen'] ) );
@@ -149,6 +168,11 @@ function kilic_kunde_finden_oder_anlegen( $name, $data ) {
 		'post_title'  => $name ? $name : 'Neuer Kunde',
 	) );
 	if ( $id && ! is_wp_error( $id ) ) {
+		if ( $name && empty( $data['nachname'] ) ) {
+			$teile = preg_split( '/\s+/', trim( $name ) );
+			$data['nachname'] = array_pop( $teile );
+			$data['vorname']  = implode( ' ', $teile );
+		}
 		kilic_kunde_save_data( $id, $data );
 		return (int) $id;
 	}
@@ -160,9 +184,14 @@ function kilic_kunde_adresse( $kunde_id ) {
 	if ( ! $kunde_id ) {
 		return array();
 	}
+	$anrede = get_post_meta( $kunde_id, '_anrede', true );
+	$name   = get_the_title( $kunde_id );
+	if ( $anrede && 'Firma' !== $anrede && $name !== get_post_meta( $kunde_id, '_firma', true ) ) {
+		$name = $anrede . ' ' . $name;
+	}
 	$lines = array(
 		get_post_meta( $kunde_id, '_firma', true ),
-		get_the_title( $kunde_id ),
+		$name,
 		get_post_meta( $kunde_id, '_strasse', true ),
 		get_post_meta( $kunde_id, '_plz_ort', true ),
 	);
@@ -212,3 +241,28 @@ add_action( 'manage_kilic_kunde_posts_custom_column', function ( $col, $id ) {
 			break;
 	}
 }, 10, 2 );
+
+/** Kunden ohne Namen nie als „(kein Titel)“ anzeigen. */
+add_filter( 'the_title', function ( $title, $id = 0 ) {
+	if ( '' === trim( (string) $title ) && $id && 'kilic_kunde' === get_post_type( $id ) ) {
+		$f = get_post_meta( $id, '_firma', true );
+		$e = get_post_meta( $id, '_email', true );
+		return $f ? $f : ( $e ? $e : 'Kunde ' . get_post_meta( $id, '_kundennr', true ) );
+	}
+	return $title;
+}, 10, 2 );
+
+/** Bestehende Kunden ohne Namen nachträglich benennen (beim Update). */
+function kilic_kunden_namen_reparieren() {
+	$ids = get_posts( array( 'post_type' => 'kilic_kunde', 'numberposts' => -1, 'fields' => 'ids', 'post_status' => 'any' ) );
+	foreach ( $ids as $id ) {
+		if ( '' === trim( get_post_field( 'post_title', $id ) ) ) {
+			$f = get_post_meta( $id, '_firma', true );
+			$e = get_post_meta( $id, '_email', true );
+			wp_update_post( array( 'ID' => $id, 'post_title' => $f ? $f : ( $e ? $e : 'Kunde ' . get_post_meta( $id, '_kundennr', true ) ) ) );
+			if ( $f && ! get_post_meta( $id, '_anrede', true ) ) {
+				update_post_meta( $id, '_anrede', 'Firma' );
+			}
+		}
+	}
+}

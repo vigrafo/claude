@@ -108,7 +108,7 @@ add_action( 'add_meta_boxes_kilic_beleg', function () {
 	remove_meta_box( 'submitdiv', 'kilic_beleg', 'side' );
 	add_meta_box( 'kilic_beleg_kopf', 'Beleg', 'kilic_beleg_kopf_box', 'kilic_beleg', 'normal', 'high' );
 	add_meta_box( 'kilic_beleg_pos', 'Positionen', 'kilic_beleg_pos_box', 'kilic_beleg', 'normal', 'high' );
-	add_meta_box( 'kilic_beleg_aktionen', 'Speichern & Drucken', 'kilic_beleg_aktionen_box', 'kilic_beleg', 'side', 'high' );
+	add_meta_box( 'kilic_beleg_aktionen', 'Speichern & Senden', 'kilic_beleg_aktionen_box', 'kilic_beleg', 'side', 'high' );
 	global $post;
 	if ( $post && 'rechnung' === kilic_beleg_typ( $post->ID ) && 'auto-draft' !== $post->post_status ) {
 		add_meta_box( 'kilic_beleg_zahlungen', 'Zahlungseingänge', 'kilic_beleg_zahlungen_box', 'kilic_beleg', 'normal', 'default' );
@@ -216,10 +216,12 @@ function kilic_beleg_kopf_box( $post ) {
 						<option value="<?php echo esc_attr( $k ); ?>" <?php selected( $status, $k ); ?>><?php echo esc_html( $l ); ?></option>
 					<?php endforeach; ?>
 				</select>
+				<?php if ( 'rechnung' === $typ ) : ?>
 				<span class="kilic-inline">
 					<label for="kb_bezahlt">bezahlt am</label>
 					<input type="date" id="kb_bezahlt" name="kilic_beleg[bezahlt_am]" value="<?php echo esc_attr( get_post_meta( $id, '_bezahlt_am', true ) ); ?>">
 				</span>
+				<?php endif; ?>
 			</td>
 		</tr>
 		<tr>
@@ -236,7 +238,7 @@ function kilic_beleg_kopf_box( $post ) {
 			<th><label for="kb_unten">Schlusstext</label></th>
 			<td><textarea id="kb_unten" name="kilic_beleg[text_unten]" rows="2" class="large-text" <?php disabled( $gesperrt ); ?>><?php echo esc_textarea( $unten ); ?></textarea></td>
 		</tr>
-		<tr>
+		<tr<?php echo 'rechnung' === $typ ? '' : ' hidden'; ?>>
 			<th><label for="kb_lohn">Lohnanteil netto (§ 35a EStG)</label></th>
 			<td><input type="text" id="kb_lohn" name="kilic_beleg[lohn]" value="<?php echo esc_attr( get_post_meta( $id, '_lohn', true ) ? number_format( get_post_meta( $id, '_lohn', true ) / 100, 2, ',', '' ) : '' ); ?>" class="small-text" placeholder="0,00" <?php disabled( $gesperrt ); ?>> €
 			<p class="description">Optional. Wird bei Privatkunden auf der Rechnung als enthaltene Arbeitskosten (brutto) ausgewiesen.</p></td>

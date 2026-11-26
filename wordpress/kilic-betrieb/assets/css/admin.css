@@ -137,3 +137,17 @@
 .kilic-fotoseite .button-hero { width: 100%; max-width: 520px; }
 .kilic-senden .form-table th { width: 140px; }
 .kilic-zahlung-neu input, .kilic-zahlung-neu select { vertical-align: middle; }
+
+/* Klare Eingabemasken */
+.kilic-titel-label { display: block; font-size: 15px; font-weight: 700; margin: 12px 0 6px; }
+#kilic_speichern .kilic-save-btn { width: 100%; justify-content: center; text-align: center; background: #e8892b; border-color: #e8892b; font-size: 17px; }
+#kilic_speichern .kilic-save-btn:hover, #kilic_speichern .kilic-save-btn:focus { background: #c96f17; border-color: #c96f17; }
+#kilic_speichern .inside p { margin: 12px 0 0; line-height: 1.9; }
+#kilic_speichern .kilic-loeschen a { color: #b32d2e; }
+#kilic_speichern .postbox-header, #kilic_beleg_aktionen .postbox-header { background: #1b1f23; }
+#kilic_speichern .postbox-header h2, #kilic_beleg_aktionen .postbox-header h2 { color: #fff; }
+.post-type-kilic_kunde #titlediv #title, .post-type-kilic_anfrage #titlediv #title, .post-type-kilic_leistung #titlediv #title { font-size: 1.5em; }
+.post-type-kilic_kunde #screen-meta-links, .post-type-kilic_anfrage #screen-meta-links, .post-type-kilic_leistung #screen-meta-links, .post-type-kilic_beleg #screen-meta-links { display: none; }
+/* Kunde: Name kommt aus Vorname/Nachname – kein separates Titelfeld */
+.post-type-kilic_kunde #titlediv { display: none; }
+.post-type-kilic_kunde #kilic_kunde_daten .postbox-header h2::after { content: " – Name, Adresse, Kontakt"; font-weight: 400; color: #646970; }

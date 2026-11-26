@@ -230,6 +230,8 @@ add_action( 'admin_init', function () {
 	if ( get_option( 'kilic_version' ) !== KILIC_VERSION ) {
 		kilic_install_roles();
 		kilic_setup_katalog();
+		kilic_kunden_namen_reparieren();
+		flush_rewrite_rules();
 		update_option( 'kilic_version', KILIC_VERSION );
 	}
 } );

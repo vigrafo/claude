@@ -1,0 +1,142 @@
+/* ==========================================================================
+   Kilic Büro – eigene Oberfläche im Firmendesign (überdeckt WordPress-Optik)
+   ========================================================================== */
+
+@font-face { font-family: "Kilic Inter"; font-weight: 400; font-display: swap; src: url(../fonts/inter-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Kilic Inter"; font-weight: 600; font-display: swap; src: url(../fonts/inter-latin-600-normal.woff2) format("woff2"); }
+@font-face { font-family: "Kilic Inter"; font-weight: 700; font-display: swap; src: url(../fonts/inter-latin-700-normal.woff2) format("woff2"); }
+@font-face { font-family: "Kilic Barlow Condensed"; font-weight: 600; font-display: swap; src: url(../fonts/barlow-condensed-latin-600-normal.woff2) format("woff2"); }
+@font-face { font-family: "Kilic Barlow Condensed"; font-weight: 700; font-display: swap; src: url(../fonts/barlow-condensed-latin-700-normal.woff2) format("woff2"); }
+
+body.kilic-ui {
+  --k-ink: #1b1f23; --k-ink2: #2a3036; --k-ink3: #3b434b; --k-muted: #6b7279;
+  --k-line: #dedad3; --k-concrete: #efede9; --k-accent: #e8892b; --k-accent-d: #c96f17;
+  --k-accent-soft: #fbeedf; --k-red: #d7262f; --k-green: #1f9d55;
+  background: var(--k-concrete);
+  font-family: "Kilic Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--k-ink);
+}
+
+/* WordPress-Leiste und -Menü ausblenden */
+.kilic-ui #wpadminbar, .kilic-ui #adminmenumain, .kilic-ui #adminmenuback, .kilic-ui #adminmenuwrap,
+.kilic-ui #screen-meta-links, .kilic-ui #screen-meta, .kilic-ui .handle-actions, .kilic-ui #wpfooter .alignright,
+.kilic-ui .kc-brand, .kilic-ui #favorite-actions, .kilic-ui .page-title-action ~ .page-title-action { display: none !important; }
+html.wp-toolbar:has(body.kilic-ui) { padding-top: 0 !important; }
+.kilic-ui #wpcontent, .kilic-ui #wpfooter { margin-left: 0 !important; padding-left: 0; }
+.kilic-ui #wpbody-content { padding-bottom: 40px; }
+.kilic-ui .wrap { margin: 24px 28px 0; }
+
+/* Kopfleiste */
+.kui-bar {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+  background: var(--k-ink); color: #fff; padding: 10px 28px; min-height: 64px;
+  border-bottom: 4px solid var(--k-accent);
+}
+.kui-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.kui-brand .logo-mark { width: 40px; height: 40px; }
+.kui-brand .kilic-logo-text { display: flex; flex-direction: column; line-height: 1; }
+.kui-brand .kilic-logo-text strong { font: 700 23px/1 "Kilic Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .05em; text-transform: uppercase; color: #fff !important; }
+.kui-brand .kilic-logo-text strong em { font-style: normal; color: var(--k-accent); }
+.kui-brand .kilic-logo-text small { font-size: 9px; letter-spacing: .26em; text-transform: uppercase; color: #aab0b6; margin-top: 3px; }
+.kui-brand img { max-height: 44px; background: #fff; border-radius: 6px; padding: 3px; }
+.kui-nav { display: flex; flex-wrap: wrap; gap: 2px; flex: 1; }
+.kui-nav a, .kui-user a {
+  display: inline-flex; align-items: center; gap: 6px; color: #cfd3d7; text-decoration: none;
+  font: 600 15px/1 "Kilic Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .06em; text-transform: uppercase;
+  padding: 10px 12px; border-radius: 8px;
+}
+.kui-nav a .dashicons, .kui-user a .dashicons { font-size: 17px; width: 17px; height: 17px; color: #8c949b; }
+.kui-nav a:hover, .kui-user a:hover { background: var(--k-ink2); color: #fff; }
+.kui-nav a.is-active { background: var(--k-accent); color: #fff; }
+.kui-nav a.is-active .dashicons { color: #fff; }
+.kui-badge { background: var(--k-red); color: #fff; border-radius: 20px; font: 700 11px/1 "Kilic Inter", sans-serif; padding: 3px 7px; letter-spacing: 0; }
+.kui-user { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+.kui-name { color: #8c949b; font-size: 13px; padding: 0 8px; }
+.kui-burger { display: none; background: none; border: 0; color: #fff; cursor: pointer; padding: 8px; }
+.kui-burger .dashicons { font-size: 28px; width: 28px; height: 28px; }
+
+/* Überschriften */
+.kilic-ui .wrap > h1, .kilic-ui .wrap h1.wp-heading-inline {
+  font: 700 30px/1.1 "Kilic Barlow Condensed", "Arial Narrow", sans-serif; text-transform: uppercase; letter-spacing: .02em; color: var(--k-ink);
+}
+.kilic-ui h2, .kilic-ui h3 { font-family: "Kilic Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .03em; }
+.kilic-ui .kilic-gruppe { font-size: 18px; text-transform: uppercase; margin: 26px 0 0; padding-bottom: 6px; border-bottom: 2px solid var(--k-accent-soft); }
+
+/* Kästen */
+.kilic-ui .postbox { border: 0; border-radius: 14px; box-shadow: 0 6px 20px rgba(20,24,28,.06); overflow: hidden; }
+.kilic-ui .postbox .postbox-header { border-bottom: 1px solid var(--k-line); background: #fff; }
+.kilic-ui .postbox .postbox-header h2 { font: 700 18px/1 "Kilic Barlow Condensed", "Arial Narrow", sans-serif; text-transform: uppercase; letter-spacing: .05em; padding: 14px 18px; }
+.kilic-ui #kilic_speichern .postbox-header, .kilic-ui #kilic_beleg_aktionen .postbox-header { background: var(--k-ink); border: 0; }
+.kilic-ui #kilic_speichern .postbox-header h2, .kilic-ui #kilic_beleg_aktionen .postbox-header h2 { color: #fff; }
+.kilic-ui .postbox .inside { padding: 6px 20px 18px; }
+.kilic-ui #titlediv #title { border-radius: 10px; border: 1.5px solid var(--k-line); padding: 12px 14px; font-size: 20px; }
+.kilic-ui .post-type-kilic_beleg #titlediv, body.kilic-ui.post-type-kilic_beleg #titlediv { display: none; }
+.kilic-ui #poststuff #post-body.columns-2 { margin-right: 340px; }
+.kilic-ui #post-body.columns-2 #postbox-container-1 { margin-right: -340px; width: 320px; }
+
+/* Formulare */
+.kilic-ui input[type=text], .kilic-ui input[type=email], .kilic-ui input[type=tel], .kilic-ui input[type=number],
+.kilic-ui input[type=date], .kilic-ui input[type=url], .kilic-ui input[type=search], .kilic-ui select, .kilic-ui textarea {
+  border: 1.5px solid var(--k-line); border-radius: 8px; min-height: 42px; padding: 6px 12px; font-size: 15px; background: #fff; color: var(--k-ink);
+}
+.kilic-ui select { padding-right: 30px; }
+.kilic-ui input:focus, .kilic-ui select:focus, .kilic-ui textarea:focus { border-color: var(--k-accent) !important; box-shadow: 0 0 0 3px rgba(232,137,43,.18) !important; outline: none; }
+.kilic-ui .form-table th { font-weight: 600; color: var(--k-ink2); }
+.kilic-ui .description { color: var(--k-muted); }
+.kilic-ui input[type=checkbox]:checked::before { content: url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2020%2020%27%3E%3Cpath%20d%3D%27M14.83%204.89l1.34.94-5.81%208.38H9.02L5.78%209.67l1.34-1.25%202.57%202.4z%27%20fill%3D%27%23e8892b%27%2F%3E%3C%2Fsvg%3E"); }
+
+/* Knöpfe & Links */
+.kilic-ui a { color: var(--k-accent-d); }
+.kilic-ui a:hover { color: var(--k-ink); }
+.kilic-ui .button, .kilic-ui .button-secondary {
+  border-radius: 8px; border: 1.5px solid var(--k-line); background: #fff; color: var(--k-ink); min-height: 40px; line-height: 2.2; padding: 0 14px; font-weight: 600;
+}
+.kilic-ui .button:hover { border-color: var(--k-ink); color: var(--k-ink); background: #fff; }
+.kilic-ui .button-primary, .kilic-ui .page-title-action {
+  background: var(--k-accent) !important; border-color: var(--k-accent) !important; color: #fff !important; text-shadow: none; box-shadow: none;
+  border-radius: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+}
+.kilic-ui .button-primary:hover, .kilic-ui .page-title-action:hover { background: var(--k-accent-d) !important; border-color: var(--k-accent-d) !important; }
+.kilic-ui .page-title-action { padding: 6px 14px; top: -4px; }
+.kilic-ui .kilic-save-btn, .kilic-ui #kilic_beleg_aktionen .button-primary { width: 100%; min-height: 52px; font-size: 17px; }
+.kilic-ui .submitdelete, .kilic-ui .kilic-loeschen a { color: var(--k-red) !important; }
+
+/* Listen */
+.kilic-ui .wp-list-table { border: 0; border-radius: 14px; overflow: hidden; box-shadow: 0 6px 20px rgba(20,24,28,.06); }
+.kilic-ui .wp-list-table thead th, .kilic-ui .wp-list-table tfoot th { background: var(--k-ink); color: #fff; font-weight: 600; border: 0; }
+.kilic-ui .wp-list-table thead th a, .kilic-ui .wp-list-table tfoot th a { color: #fff; }
+.kilic-ui .wp-list-table td, .kilic-ui .wp-list-table th { padding: 12px 10px; }
+.kilic-ui .wp-list-table .row-title { color: var(--k-ink); font-size: 15px; }
+.kilic-ui .striped > tbody > :nth-child(odd) { background: #faf9f7; }
+.kilic-ui .subsubsub a .count { color: var(--k-muted); }
+.kilic-ui .subsubsub a.current { color: var(--k-accent-d); }
+.kilic-ui .tablenav .actions select, .kilic-ui .search-box input { min-height: 38px; }
+
+/* Hinweise */
+.kilic-ui .notice, .kilic-ui div.updated { border-radius: 10px; border-left-width: 5px; box-shadow: none; }
+.kilic-ui .notice-success, .kilic-ui div.updated { border-left-color: var(--k-green); }
+
+/* Cockpit innerhalb der Oberfläche */
+.kilic-ui .kc { margin: 0; }
+.kilic-ui .kc-head { background: transparent; padding: 0; justify-content: flex-start; }
+.kilic-ui .kc-big { background: var(--k-ink); }
+
+/* Handy */
+@media (max-width: 960px) {
+  .kui-bar { padding: 10px 14px; gap: 10px; }
+  .kui-burger { display: block; margin-left: auto; }
+  .kui-nav, .kui-user { display: none; width: 100%; flex-direction: column; }
+  body.kui-nav-open .kui-nav, body.kui-nav-open .kui-user { display: flex; }
+  .kui-user { margin: 0; align-items: stretch; }
+  .kui-nav a, .kui-user a { padding: 14px 12px; font-size: 17px; }
+  .kilic-ui .wrap { margin: 16px 12px 0; }
+  .kilic-ui #poststuff #post-body.columns-2 { margin-right: 0; }
+  .kilic-ui #post-body.columns-2 #postbox-container-1 { margin-right: 0; width: 100%; }
+}
+
+/* Kopfleiste: Links hell (vor den allgemeinen Link-Farben) */
+.kilic-ui .kui-nav a, .kilic-ui .kui-user a { color: #cfd3d7; }
+.kilic-ui .kui-nav a:hover, .kilic-ui .kui-user a:hover, .kilic-ui .kui-nav a.is-active { color: #fff; }
+/* Anfrage & Kunde: Titel entsteht automatisch */
+body.kilic-ui.post-type-kilic_anfrage #titlediv, body.kilic-ui.post-type-kilic_kunde #titlediv { display: none; }
