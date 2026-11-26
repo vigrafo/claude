@@ -35,6 +35,7 @@ function kilic_defaults() {
 		'an_text_oben'   => 'Vielen Dank für Ihre Anfrage. Gerne bieten wir Ihnen folgende Leistungen an:',
 		'an_text_unten'  => 'Dieses Angebot ist 30 Tage gültig. Wir freuen uns auf Ihren Auftrag.',
 		'empfaenger'     => '',
+		'inhaber_email'  => '',
 		'bestaetigung'   => '1',
 	);
 }

@@ -44,6 +44,7 @@ function kilic_settings_fields() {
 		'Anfragen' => array(
 			'empfaenger'   => array( 'Benachrichtigung an', 'email', 'Leer = Firmen-E-Mail bzw. WordPress-Admin-E-Mail.' ),
 			'bestaetigung' => array( 'Eingangsbestätigung an Kunden senden', 'checkbox' ),
+			'inhaber_email' => array( 'Kopie der Eingangsbestätigung an (Inhaber)', 'email', 'Leer = WordPress-Admin-E-Mail. Angebote und Rechnungen gehen ohne Kopie raus – die Kopie liegt am Beleg im Backend.' ),
 		),
 	);
 }

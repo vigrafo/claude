@@ -136,7 +136,10 @@
     function toggleConditional() {
       var service = val("leistung");
       form.querySelectorAll("[data-show-if]").forEach(function (el) {
-        el.classList.toggle("show", el.dataset.showIf.split(",").indexOf(service) !== -1);
+        var sichtbar = el.dataset.showIf.split(",").indexOf(service) !== -1;
+        el.classList.toggle("show", sichtbar);
+        // Ausgeblendete Felder nicht mitsenden (z. B. Belagart bei Estrich).
+        el.querySelectorAll("input, select, textarea").forEach(function (f) { f.disabled = !sichtbar; });
       });
     }
 

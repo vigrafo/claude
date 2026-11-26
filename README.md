@@ -17,18 +17,17 @@ WordPress-Website mit Büro-Verwaltung für Fikret Kilic, Heidelberger Str. 57, 
 - Notdienst-Nummer überall (Topbar, Banner, Footer, mobile Leiste), Nach-oben-Knopf
 - Schriften lokal (DSGVO), keine externen Dienste
 
-**Backend „Kilic Betrieb“**
-- Übersicht: neue Anfragen, offene/überfällige Rechnungen, Umsatz, CSV-Export für den Steuerberater
-- Anfragen aus dem Formular (inkl. Fotos), Status, Notizen, E-Mail-Benachrichtigung, Eingangsbestätigung an Kunden
-- „Kunde anlegen & Angebot erstellen“ mit einem Klick aus der Anfrage
-- Kunden mit Kundennummer, Privat-/Gewerbekunde, Belegübersicht
-- Leistungskatalog (Text, Einheit, Preis) zum Auswählen in Angeboten und Rechnungen
-- Angebote & Rechnungen: Positionen aus dem Katalog, MwSt., fortlaufende Nummern (AN-/RE-Jahr-Nummer), Status, Zahlungseingang, Angebot → Rechnung, Kopieren
-- Druckansicht DIN A4 → „Als PDF speichern“, mit Pflichtangaben (§ 14 UStG), § 35a-Lohnanteil und Aufbewahrungshinweis für Privatkunden
-- Abgeschlossene Rechnungen sind gesperrt und nicht löschbar (GoBD) – Korrektur über Storno
-- Referenzen mit Foto, Projektarten-Filter
-- Einstellungen: Firmendaten, Notdienst-Nummer, Steuer, Bank, Nummernkreise, Belegtexte
-- Rolle „Büro (Kilic)“ für Mitarbeiter ohne Admin-Rechte
+**Büro-Software (Cockpit)** – erreichbar unter `/buero`
+- Anmeldung im Firmendesign, danach direkt das Cockpit; Büro-Zugänge (Rolle „Büro (Kilic)“) sehen keine WordPress-Menüs
+- Cockpit mit Ablauf Anfragen → Angebote → Aufträge → Rechnungen, Knöpfe direkt an jeder Karte
+- Kennzahlen: offen, überfällig, Zahlungseingang Monat/Jahr, letzte Zahlungen
+- Anfragen aus dem Formular (inkl. Fotos), E-Mail ans Büro, Eingangsbestätigung an den Kunden im Firmendesign mit Kopie an den Inhaber
+- Angebote & Rechnungen mit Leistungskatalog, fortlaufenden Nummern (nie doppelt), jederzeit wieder bearbeitbar
+- Per E-Mail an den Kunden senden – E-Mail im Firmendesign, PDF im Anhang (dompdf); jede gesendete Fassung bleibt als Kopie am Beleg
+- Aufträge mit Ausführungstermin, Auftragsbestätigung (PDF/E-Mail)
+- Zahlungsverkehr: Zahlungseingänge und Teilzahlungen, Status automatisch, Zahlungserinnerung (PDF/E-Mail), CSV-Export für den Steuerberater
+- Kundenakte mit Verlauf (wer hat wann was gemacht) und Fotos vom Objekt – Upload direkt vom Handy
+- Referenzen, Einstellungen (Firmendaten, Steuer, Bank, Logo, Nummernkreise, Texte)
 
 ## Installation auf kilic.vigrafo.de (Plesk)
 
@@ -46,4 +45,4 @@ Gelb markierte Platzhalter (`todo`) ersetzen: Fotos („Foto ersetzen“), Kunde
 
 ## Entwicklung
 
-Getestet mit WordPress 6.8 und PHP 8.3 (ohne Divi – Divi ist kommerziell und war für den Test nicht verfügbar).
+Getestet mit WordPress 6.8 und PHP 8.3 (ohne Divi – Divi ist kommerziell und war für den Test nicht verfügbar). PDF-Erzeugung: dompdf 3 (LGPL) unter `lib/vendor`.

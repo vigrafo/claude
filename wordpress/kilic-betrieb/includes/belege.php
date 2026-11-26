@@ -11,7 +11,7 @@ function kilic_beleg_status_liste( $typ ) {
 		return array(
 			'entwurf'    => 'Entwurf',
 			'offen'      => 'Versendet',
-			'angenommen' => 'Angenommen',
+			'angenommen' => 'Auftrag erteilt',
 			'abgelehnt'  => 'Abgelehnt',
 		);
 	}
@@ -29,12 +29,13 @@ function kilic_status_badge( $status ) {
 		'offen'      => 'Offen',
 		'bezahlt'    => 'Bezahlt',
 		'storniert'  => 'Storniert',
-		'angenommen' => 'Angenommen',
+		'angenommen' => 'Auftrag erteilt',
 		'abgelehnt'  => 'Abgelehnt',
 		'neu'        => 'Neu',
 		'bearbeitung'=> 'In Bearbeitung',
 		'angebot'    => 'Angebot erstellt',
 		'erledigt'   => 'Erledigt',
+		'teilbezahlt'=> 'Teilbezahlt',
 	);
 	$status = $status ? $status : 'entwurf';
 	return '<span class="kilic-badge kilic-badge-' . esc_attr( $status ) . '">' . esc_html( $labels[ $status ] ?? $status ) . '</span>';
@@ -90,8 +91,13 @@ function kilic_naechste_nummer( $typ ) {
 	$opts   = wp_parse_args( get_option( 'kilic_settings', array() ), kilic_defaults() );
 	$next   = max( 1, (int) $opts[ $key . '_next' ] );
 	$prefix = $opts[ $key . '_prefix' ] ? $opts[ $key . '_prefix' ] : strtoupper( $key );
-	$nummer = sprintf( '%s-%s-%04d', $prefix, gmdate( 'Y' ), $next );
-	$opts[ $key . '_next' ] = (string) ( $next + 1 );
+	// Nie doppelt vergeben – auch wenn der Zähler zurückgestellt wurde.
+	do {
+		$nummer = sprintf( '%s-%s-%04d', $prefix, gmdate( 'Y' ), $next );
+		$belegt = get_posts( array( 'post_type' => 'kilic_beleg', 'post_status' => 'any', 'numberposts' => 1, 'fields' => 'ids', 'meta_key' => '_nummer', 'meta_value' => $nummer ) );
+		$next++;
+	} while ( $belegt );
+	$opts[ $key . '_next' ] = (string) $next;
 	update_option( 'kilic_settings', $opts );
 	return $nummer;
 }
@@ -103,6 +109,10 @@ add_action( 'add_meta_boxes_kilic_beleg', function () {
 	add_meta_box( 'kilic_beleg_kopf', 'Beleg', 'kilic_beleg_kopf_box', 'kilic_beleg', 'normal', 'high' );
 	add_meta_box( 'kilic_beleg_pos', 'Positionen', 'kilic_beleg_pos_box', 'kilic_beleg', 'normal', 'high' );
 	add_meta_box( 'kilic_beleg_aktionen', 'Speichern & Drucken', 'kilic_beleg_aktionen_box', 'kilic_beleg', 'side', 'high' );
+	global $post;
+	if ( $post && 'rechnung' === kilic_beleg_typ( $post->ID ) && 'auto-draft' !== $post->post_status ) {
+		add_meta_box( 'kilic_beleg_zahlungen', 'Zahlungseingänge', 'kilic_beleg_zahlungen_box', 'kilic_beleg', 'normal', 'default' );
+	}
 } );
 
 add_filter( 'enter_title_here', function ( $text, $post ) {
@@ -139,7 +149,7 @@ function kilic_beleg_kopf_box( $post ) {
 	$gesperrt = kilic_beleg_gesperrt( $id );
 	?>
 	<?php if ( $gesperrt ) : ?>
-		<div class="notice notice-info inline"><p>Diese Rechnung ist abgeschlossen und kann nicht mehr inhaltlich geändert werden (GoBD). Für Korrekturen stornieren Sie sie und erstellen eine neue Rechnung. Status und Zahlungseingang können Sie weiter pflegen.</p></div>
+		<div class="notice notice-info inline"><p>Diese Rechnung ist abgeschlossen. <strong>Zum Ändern</strong> den Status auf „Entwurf“ setzen und speichern – danach ist alles wieder bearbeitbar und kann erneut gesendet werden. Bereits gesendete Fassungen bleiben unter „Versand &amp; Kopien“ erhalten.</p></div>
 	<?php endif; ?>
 	<table class="form-table kilic-form"><tbody>
 		<tr>
@@ -191,6 +201,13 @@ function kilic_beleg_kopf_box( $post ) {
 			<td><input type="text" id="kb_leistung" name="kilic_beleg[leistung]" value="<?php echo esc_attr( get_post_meta( $id, '_leistung', true ) ); ?>" class="large-text" placeholder="z. B. 03.–05.11.2026, BV Musterweg 3, Mosbach" <?php disabled( $gesperrt ); ?>>
 			<p class="description">Auf Rechnungen Pflicht: Zeitpunkt der Leistung.</p></td>
 		</tr>
+		<?php if ( 'angebot' === $typ ) : ?>
+		<tr>
+			<th><label for="kb_termin_von">Ausführungstermin (Auftrag)</label></th>
+			<td><input type="date" id="kb_termin_von" name="kilic_beleg[termin_von]" value="<?php echo esc_attr( get_post_meta( $id, '_termin_von', true ) ); ?>"> bis <input type="date" name="kilic_beleg[termin_bis]" value="<?php echo esc_attr( get_post_meta( $id, '_termin_bis', true ) ); ?>" aria-label="Termin bis">
+			<p class="description">Erscheint im Cockpit unter „Aufträge“ und auf der Auftragsbestätigung.</p></td>
+		</tr>
+		<?php endif; ?>
 		<tr>
 			<th><label for="kb_status">Status</label></th>
 			<td>
@@ -294,6 +311,7 @@ function kilic_beleg_aktionen_box( $post ) {
 	echo '<div class="kilic-actions">';
 	echo '<button type="submit" name="save" class="button button-primary button-large" style="width:100%">Speichern</button>';
 	if ( 'auto-draft' !== $post->post_status ) {
+		echo '<a class="button button-large" style="width:100%;text-align:center;margin-top:8px" href="' . esc_url( kilic_senden_url( $id ) ) . '"><span class="dashicons dashicons-email" style="vertical-align:text-bottom"></span> Per E-Mail an Kunden</a>';
 		$print = wp_nonce_url( admin_url( 'admin-post.php?action=kilic_drucken&id=' . $id ), 'kilic_drucken_' . $id );
 		echo '<a class="button button-large" style="width:100%;text-align:center;margin-top:8px" target="_blank" href="' . esc_url( $print ) . '">Drucken / als PDF speichern</a>';
 		if ( 'angebot' === kilic_beleg_typ( $id ) ) {
@@ -302,6 +320,10 @@ function kilic_beleg_aktionen_box( $post ) {
 		}
 		$dup = wp_nonce_url( admin_url( 'admin-post.php?action=kilic_kopieren&id=' . $id ), 'kilic_kopieren_' . $id );
 		echo '<a class="button" style="width:100%;text-align:center;margin-top:8px" href="' . esc_url( $dup ) . '">Als neuen Entwurf kopieren</a>';
+		$kd = (int) get_post_meta( $id, '_kunde', true );
+		if ( $kd ) {
+			echo '<p><a href="' . esc_url( get_edit_post_link( $kd ) . '#kilic_kunde_verlauf' ) . '">Kundenakte &amp; Verlauf öffnen</a></p>';
+		}
 		$bezug = (int) get_post_meta( $id, '_bezug', true );
 		if ( $bezug ) {
 			echo '<p>Erstellt aus: <a href="' . esc_url( get_edit_post_link( $bezug ) ) . '">' . esc_html( kilic_beleg_label( $bezug ) ) . '</a></p>';
@@ -329,6 +351,8 @@ function kilic_beleg_save( $post_id, $post ) {
 	}
 	$d        = isset( $_POST['kilic_beleg'] ) ? (array) wp_unslash( $_POST['kilic_beleg'] ) : array();
 	$gesperrt = kilic_beleg_gesperrt( $post_id );
+	$alt_status = get_post_meta( $post_id, '_status', true );
+	$alt_kunde  = (int) get_post_meta( $post_id, '_kunde', true );
 
 	if ( ! get_post_meta( $post_id, '_nummer', true ) ) {
 		update_post_meta( $post_id, '_typ', ( $d['typ'] ?? '' ) === 'rechnung' ? 'rechnung' : 'angebot' );
@@ -339,14 +363,20 @@ function kilic_beleg_save( $post_id, $post ) {
 	if ( ! isset( kilic_beleg_status_liste( $typ )[ $status ] ) ) {
 		$status = 'entwurf';
 	}
-	// Abgeschlossene Rechnungen nicht zurück in den Entwurf.
+	// Zurück in den Entwurf ist erlaubt; gesendete Fassungen bleiben im Versandarchiv.
+	// Die Felder waren gesperrt und wurden daher nicht mitgesendet: in diesem
+	// Speichervorgang nur den Status ändern, Inhalte bleiben unverändert.
 	if ( $gesperrt && 'entwurf' === $status ) {
-		$status = get_post_meta( $post_id, '_status', true );
+		kilic_log_beleg( $post_id, 'zur Bearbeitung wieder geöffnet', kilic_beleg_typ( $post_id ) );
 	}
 	update_post_meta( $post_id, '_status', $status );
 	update_post_meta( $post_id, '_bezahlt_am', sanitize_text_field( $d['bezahlt_am'] ?? '' ) );
-	if ( 'bezahlt' === $status && empty( $d['bezahlt_am'] ) ) {
-		update_post_meta( $post_id, '_bezahlt_am', current_time( 'Y-m-d' ) );
+	if ( isset( $d['termin_von'] ) ) {
+		update_post_meta( $post_id, '_termin_von', sanitize_text_field( $d['termin_von'] ) );
+		update_post_meta( $post_id, '_termin_bis', sanitize_text_field( $d['termin_bis'] ?? '' ) );
+	}
+	if ( 'rechnung' === $typ ) {
+		kilic_zahlungen_speichern( $post_id );
 	}
 
 	if ( ! $gesperrt ) {
@@ -389,7 +419,19 @@ function kilic_beleg_save( $post_id, $post ) {
 		update_post_meta( $post_id, '_nummer', kilic_naechste_nummer( $typ ) );
 	}
 
+	if ( 'rechnung' === $typ ) {
+		kilic_zahlstatus_abgleichen( $post_id );
+	}
 	kilic_beleg_titel_setzen( $post_id );
+
+	// Verlauf: neuer Beleg und Statuswechsel festhalten.
+	$neu_status = get_post_meta( $post_id, '_status', true );
+	if ( ! $alt_status || ( ! $alt_kunde && get_post_meta( $post_id, '_kunde', true ) ) ) {
+		kilic_log_beleg( $post_id, 'angelegt', $typ );
+	}
+	if ( $alt_status && $alt_status !== $neu_status ) {
+		kilic_log_beleg( $post_id, 'Status „' . wp_strip_all_tags( kilic_status_badge( $neu_status ) ) . '“', 'angenommen' === $neu_status ? 'auftrag' : $typ );
+	}
 }
 
 function kilic_beleg_titel_setzen( $post_id ) {
@@ -448,6 +490,8 @@ add_action( 'admin_post_kilic_umwandeln', function () {
 	}
 	$new = kilic_beleg_kopie( $id, 'rechnung' );
 	update_post_meta( $new, '_bezug', $id );
+	update_post_meta( $id, '_rechnung', $new );
+	kilic_log_beleg( $new, 'Rechnungsentwurf aus ' . kilic_beleg_label( $id ) . ' erstellt', 'rechnung' );
 	if ( in_array( get_post_meta( $id, '_status', true ), array( 'entwurf', 'offen' ), true ) ) {
 		update_post_meta( $id, '_status', 'angenommen' );
 		if ( ! get_post_meta( $id, '_nummer', true ) ) {
@@ -476,6 +520,9 @@ add_action( 'admin_post_kilic_drucken', function () {
 	if ( 'kilic_beleg' !== get_post_type( $id ) || ! current_user_can( 'edit_post', $id ) ) {
 		wp_die( 'Keine Berechtigung.' );
 	}
+	$art_log = sanitize_key( $_GET['art'] ?? '' );
+	$namen   = array( 'ab' => 'Auftragsbestätigung', 'mahnung' => 'Zahlungserinnerung' );
+	kilic_log_beleg( $id, ( $namen[ $art_log ] ?? 'Beleg' ) . ' gedruckt / als PDF geöffnet', 'mahnung' === $art_log ? 'mahnung' : 'druck' );
 	include KILIC_DIR . 'templates/beleg-druck.php';
 	exit;
 } );
@@ -564,7 +611,8 @@ add_action( 'manage_kilic_beleg_posts_custom_column', function ( $col, $id ) {
 			echo esc_html( kilic_eur( kilic_beleg_summen( $id )['brutto'] ) );
 			break;
 		case 'druck':
-			$print = wp_nonce_url( admin_url( 'admin-post.php?action=kilic_drucken&id=' . $id ), 'kilic_drucken_' . $id );
+			echo '<a class="button button-large" style="width:100%;text-align:center;margin-top:8px" href="' . esc_url( kilic_senden_url( $id ) ) . '"><span class="dashicons dashicons-email" style="vertical-align:text-bottom"></span> Per E-Mail an Kunden</a>';
+		$print = wp_nonce_url( admin_url( 'admin-post.php?action=kilic_drucken&id=' . $id ), 'kilic_drucken_' . $id );
 			echo '<a class="button button-small" target="_blank" href="' . esc_url( $print ) . '">Drucken</a>';
 			break;
 	}
@@ -605,3 +653,127 @@ add_filter( 'post_row_actions', function ( $actions, $post ) {
 	}
 	return $actions;
 }, 10, 2 );
+
+
+/* ---------- Zahlungsverkehr ---------- */
+
+function kilic_zahlarten() {
+	return array( 'Überweisung', 'Bar', 'EC-Karte', 'PayPal', 'Verrechnung' );
+}
+
+function kilic_zahlungen( $id ) {
+	$z = get_post_meta( $id, '_zahlungen', true );
+	return is_array( $z ) ? $z : array();
+}
+
+function kilic_beleg_bezahlt( $id ) {
+	return array_sum( array_map( 'intval', wp_list_pluck( kilic_zahlungen( $id ), 'betrag' ) ) );
+}
+
+function kilic_beleg_rest( $id ) {
+	return max( 0, kilic_beleg_summen( $id )['brutto'] - kilic_beleg_bezahlt( $id ) );
+}
+
+/** Zahlung hinzufügen (Cent). */
+function kilic_zahlung_hinzufuegen( $id, $betrag, $datum = '', $art = 'Überweisung', $notiz = '' ) {
+	$z   = kilic_zahlungen( $id );
+	$z[] = array(
+		'datum'  => $datum ? $datum : current_time( 'Y-m-d' ),
+		'betrag' => (int) $betrag,
+		'art'    => $art,
+		'notiz'  => $notiz,
+	);
+	update_post_meta( $id, '_zahlungen', $z );
+	kilic_log_beleg( $id, 'Zahlungseingang ' . kilic_eur( $betrag ) . ' (' . $art . ')', 'zahlung' );
+	kilic_zahlstatus_abgleichen( $id );
+}
+
+/** Status aus den Zahlungen ableiten: alles da → bezahlt. */
+function kilic_zahlstatus_abgleichen( $id ) {
+	$status = get_post_meta( $id, '_status', true );
+	if ( ! in_array( $status, array( 'offen', 'bezahlt' ), true ) ) {
+		return;
+	}
+	$z = kilic_zahlungen( $id );
+	if ( 'bezahlt' === $status && ! $z ) {
+		// Manuell auf „bezahlt“ gesetzt: vollständige Zahlung vermerken.
+		$datum = get_post_meta( $id, '_bezahlt_am', true );
+		update_post_meta( $id, '_zahlungen', array( array( 'datum' => $datum ? $datum : current_time( 'Y-m-d' ), 'betrag' => kilic_beleg_summen( $id )['brutto'], 'art' => 'Überweisung', 'notiz' => '' ) ) );
+		$z = kilic_zahlungen( $id );
+	}
+	if ( $z && kilic_beleg_rest( $id ) <= 0 ) {
+		update_post_meta( $id, '_status', 'bezahlt' );
+		$daten = wp_list_pluck( $z, 'datum' );
+		sort( $daten );
+		update_post_meta( $id, '_bezahlt_am', end( $daten ) );
+	} elseif ( 'bezahlt' === $status && kilic_beleg_rest( $id ) > 0 ) {
+		update_post_meta( $id, '_status', 'offen' );
+		update_post_meta( $id, '_bezahlt_am', '' );
+	}
+}
+
+function kilic_zahlungen_speichern( $id ) {
+	$z = kilic_zahlungen( $id );
+	$loeschen = isset( $_POST['kilic_zahlung_loeschen'] ) ? array_map( 'absint', (array) $_POST['kilic_zahlung_loeschen'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification
+	foreach ( $loeschen as $i ) {
+		if ( isset( $z[ $i ] ) ) {
+			kilic_log_beleg( $id, 'Zahlung vom ' . kilic_date( $z[ $i ]['datum'] ) . ' über ' . kilic_eur( $z[ $i ]['betrag'] ) . ' gelöscht', 'zahlung' );
+		}
+		unset( $z[ $i ] );
+	}
+	$z = array_values( $z );
+	$neu = isset( $_POST['kilic_zahlung'] ) ? (array) wp_unslash( $_POST['kilic_zahlung'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification
+	$betrag = kilic_to_cents( $neu['betrag'] ?? '' );
+	if ( $betrag > 0 ) {
+		$art = sanitize_text_field( $neu['art'] ?? 'Überweisung' );
+		$z[] = array(
+			'datum'  => sanitize_text_field( $neu['datum'] ?? current_time( 'Y-m-d' ) ),
+			'betrag' => $betrag,
+			'art'    => in_array( $art, kilic_zahlarten(), true ) ? $art : 'Überweisung',
+			'notiz'  => sanitize_text_field( $neu['notiz'] ?? '' ),
+		);
+		kilic_log_beleg( $id, 'Zahlungseingang ' . kilic_eur( $betrag ) . ' (' . end( $z )['art'] . ')', 'zahlung' );
+	}
+	update_post_meta( $id, '_zahlungen', $z );
+}
+
+function kilic_beleg_zahlungen_box( $post ) {
+	$id  = $post->ID;
+	$z   = kilic_zahlungen( $id );
+	$sum = kilic_beleg_summen( $id );
+	$rest = kilic_beleg_rest( $id );
+	echo '<p><strong>Rechnungsbetrag:</strong> ' . esc_html( kilic_eur( $sum['brutto'] ) ) . ' &nbsp;·&nbsp; <strong>bezahlt:</strong> ' . esc_html( kilic_eur( kilic_beleg_bezahlt( $id ) ) ) . ' &nbsp;·&nbsp; <strong>offen:</strong> <span class="' . ( $rest ? 'kilic-ueberfaellig' : '' ) . '">' . esc_html( kilic_eur( $rest ) ) . '</span></p>';
+	if ( $z ) {
+		echo '<table class="widefat striped"><thead><tr><th>Datum</th><th>Art</th><th>Notiz</th><th style="text-align:right">Betrag</th><th>Löschen</th></tr></thead><tbody>';
+		foreach ( $z as $i => $row ) {
+			printf(
+				'<tr><td>%s</td><td>%s</td><td>%s</td><td style="text-align:right">%s</td><td><input type="checkbox" name="kilic_zahlung_loeschen[]" value="%d" aria-label="Zahlung löschen"></td></tr>',
+				esc_html( kilic_date( $row['datum'] ) ),
+				esc_html( $row['art'] ),
+				esc_html( $row['notiz'] ),
+				esc_html( kilic_eur( $row['betrag'] ) ),
+				(int) $i
+			);
+		}
+		echo '</tbody></table>';
+	}
+	if ( 'entwurf' === get_post_meta( $id, '_status', true ) ) {
+		echo '<p class="description">Zahlungen können erfasst werden, sobald die Rechnung abgeschlossen ist (Status „Offen“).</p>';
+		return;
+	}
+	if ( $rest > 0 ) {
+		echo '<h4>Zahlungseingang erfassen</h4><p class="kilic-zahlung-neu">';
+		echo '<input type="date" name="kilic_zahlung[datum]" value="' . esc_attr( current_time( 'Y-m-d' ) ) . '" aria-label="Datum"> ';
+		echo '<input type="text" name="kilic_zahlung[betrag]" placeholder="' . esc_attr( number_format( $rest / 100, 2, ',', '' ) ) . '" style="width:110px" aria-label="Betrag"> € ';
+		echo '<select name="kilic_zahlung[art]" aria-label="Zahlungsart">';
+		foreach ( kilic_zahlarten() as $a ) {
+			echo '<option>' . esc_html( $a ) . '</option>';
+		}
+		echo '</select> <input type="text" name="kilic_zahlung[notiz]" placeholder="Notiz (optional)" aria-label="Notiz"> ';
+		echo '<button type="button" class="button kilic-rest-uebernehmen" data-rest="' . esc_attr( number_format( $rest / 100, 2, ',', '' ) ) . '">Restbetrag einsetzen</button>';
+		echo '</p><p class="description">Dann oben rechts „Speichern“. Ist alles bezahlt, steht die Rechnung automatisch auf „Bezahlt“.</p>';
+	}
+	if ( 'offen' === get_post_meta( $id, '_status', true ) ) {
+		echo '<p><a class="button" target="_blank" href="' . esc_url( kilic_druck_url( $id, 'mahnung' ) ) . '">Zahlungserinnerung drucken</a></p>';
+	}
+}

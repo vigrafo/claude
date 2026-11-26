@@ -125,7 +125,7 @@ function kilic_anfrage_empfangen() {
 
 	$dateien = kilic_anfrage_uploads( $id );
 
-	kilic_anfrage_mails( $id, $data, $dateien );
+	kilic_anfrage_mails_html( $id, $data, $dateien );
 
 	wp_safe_redirect( add_query_arg( 'anfrage', 'danke', $back ) . '#' . $form );
 	exit;
@@ -170,31 +170,6 @@ function kilic_anfrage_uploads( $anfrage_id ) {
 	unset( $_FILES['kilic_datei'] );
 	update_post_meta( $anfrage_id, '_dateien', $ids );
 	return $ids;
-}
-
-function kilic_anfrage_mails( $id, $data, $dateien ) {
-	$felder = kilic_anfrage_felder();
-	$lines  = array();
-	foreach ( $data as $k => $v ) {
-		$lines[] = str_pad( ( $felder[ $k ] ?? $k ) . ':', 22 ) . $v;
-	}
-	$body  = "Neue Anfrage über die Website\n\n" . implode( "\n", $lines );
-	$body .= "\n\nDateien: " . count( $dateien );
-	$body .= "\n\nIm Backend öffnen: " . admin_url( 'post.php?post=' . $id . '&action=edit' );
-	$headers = array();
-	if ( ! empty( $data['email'] ) ) {
-		$headers[] = 'Reply-To: ' . $data['name'] . ' <' . $data['email'] . '>';
-	}
-	wp_mail( kilic_empfaenger(), 'Neue Anfrage: ' . get_the_title( $id ), $body, $headers );
-
-	if ( '1' === kilic_opt( 'bestaetigung' ) && ! empty( $data['email'] ) && is_email( $data['email'] ) ) {
-		$msg  = 'Guten Tag ' . $data['name'] . ",\n\n";
-		$msg .= "vielen Dank für Ihre Anfrage. Wir haben sie erhalten und melden uns in der Regel innerhalb von 24 Stunden (werktags).\n\n";
-		$msg .= "Ihre Angaben:\n" . implode( "\n", $lines ) . "\n\n";
-		$msg .= 'Rohrreinigung-Notfall? 24/7-Notdienst: ' . kilic_opt( 'notdienst' ) . "\n\n";
-		$msg .= "Freundliche Grüße\n" . kilic_opt( 'firma' ) . "\n" . kilic_opt( 'strasse' ) . ', ' . kilic_opt( 'plz_ort' ) . "\nTel. " . kilic_opt( 'telefon' );
-		wp_mail( $data['email'], 'Ihre Anfrage bei ' . kilic_opt( 'firma' ), $msg );
-	}
 }
 
 /* ---------- Backend ---------- */
@@ -352,6 +327,13 @@ add_action( 'admin_post_kilic_anfrage_angebot', function () {
 	update_post_meta( $b, '_text_unten', kilic_opt( 'an_text_unten' ) );
 	kilic_beleg_titel_setzen( $b );
 	update_post_meta( $id, '_status', 'angebot' );
+	update_post_meta( $id, '_kunde', $kunde );
+	// Fotos aus der Anfrage in die Kundenakte übernehmen.
+	foreach ( array_filter( (array) get_post_meta( $id, '_dateien', true ) ) as $att ) {
+		update_post_meta( $att, '_kilic_kunde', $kunde );
+	}
+	kilic_log( $kunde, 'Anfrage vom ' . get_the_date( 'd.m.Y', $id ) . ' übernommen: ' . get_the_title( $id ), $id, 'anfrage' );
+	kilic_log_beleg( $b, 'Entwurf aus der Anfrage erstellt', 'angebot' );
 
 	wp_safe_redirect( get_edit_post_link( $b, 'url' ) );
 	exit;

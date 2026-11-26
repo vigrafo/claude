@@ -8,8 +8,8 @@ defined( 'ABSPATH' ) || exit;
 add_action( 'admin_menu', function () {
 	$neu   = kilic_anzahl_neue_anfragen();
 	$bubble = $neu ? ' <span class="awaiting-mod">' . (int) $neu . '</span>' : '';
-	add_menu_page( 'Kilic Betrieb', 'Kilic Betrieb' . $bubble, 'kilic_buero', 'kilic', 'kilic_render_dashboard', 'dashicons-hammer', 3 );
-	add_submenu_page( 'kilic', 'Übersicht', 'Übersicht', 'kilic_buero', 'kilic', 'kilic_render_dashboard', 0 );
+	add_menu_page( 'Cockpit', 'Kilic Betrieb' . $bubble, 'kilic_buero', 'kilic', 'kilic_render_cockpit', 'dashicons-hammer', 2 );
+	add_submenu_page( 'kilic', 'Cockpit', 'Cockpit', 'kilic_buero', 'kilic', 'kilic_render_cockpit', 0 );
 	add_submenu_page( 'kilic', 'Projektarten', 'Projektarten', 'manage_categories', 'edit-tags.php?taxonomy=kilic_ref_kat&post_type=kilic_referenz' );
 	add_submenu_page( 'kilic', 'Einstellungen', 'Einstellungen', 'manage_options', 'kilic-einstellungen', 'kilic_render_settings' );
 } );

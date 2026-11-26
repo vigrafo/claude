@@ -139,3 +139,21 @@
     });
   });
 })();
+
+/* Fotos: Dateiliste anzeigen, „Neuer Kunde“ ein-/ausblenden, Restbetrag einsetzen */
+(function () {
+  document.querySelectorAll('input[name="kilic_fotos[]"]').forEach(function (inp) {
+    inp.addEventListener("change", function () {
+      var info = document.querySelector(".kilic-upload-liste, .kilic-upload-info");
+      if (info) info.textContent = inp.files.length + " Datei(en) ausgewählt";
+    });
+  });
+  var kf = document.getElementById("kf_kunde");
+  if (kf) {
+    var neu = document.querySelector(".kf-neu");
+    kf.addEventListener("change", function () { neu.hidden = kf.value !== "neu"; neu.required = kf.value === "neu"; });
+  }
+  document.querySelectorAll(".kilic-rest-uebernehmen").forEach(function (b) {
+    b.addEventListener("click", function () { var f = document.querySelector('[name="kilic_zahlung[betrag]"]'); if (f) f.value = b.dataset.rest; });
+  });
+})();
