@@ -1,0 +1,33 @@
+/* Kilic Betrieb – Backend */
+.kilic-badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #f0f0f1; color: #3c434a; white-space: nowrap; }
+.kilic-badge-neu { background: #fde4e5; color: #b01c24; }
+.kilic-badge-offen { background: #fff4cc; color: #7a5300; }
+.kilic-badge-bezahlt, .kilic-badge-angenommen, .kilic-badge-erledigt { background: #e7f6ec; color: #165c2e; }
+.kilic-badge-storniert, .kilic-badge-abgelehnt { background: #eee; color: #777; text-decoration: line-through; }
+.kilic-badge-bearbeitung, .kilic-badge-angebot { background: #e6effb; color: #1756a6; }
+.kilic-ueberfaellig { color: #b01c24; font-weight: 600; }
+.kilic-form th { width: 220px; }
+.kilic-inline { margin-left: 18px; }
+.kilic-pos textarea { width: 100%; min-height: 44px; }
+.kilic-pos input[type=text], .kilic-pos select { width: 100%; }
+.kilic-pos td { vertical-align: top; }
+.kilic-pos .kilic-pos-sum { font-weight: 600; padding-top: 14px; }
+.kilic-pos .kilic-pos-nr { padding-top: 14px; color: #777; }
+.kilic-pos .kilic-sum td { border-top: 1px solid #dcdcde; }
+.kilic-pos .kilic-sum-total td { font-size: 15px; font-weight: 700; }
+.kilic-pos-del { color: #b32d2e; font-size: 16px; padding-top: 10px; }
+.kilic-vorlagen { margin-left: 14px; }
+.kilic-vorlagen select { max-width: 420px; }
+.kilic-dateien { display: flex; flex-wrap: wrap; gap: 10px; }
+.kilic-dateien img { border-radius: 4px; }
+.kilic-daten th { font-weight: 600; }
+.kilic-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin: 20px 0; }
+.kilic-kpi { display: block; background: #fff; border: 1px solid #dcdcde; border-left: 4px solid #e8892b; padding: 16px 18px; text-decoration: none; color: #1d2327; border-radius: 4px; }
+.kilic-kpi strong { display: block; font-size: 26px; line-height: 1.1; }
+.kilic-kpi span { color: #646970; }
+.kilic-kpi.warn { border-left-color: #d7262f; }
+.kilic-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 960px) { .kilic-cols { grid-template-columns: 1fr; } }
+.kilic-dash .postbox h2 { padding: 0; margin: 6px 0 12px; font-size: 15px; }
+.kilic-quick .button { margin: 0 6px 6px 0; }
+#toplevel_page_kilic .wp-menu-image:before { color: #e8892b; }
