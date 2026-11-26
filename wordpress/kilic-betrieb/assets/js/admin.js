@@ -180,9 +180,16 @@
   function firma(zeigen) {
     form.querySelectorAll(".kk-firma").forEach(function (r) { r.classList.toggle("is-hidden", !zeigen); });
     form.querySelectorAll(".kk-firma-link").forEach(function (r) { r.classList.toggle("is-hidden", zeigen); });
-    form.querySelectorAll(".kk-nur-firma").forEach(function (r) { r.hidden = !zeigen; });
   }
-  if (anrede) anrede.addEventListener("change", function () { if (anrede.value === "Firma") { firma(true); } });
+  /* Anrede „Firma“: Firmenname Pflicht, Nachname freiwillig (Ansprechpartner) */
+  function modus() {
+    var istFirma = !!anrede && anrede.value === "Firma";
+    if (istFirma) firma(true);
+    form.querySelectorAll(".kk-pflicht-firma").forEach(function (s) { s.hidden = !istFirma; });
+    form.querySelectorAll(".kk-pflicht-person").forEach(function (s) { s.hidden = istFirma; });
+    form.querySelectorAll(".kk-nur-firma").forEach(function (r) { r.hidden = !istFirma; });
+  }
+  if (anrede) { anrede.addEventListener("change", modus); modus(); }
   form.querySelectorAll(".kk-firma-zeigen").forEach(function (b) {
     b.addEventListener("click", function () { firma(true); var f = document.getElementById("kk_firma"); if (f) f.focus(); });
   });
@@ -209,7 +216,11 @@
       if (!gut) { fehlt.push(label); if (!erstes) erstes = el; }
     }
     var f = document.getElementById("kk_firma"), n = document.getElementById("kk_nachname");
-    pruef("kk_nachname", "Nachname (oder Firma)", !!(n && n.value.trim()) || !!(f && f.value.trim()));
+    var istFirma = !!anrede && anrede.value === "Firma";
+    document.getElementById("kk_nachname").classList.remove("kk-rot");
+    if (f) f.classList.remove("kk-rot");
+    if (istFirma) pruef("kk_firma", "Firmenname");
+    else pruef("kk_nachname", "Nachname", !!(n && n.value.trim()) || !!(f && f.value.trim()));
     pruef("kk_str", "Straße"); pruef("kk_hausnr", "Hausnummer");
     pruef("kk_plz", "PLZ"); pruef("kk_ort", "Ort");
     var em = document.getElementById("kk_email");
