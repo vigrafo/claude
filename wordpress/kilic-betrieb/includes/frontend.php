@@ -333,3 +333,32 @@ add_shortcode( 'kilic_anfrage', function () {
 	include KILIC_DIR . 'templates/anfrage-formular.php';
 	return ob_get_clean();
 } );
+
+/**
+ * Divi-5-Hinweis „Backwards Compatibility Mode Enabled“ in der Admin-Leiste ausblenden.
+ * Er ist nur ein Info-Hinweis für Admins (Seiten im Divi-4-Format laufen normal).
+ */
+add_action( 'admin_bar_menu', function ( $bar ) {
+	foreach ( (array) $bar->get_nodes() as $node ) {
+		$text = strtolower( $node->id . ' ' . wp_strip_all_tags( (string) $node->title ) );
+		if ( false !== strpos( $text, 'compatib' ) || false !== strpos( $text, 'kompatib' ) ) {
+			$bar->remove_node( $node->id );
+		}
+	}
+}, 9999 );
+add_action( 'wp_head', function () {
+	if ( is_admin_bar_showing() ) {
+		echo '<style>#wpadminbar [id*="compatib" i],#wpadminbar [class*="compatib" i]{display:none!important}</style>';
+	}
+}, 99 );
+add_action( 'wp_footer', function () {
+	if ( ! is_admin_bar_showing() ) {
+		return;
+	}
+	?>
+	<script>
+	(function(){function weg(){var b=document.getElementById("wpadminbar");if(!b)return;b.querySelectorAll("#wp-admin-bar-root-default > li, .ab-top-menu > li").forEach(function(li){var a=li.querySelector(".ab-item");if(a&&/backwards compatibility|kompatibilit/i.test(a.textContent))li.style.display="none";});}
+	weg();setTimeout(weg,800);setTimeout(weg,2500);})();
+	</script>
+	<?php
+}, 99 );
