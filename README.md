@@ -46,3 +46,11 @@ Gelb markierte Platzhalter (`todo`) ersetzen: Fotos („Foto ersetzen“), Kunde
 ## Entwicklung
 
 Getestet mit WordPress 6.8 und PHP 8.3 (ohne Divi – Divi ist kommerziell und war für den Test nicht verfügbar). PDF-Erzeugung: dompdf 3 (LGPL) unter `lib/vendor`.
+
+## Testen – immer mit Divi
+
+Jede Änderung an Website/Template wird **mit Divi** getestet, nicht nur mit dem Standard-Theme:
+Seiten aufrufen, Divi-Editor (`?et_fb=1`) öffnen, einen Text ändern, speichern und auf der
+Besucherseite prüfen. Divi ist eine lizenzierte Datei des Kunden (nicht im Repository):
+`Divi.zip` vom Kunden bereitstellen lassen und nach dem Test wieder vom Server löschen lassen.
+Geprüft mit Divi 5.19.1.

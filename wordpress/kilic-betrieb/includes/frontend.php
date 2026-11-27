@@ -346,9 +346,15 @@ add_action( 'admin_bar_menu', function ( $bar ) {
 		}
 	}
 }, 9999 );
+add_action( 'wp_before_admin_bar_render', function () {
+	global $wp_admin_bar;
+	if ( $wp_admin_bar ) {
+		$wp_admin_bar->remove_node( 'et-builder-shortcode-framework' );
+	}
+}, 9999 );
 add_action( 'wp_head', function () {
 	if ( is_admin_bar_showing() ) {
-		echo '<style>#wpadminbar [id*="compatib" i],#wpadminbar [class*="compatib" i]{display:none!important}</style>';
+		echo '<style>#wp-admin-bar-et-builder-shortcode-framework,#wpadminbar [id*="compatib" i],#wpadminbar [class*="compatib" i]{display:none!important}</style>';
 	}
 }, 99 );
 add_action( 'wp_footer', function () {
@@ -362,3 +368,60 @@ add_action( 'wp_footer', function () {
 	</script>
 	<?php
 }, 99 );
+
+/**
+ * Divi-Editor: Platzhalter wie {{notdienst}} oder {{assets}} auch in der Editor-Vorschau
+ * anzeigen (auf der echten Seite ersetzt sie bereits der Inhaltsfilter).
+ */
+add_action( 'wp_footer', function () {
+	if ( empty( $_GET['et_fb'] ) || ! current_user_can( 'edit_pages' ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		return;
+	}
+	$t = array();
+	// Platzhalter-Fotos wie auf der echten Seite: Schlüssel „hero|alt|variante“ → URL.
+	$ph   = array();
+	$post = get_queried_object();
+	if ( $post instanceof WP_Post && function_exists( 'kilic_ph_url' ) ) {
+		$parent = $post->post_parent ? get_post_field( 'post_name', $post->post_parent ) : '';
+		if ( preg_match_all( '#<img\b[^>]*?/img/ph-(dunkel|grau|warm|blau)\.svg[^>]*>#i', $post->post_content, $mm, PREG_SET_ORDER ) ) {
+			foreach ( $mm as $m ) {
+				preg_match( '#alt="([^"]*)"#', $m[0], $a );
+				$alt  = $a[1] ?? '';
+				$hero = false !== strpos( $m[0], 'hero-img' );
+				$url  = kilic_ph_url( $hero ? kilic_ph_hero( $post->post_name, $parent ) : kilic_ph_motiv( $post->post_name, $alt, strtolower( $m[1] ) ) );
+				if ( $url ) {
+					$ph[ ( $hero ? '1' : '0' ) . '|' . html_entity_decode( $alt, ENT_QUOTES, 'UTF-8' ) . '|' . strtolower( $m[1] ) ] = $url;
+				}
+			}
+		}
+	}
+	foreach ( kilic_tokens() as $k => $v ) {
+		$t[ $k ] = html_entity_decode( wp_strip_all_tags( (string) $v ), ENT_QUOTES, 'UTF-8' );
+	}
+	?>
+	<script>
+	(function () {
+		var T = <?php echo wp_json_encode( $t ); ?>, keys = Object.keys(T), PH = <?php echo wp_json_encode( (object) $ph ); ?>;
+		function bilder(root) {
+			root.querySelectorAll("img[src*='/img/ph-']").forEach(function (i) {
+				var m = i.getAttribute("src").match(/\/img\/ph-(dunkel|grau|warm|blau)\.svg/); if (!m) return;
+				var k = (i.classList.contains("hero-img") ? "1" : "0") + "|" + (i.getAttribute("alt") || "") + "|" + m[1];
+				if (PH[k]) i.setAttribute("src", PH[k]);
+			});
+		}
+		function rep(s) { keys.forEach(function (k) { if (s.indexOf(k) !== -1) s = s.split(k).join(T[k]); }); return s; }
+		function walk(root) {
+			if (!root || !root.querySelectorAll) return;
+			var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), n;
+			while ((n = w.nextNode())) { if (n.nodeValue.indexOf("{{") !== -1 && !(n.parentNode && n.parentNode.isContentEditable)) n.nodeValue = rep(n.nodeValue); }
+			root.querySelectorAll("[src*='{{'],[href*='{{'],[style*='{{']").forEach(function (e) {
+				["src", "href", "style"].forEach(function (a) { var v = e.getAttribute(a); if (v && v.indexOf("{{") !== -1) e.setAttribute(a, rep(v)); });
+			});
+			bilder(root);
+		}
+		function start() { walk(document.body); new MutationObserver(function (m) { m.forEach(function (r) { r.addedNodes.forEach(function (x) { walk(x.nodeType === 1 ? x : x.parentNode); }); }); }).observe(document.body, { childList: true, subtree: true }); }
+		if (document.body) start(); else document.addEventListener("DOMContentLoaded", start);
+	})();
+	</script>
+	<?php
+}, 999 );
