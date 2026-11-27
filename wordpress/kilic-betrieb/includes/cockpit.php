@@ -317,7 +317,9 @@ function kilic_render_cockpit() {
 				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=kilic_kunde' ) ); ?>"><span class="dashicons dashicons-groups"></span><span>Alle Kunden</span></a>
 				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=kilic_beleg' ) ); ?>"><span class="dashicons dashicons-media-document"></span><span>Angebote &amp; Rechnungen</span></a>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=kilic-katalog' ) ); ?>"><span class="dashicons dashicons-list-view"></span><span>Leistungen &amp; Preise</span></a>
-				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=kilic_referenz' ) ); ?>"><span class="dashicons dashicons-format-gallery"></span><span>Referenzen</span></a>
+				<?php if ( current_user_can( 'edit_kilic_webseiten' ) ) : ?>
+					<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=kilic_referenz' ) ); ?>"><span class="dashicons dashicons-format-gallery"></span><span>Referenzen</span></a>
+				<?php endif; ?>
 				<?php if ( current_user_can( 'manage_options' ) ) : ?>
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kilic-einstellungen' ) ); ?>"><span class="dashicons dashicons-admin-generic"></span><span>Einstellungen</span></a>
 				<?php endif; ?>

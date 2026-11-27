@@ -79,6 +79,8 @@ function kilic_register_post_types() {
 		'has_archive'  => false,
 		'rewrite'      => array( 'slug' => 'projekt' ),
 		'supports'     => array( 'title', 'editor', 'thumbnail' ),
+		'capability_type' => array( 'kilic_webseite', 'kilic_webseiten' ),
+		'map_meta_cap'    => true,
 	) );
 
 	register_taxonomy( 'kilic_ref_kat', 'kilic_referenz', array(
@@ -92,6 +94,7 @@ function kilic_register_post_types() {
 		'show_admin_column' => true,
 		'show_in_rest'      => true,
 		'hierarchical'      => true,
+		'capabilities'      => array( 'manage_terms' => 'edit_kilic_webseiten', 'edit_terms' => 'edit_kilic_webseiten', 'delete_terms' => 'edit_kilic_webseiten', 'assign_terms' => 'edit_kilic_webseiten' ),
 	) );
 }
 
@@ -107,24 +110,30 @@ function kilic_caps() {
 	);
 }
 
+/** Rechte für die Website (Referenzen, Website-Bilder) – nur Inhaber/Admin. */
+function kilic_webseiten_caps() {
+	return array(
+		'edit_kilic_webseite', 'read_kilic_webseite', 'delete_kilic_webseite',
+		'edit_kilic_webseiten', 'edit_others_kilic_webseiten', 'publish_kilic_webseiten',
+		'read_private_kilic_webseiten', 'delete_kilic_webseiten', 'delete_private_kilic_webseiten',
+		'delete_published_kilic_webseiten', 'delete_others_kilic_webseiten',
+		'edit_private_kilic_webseiten', 'edit_published_kilic_webseiten',
+	);
+}
+
 function kilic_install_roles() {
 	$admin = get_role( 'administrator' );
 	if ( $admin ) {
-		foreach ( kilic_caps() as $cap ) {
+		foreach ( array_merge( kilic_caps(), kilic_webseiten_caps() ) as $cap ) {
 			$admin->add_cap( $cap );
 		}
 	}
 	// Rolle „Büro“: verwaltet Anfragen, Kunden, Belege und Referenzen, aber keine Plugins/Themes.
 	remove_role( 'kilic_buero' );
+	// Bewusst ohne Beitrags-/Seitenrechte: Büro ändert nichts an der Website.
 	$caps = array(
-		'read'                   => true,
-		'upload_files'           => true,
-		'edit_posts'             => true,
-		'edit_published_posts'   => true,
-		'publish_posts'          => true,
-		'delete_posts'           => true,
-		'delete_published_posts' => true,
-		'manage_categories'      => true,
+		'read'         => true,
+		'upload_files' => true,
 	);
 	foreach ( kilic_caps() as $cap ) {
 		$caps[ $cap ] = true;

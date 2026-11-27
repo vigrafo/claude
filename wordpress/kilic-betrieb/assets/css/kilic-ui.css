@@ -890,3 +890,13 @@ body.kilic-ui.kui-dunkel {
   .kc-export-jahr { flex: 1; } .kilic-ui .kc-export select { width: 100%; }
   .kc-export-knopf { flex: 1; }
 }
+/* Fotos-Seite im dunklen Design */
+.kui-dunkel .kf-step, .kui-dunkel .kf-recent { background: var(--a-card) !important; box-shadow: 0 1px 2px rgba(0,0,0,.4) !important; }
+.kui-dunkel .kf-step h2, .kui-dunkel .kf-recent h2, .kui-dunkel .kf-step h2 span { color: var(--a-text) !important; }
+.kui-dunkel .kf-step h2 b { background: #3a2a19; color: #f0a258; }
+.kui-dunkel .kf-sub, .kui-dunkel .kf-intro { color: var(--a-sub) !important; }
+.kui-dunkel .kf-drop { background: #24282d !important; border-color: #454b53 !important; }
+.kui-dunkel .kf-drop:hover, .kui-dunkel .kf-drop.over { background: #2e2216 !important; border-color: #f0a258 !important; }
+.kui-dunkel .kf-drop strong { color: var(--a-text); } .kui-dunkel .kf-drop small, .kui-dunkel .kf-drop span:not(.dashicons) { color: var(--a-sub); }
+.kui-dunkel .kf-recent-grid small, .kui-dunkel .kf-recent-grid span { color: var(--a-sub); }
+.kui-dunkel .kf-ok { background: #13271b !important; color: #6fdc98 !important; }

@@ -10,7 +10,7 @@ add_action( 'admin_menu', function () {
 	$bubble = $neu ? ' <span class="awaiting-mod">' . (int) $neu . '</span>' : '';
 	add_menu_page( 'Cockpit', 'Kilic Betrieb' . $bubble, 'kilic_buero', 'kilic', 'kilic_render_cockpit', 'dashicons-hammer', 2 );
 	add_submenu_page( 'kilic', 'Cockpit', 'Cockpit', 'kilic_buero', 'kilic', 'kilic_render_cockpit', 0 );
-	add_submenu_page( 'kilic', 'Projektarten', 'Projektarten', 'manage_categories', 'edit-tags.php?taxonomy=kilic_ref_kat&post_type=kilic_referenz' );
+	add_submenu_page( 'kilic', 'Projektarten', 'Projektarten', 'edit_kilic_webseiten', 'edit-tags.php?taxonomy=kilic_ref_kat&post_type=kilic_referenz' );
 	add_submenu_page( 'kilic', 'Einstellungen', 'Einstellungen', 'manage_options', 'kilic-einstellungen', 'kilic_render_settings' );
 } );
 
@@ -115,7 +115,7 @@ function kilic_render_dashboard() {
 			<a class="button button-primary" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=kilic_beleg&kilic_typ=rechnung' ) ); ?>">Neue Rechnung</a>
 			<a class="button" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=kilic_kunde' ) ); ?>">Kunde anlegen</a>
 			<a class="button" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=kilic_anfrage' ) ); ?>">Telefonanfrage erfassen</a>
-			<a class="button" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=kilic_referenz' ) ); ?>">Referenz hinzufügen</a>
+			<?php if ( current_user_can( 'edit_kilic_webseiten' ) ) : ?><a class="button" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=kilic_referenz' ) ); ?>">Referenz hinzufügen</a><?php endif; ?>
 		</p>
 
 		<div class="kilic-cols">
@@ -245,3 +245,23 @@ add_filter( 'wp_insert_post_data', function ( $data, $raw ) {
 	}
 	return $data;
 }, 10, 2 );
+
+/**
+ * „Neu anlegen“ für Kilic-Typen ohne WordPress-Beitragsrechte erlauben:
+ * WordPress prüft post-new.php über das Menü – daher versteckte Menüeinträge.
+ */
+add_action( 'admin_menu', function () {
+	foreach ( array( 'kilic_anfrage', 'kilic_kunde', 'kilic_beleg', 'kilic_leistung' ) as $t ) {
+		$o = get_post_type_object( $t );
+		if ( $o ) {
+			add_submenu_page( 'kilic', $o->labels->add_new_item, $o->labels->add_new_item, $o->cap->create_posts, 'post-new.php?post_type=' . $t );
+		}
+	}
+	$o = get_post_type_object( 'kilic_referenz' );
+	if ( $o ) {
+		add_submenu_page( 'kilic', $o->labels->add_new_item, $o->labels->add_new_item, $o->cap->create_posts, 'post-new.php?post_type=kilic_referenz' );
+	}
+}, 99 );
+add_action( 'admin_head', function () {
+	echo '<style>#adminmenu a[href^="post-new.php?post_type=kilic_"]{display:none!important}</style>';
+} );

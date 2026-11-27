@@ -227,7 +227,7 @@ function kilic_ph_referenz( $kat_slugs ) {
 /* ---------- Backend: Seite „Website-Bilder“ ---------- */
 
 add_action( 'admin_menu', function () {
-	add_submenu_page( 'kilic', 'Website-Bilder', 'Website-Bilder', 'upload_files', 'kilic-bilder', 'kilic_render_bilder_seite' );
+	add_submenu_page( 'kilic', 'Website-Bilder', 'Website-Bilder', 'edit_kilic_webseiten', 'kilic-bilder', 'kilic_render_bilder_seite' );
 }, 20 );
 
 add_action( 'admin_enqueue_scripts', function ( $hook ) {
@@ -264,7 +264,7 @@ function kilic_bild_platz_aus_dateiname( $name ) {
 }
 
 function kilic_render_bilder_seite() {
-	if ( ! current_user_can( 'upload_files' ) ) {
+	if ( ! current_user_can( 'edit_kilic_webseiten' ) ) {
 		wp_die( 'Keine Berechtigung.' );
 	}
 	$z      = kilic_bild_zuordnung();
@@ -333,7 +333,7 @@ function kilic_render_bilder_seite() {
 
 add_action( 'admin_post_kilic_bilder_upload', function () {
 	check_admin_referer( 'kilic_bilder_upload' );
-	if ( ! current_user_can( 'upload_files' ) ) {
+	if ( ! current_user_can( 'edit_kilic_webseiten' ) ) {
 		wp_die( 'Keine Berechtigung.' );
 	}
 	require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -386,7 +386,7 @@ add_action( 'admin_post_kilic_bilder_upload', function () {
 
 add_action( 'admin_post_kilic_bilder_speichern', function () {
 	check_admin_referer( 'kilic_bilder_speichern' );
-	if ( ! current_user_can( 'upload_files' ) ) {
+	if ( ! current_user_can( 'edit_kilic_webseiten' ) ) {
 		wp_die( 'Keine Berechtigung.' );
 	}
 	$in = isset( $_POST['kilic_bild'] ) ? (array) wp_unslash( $_POST['kilic_bild'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
@@ -417,7 +417,7 @@ function kilic_bild_in_mediathek( $dateiname ) {
 /** Ein Bild hochladen (per JavaScript einzeln nacheinander aufgerufen). */
 add_action( 'wp_ajax_kilic_bild_einzeln', function () {
 	check_ajax_referer( 'kilic_bilder_upload' );
-	if ( ! current_user_can( 'upload_files' ) ) {
+	if ( ! current_user_can( 'edit_kilic_webseiten' ) ) {
 		wp_send_json_error( array( 'text' => 'Keine Berechtigung.' ), 403 );
 	}
 	if ( empty( $_FILES['datei'] ) || UPLOAD_ERR_OK !== $_FILES['datei']['error'] ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
@@ -454,7 +454,7 @@ add_action( 'wp_ajax_kilic_bild_einzeln', function () {
 /** Bereits hochgeladene Bilder aus der Mediathek den Plätzen zuordnen (nach Dateiname). */
 add_action( 'admin_post_kilic_bilder_scan', function () {
 	check_admin_referer( 'kilic_bilder_scan' );
-	if ( ! current_user_can( 'upload_files' ) ) {
+	if ( ! current_user_can( 'edit_kilic_webseiten' ) ) {
 		wp_die( 'Keine Berechtigung.' );
 	}
 	$z   = kilic_bild_zuordnung();
