@@ -820,3 +820,45 @@ body.kilic-ui.kui-dunkel {
   .ku-eng .ku-x { font-size: 9px; }
   .ku-eng .ku-spalte:not(:nth-child(5n+1)):not(.ist-heute) .ku-x { visibility: hidden; }
 }
+
+/* ---------- Team & Zugänge ---------- */
+.kt { max-width: 1200px; }
+.kt-intro { color: var(--k-muted); font-size: 15px; max-width: 760px; }
+.kt-hinweis { padding: 12px 16px; border-radius: 12px; margin: 10px 0; font-weight: 600; }
+.kt-hinweis.ok { background: #e9f6ee; color: #166c3b; } .kt-hinweis.fehler { background: #fdecec; color: #8f1d22; }
+.kt-zugang { margin: 12px 0 18px; padding: 18px 20px; border-radius: 16px; background: #e9f6ee; border: 1px solid #b9e3c8; }
+.kt-zugang h2 { margin: 0 0 10px; font-size: 18px; color: #166c3b; }
+.kt-zugang dl { display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; margin: 0 0 8px; }
+.kt-zugang dt { color: #4b5b52; } .kt-zugang dd { margin: 0; }
+.kt-zugang code { font-size: 15px; padding: 3px 8px; border-radius: 6px; background: #fff; user-select: all; }
+.kt-raster { display: grid; grid-template-columns: minmax(300px, 1fr) minmax(320px, 1.3fr); gap: 18px; align-items: start; }
+.kt-karte { background: var(--a-card, #fff); border-radius: 18px; padding: 20px 22px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.06); }
+.kt-karte h2 { margin: 0 0 14px; font-size: 18px; }
+.kt-form { display: grid; gap: 12px; }
+.kt-form label { display: flex; flex-direction: column; gap: 5px; font-weight: 600; font-size: 14px; }
+.kt-form label small { font-weight: 400; color: var(--k-muted); }
+.kt-form input[type=text], .kt-form input[type=email] { min-height: 44px; border-radius: 10px !important; font-size: 15px; }
+.kt-zwei { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.kt-form .kt-check { flex-direction: row; align-items: center; gap: 8px; font-weight: 400; }
+.kt-knopf { min-height: 48px; border: 0; border-radius: 999px; background: var(--k-accent); color: #fff; font-weight: 700; font-size: 16px; cursor: pointer; }
+.kt-knopf:hover { background: var(--k-accent-d); }
+.kt-liste { margin: 0; padding: 0; list-style: none; }
+.kt-liste li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--a-sep, #eee); flex-wrap: wrap; }
+.kt-liste li:first-child { border-top: 0; }
+.kt-avatar { flex: 0 0 40px; height: 40px; border-radius: 50%; background: var(--k-accent-soft); color: var(--k-accent-d); display: grid; place-items: center; font-weight: 700; }
+.kt-wer { flex: 1 1 180px; min-width: 0; display: flex; flex-direction: column; }
+.kt-wer small { color: var(--k-muted); overflow: hidden; text-overflow: ellipsis; }
+.kt-rolle { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.kt-admin { background: #1d1d1f; color: #fff; } .kt-buero { background: #e9f6ee; color: #166c3b; } .kt-kein { background: #fdecec; color: #8f1d22; }
+.kt-mini { min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--a-sep, #e5e5ea); background: #fff; font-weight: 600; cursor: pointer; }
+.kt-mini.geben { background: var(--k-accent); border-color: var(--k-accent); color: #fff; }
+.kt-mini.weg:hover { border-color: #d7262f; color: #d7262f; }
+.kui-dunkel .kt-zugang { background: #13271b; border-color: #23503a; } .kui-dunkel .kt-zugang code { background: #1b1e22; color: #f2f2f4; }
+.kui-dunkel .kt-buero { background: #13271b; color: #6fdc98; } .kui-dunkel .kt-kein { background: #3a1d20; color: #ff8a8f; } .kui-dunkel .kt-admin { background: #f2f2f4; color: #111; }
+.kui-dunkel .kt-mini:not(.geben) { background: #2a2e34; color: #e6e6ea; border-color: #383d44; }
+@media (max-width: 900px) { .kt-raster { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .kt-zwei { grid-template-columns: 1fr; } .kt-zugang dl { grid-template-columns: 1fr; } .kt-mini { width: 100%; } .kt-liste li form { width: 100%; } }
+
+.kt-form input[type=text], .kt-form input[type=email] { width: 100% !important; max-width: 100% !important; box-sizing: border-box; margin: 0; }
+.kt-form .kk-pflicht { color: #d7262f; }
+.kt-zwei > label { min-width: 0; }

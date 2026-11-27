@@ -34,6 +34,9 @@ function kilic_nav_punkte() {
 	if ( current_user_can( 'upload_files' ) ) {
 		$p[] = array( 'Website-Bilder', admin_url( 'admin.php?page=kilic-bilder' ), 'page:kilic-bilder', 'format-image' );
 	}
+	if ( current_user_can( 'create_users' ) ) {
+		$p[] = array( 'Team', admin_url( 'admin.php?page=kilic-team' ), 'page:kilic-team', 'admin-users' );
+	}
 	if ( current_user_can( 'manage_options' ) ) {
 		$p[] = array( 'Einstellungen', admin_url( 'admin.php?page=kilic-einstellungen' ), 'page:kilic-einstellungen', 'admin-generic' );
 	}

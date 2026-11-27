@@ -442,7 +442,7 @@ function kilic_erste_schritte() {
 		array( (bool) $preise, 'Preise im Leistungskatalog', 'Einmal Ihre Preise eintragen – danach sind Angebote in Sekunden fertig.', 'Katalog öffnen', admin_url( 'edit.php?post_type=kilic_leistung' ), '' ),
 		array( (bool) $kunden, 'Ersten Kunden anlegen', 'Name, Adresse und Telefon – oder einfach aus einer Anfrage übernehmen.', 'Kunde anlegen', admin_url( 'post-new.php?post_type=kilic_kunde' ), '' ),
 		array( (bool) $send, 'Erstes Angebot senden', 'Angebot erstellen und per Knopf als PDF an den Kunden mailen.', 'Angebot erstellen', admin_url( 'post-new.php?post_type=kilic_beleg&kilic_typ=angebot' ), '' ),
-		array( (bool) $buero, 'Büro-Zugang anlegen', 'Eigener Zugang für Mitarbeiter – sieht nur diese Büro-Software.', 'Benutzer anlegen', admin_url( 'user-new.php' ), 'create_users' ),
+		array( (bool) $buero, 'Büro-Zugang anlegen', 'Eigener Zugang für Mitarbeiter – sieht nur diese Büro-Software.', 'Zugang anlegen', admin_url( 'admin.php?page=kilic-team' ), 'create_users' ),
 	);
 	$schritte = array_values( array_filter( $schritte, function ( $x ) {
 		return ! $x[5] || current_user_can( $x[5] );
