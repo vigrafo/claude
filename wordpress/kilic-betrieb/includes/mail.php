@@ -61,15 +61,70 @@ function kilic_mail_tabelle( $zeilen ) {
 	return $out . '</table>';
 }
 
-/** HTML-Mail senden. */
-function kilic_send_mail( $an, $betreff, $html, $anhaenge = array(), $bcc = '' ) {
+/** Absender: eigene Domain (sonst Spam/Ablehnung bei Gmail & Co.). */
+function kilic_absender_email() {
+	$a = kilic_opt( 'absender' );
+	if ( $a && is_email( $a ) ) {
+		return $a;
+	}
+	$host = wp_parse_url( home_url(), PHP_URL_HOST );
+	$host = preg_replace( '/^www\./', '', (string) $host );
+	if ( ! $host || 'localhost' === $host || false === strpos( $host, '.' ) ) {
+		return get_option( 'admin_email' );
+	}
+	return 'noreply@' . $host;
+}
+
+/** Versand über das Postfach (SMTP), sobald Benutzer und Passwort eingetragen sind. */
+function kilic_smtp_aktiv() {
+	return kilic_opt( 'smtp_host' ) && kilic_opt( 'smtp_user' ) && kilic_opt( 'smtp_pass' );
+}
+add_action( 'phpmailer_init', function ( $m ) {
+	if ( ! kilic_smtp_aktiv() ) {
+		return;
+	}
+	$m->isSMTP();
+	$m->Host       = kilic_opt( 'smtp_host' ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName
+	$m->Port       = (int) ( kilic_opt( 'smtp_port' ) ? kilic_opt( 'smtp_port' ) : 587 ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName
+	$m->SMTPAuth   = true; // phpcs:ignore WordPress.NamingConventions.ValidVariableName
+	$m->Username   = kilic_opt( 'smtp_user' ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName
+	$m->Password   = kilic_opt( 'smtp_pass' ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName
+	$m->SMTPSecure = 465 === (int) kilic_opt( 'smtp_port' ) ? 'ssl' : 'tls'; // phpcs:ignore WordPress.NamingConventions.ValidVariableName
+	$m->Timeout    = 20; // phpcs:ignore WordPress.NamingConventions.ValidVariableName
+}, 5 );
+
+/** Antwortadresse: Firmen-E-Mail, sonst Benachrichtigungsadresse. */
+function kilic_antwort_email() {
+	$e = kilic_opt( 'email' );
+	if ( $e && ! kilic_ist_platzhalter( 'email' ) && is_email( $e ) ) {
+		return $e;
+	}
+	return is_email( kilic_opt( 'absender' ) ) ? kilic_opt( 'absender' ) : kilic_empfaenger();
+}
+
+/** Letzter Versandfehler (für Protokoll und Test). */
+add_action( 'wp_mail_failed', function ( $err ) {
+	$GLOBALS['kilic_mail_fehler'] = is_wp_error( $err ) ? $err->get_error_message() : 'unbekannter Fehler';
+} );
+
+/** HTML-Mail senden. $reply_to optional (z. B. Kunde bei Büro-Benachrichtigung). */
+function kilic_send_mail( $an, $betreff, $html, $anhaenge = array(), $bcc = '', $reply_to = '' ) {
+	$GLOBALS['kilic_mail_fehler'] = '';
+	$von       = kilic_absender_email();
 	$headers   = array( 'Content-Type: text/html; charset=UTF-8' );
-	$absender  = kilic_opt( 'email' );
-	$headers[] = 'From: ' . kilic_opt( 'firma' ) . ' <' . ( $absender && ! kilic_ist_platzhalter( 'email' ) ? $absender : get_option( 'admin_email' ) ) . '>';
+	$headers[] = 'From: ' . wp_specialchars_decode( kilic_opt( 'firma' ), ENT_QUOTES ) . ' <' . $von . '>';
+	$headers[] = 'Reply-To: ' . ( $reply_to ? $reply_to : kilic_antwort_email() );
 	if ( $bcc && is_email( $bcc ) ) {
 		$headers[] = 'Bcc: ' . $bcc;
 	}
-	return wp_mail( $an, $betreff, $html, $headers, $anhaenge );
+	// Envelope-Sender (Return-Path) passend zum Absender – wichtig für SPF.
+	$sender = function ( $phpmailer ) use ( $von ) {
+		$phpmailer->Sender = $von; // phpcs:ignore WordPress.NamingConventions.ValidVariableName
+	};
+	add_action( 'phpmailer_init', $sender );
+	$ok = wp_mail( $an, $betreff, $html, $headers, $anhaenge );
+	remove_action( 'phpmailer_init', $sender );
+	return $ok;
 }
 
 /** Kopie-Empfänger: Inhaber (Einstellung) oder Admin-E-Mail. */
@@ -77,6 +132,35 @@ function kilic_inhaber_email() {
 	$e = kilic_opt( 'inhaber_email' );
 	return $e ? $e : get_option( 'admin_email' );
 }
+
+/** Versand an einer Anfrage protokollieren (im Backend sichtbar). */
+function kilic_mail_protokoll( $id, $an, $was, $ok ) {
+	$log   = (array) get_post_meta( $id, '_mail_log', true );
+	$log[] = array(
+		'zeit'   => current_time( 'mysql' ),
+		'an'     => $an,
+		'was'    => $was,
+		'ok'     => $ok ? 1 : 0,
+		'fehler' => $ok ? '' : ( $GLOBALS['kilic_mail_fehler'] ?? '' ),
+	);
+	update_post_meta( $id, '_mail_log', array_filter( $log ) );
+}
+
+add_action( 'admin_post_kilic_mailtest', function () {
+	check_admin_referer( 'kilic_mailtest' );
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Keine Berechtigung.' );
+	}
+	$an = sanitize_email( wp_unslash( $_POST['an'] ?? '' ) );
+	$ok = false;
+	if ( is_email( $an ) ) {
+		$html = '<h1 style="font:bold 24px/1.2 Arial,sans-serif;margin:0 0 10px;text-transform:uppercase">Test-E-Mail</h1><p>Wenn Sie diese E-Mail sehen, funktioniert der Versand von der Website. Absender: ' . esc_html( kilic_absender_email() ) . '</p>';
+		$ok   = kilic_send_mail( $an, 'Test-E-Mail – ' . kilic_opt( 'firma' ), kilic_mail_layout( $html, 'Test des E-Mail-Versands' ) );
+	}
+	set_transient( 'kilic_mailtest', array( 'ok' => $ok, 'an' => $an, 'fehler' => $GLOBALS['kilic_mail_fehler'] ?? ( is_email( $an ) ? '' : 'ungültige Adresse' ) ), 300 );
+	wp_safe_redirect( admin_url( 'admin.php?page=kilic-einstellungen&kilic_test=1#kilic_test_an' ) );
+	exit;
+} );
 
 /* ---------- Anfrage-Mails ---------- */
 
@@ -95,25 +179,35 @@ function kilic_anfrage_mails_html( $id, $data, $dateien ) {
 		$buero .= '<p>' . count( $dateien ) . ' Foto(s)/Datei(en) angehängt – im Backend einsehbar.</p>';
 	}
 	$buero .= kilic_mail_button( 'Im Cockpit öffnen', admin_url( 'post.php?post=' . $id . '&action=edit' ) );
-	$headers_reply = ! empty( $data['email'] ) ? $data['email'] : '';
-	add_filter( 'wp_mail', $f = function ( $args ) use ( $headers_reply, $data ) {
-		if ( $headers_reply ) {
-			$args['headers'][] = 'Reply-To: ' . ( $data['name'] ?? '' ) . ' <' . $headers_reply . '>';
-		}
-		return $args;
-	} );
-	kilic_send_mail( kilic_empfaenger(), 'Neue Anfrage: ' . get_the_title( $id ), kilic_mail_layout( $buero, 'Neue Anfrage über die Website' ) );
-	remove_filter( 'wp_mail', $f );
+	$reply = ( ! empty( $data['email'] ) && is_email( $data['email'] ) ) ? $data['email'] : '';
+	$an_buero = kilic_empfaenger();
+	$ok = kilic_send_mail( $an_buero, 'Neue Anfrage: ' . get_the_title( $id ), kilic_mail_layout( $buero, 'Neue Anfrage über die Website' ), array(), '', $reply );
+	kilic_mail_protokoll( $id, $an_buero, 'Benachrichtigung Büro', $ok );
 
-	// Kunde: Eingangsbestätigung, Kopie an den Inhaber.
-	if ( '1' === kilic_opt( 'bestaetigung' ) && ! empty( $data['email'] ) && is_email( $data['email'] ) ) {
+	$anrede = trim( ( $data['vorname'] ?? '' ) . ' ' . ( $data['nachname'] ?? '' ) );
+	$anrede = $anrede ? $anrede : ( $data['name'] ?? '' );
+
+	// Kunde: Eingangsbestätigung im Firmendesign.
+	if ( '1' === kilic_opt( 'bestaetigung' ) && $reply ) {
 		$k  = '<h1 style="font:bold 24px/1.2 Arial,sans-serif;margin:0 0 14px;text-transform:uppercase">Vielen Dank für Ihre Anfrage</h1>';
-		$k .= '<p>Guten Tag ' . esc_html( $data['name'] ) . ',</p>';
+		$k .= '<p>Guten Tag ' . esc_html( $anrede ) . ',</p>';
 		$k .= '<p>wir haben Ihre Anfrage erhalten und melden uns in der Regel innerhalb von 24 Stunden (werktags) mit einem Angebot oder einem Terminvorschlag zur Besichtigung.</p>';
 		$k .= '<p style="margin-top:22px"><strong>Ihre Angaben im Überblick</strong></p>' . kilic_mail_tabelle( $zeilen );
 		$k .= '<p>Haben Sie Fragen? Rufen Sie uns an: <a href="' . esc_attr( kilic_tel_href( kilic_opt( 'telefon' ) ) ) . '" style="color:#c96f17;font-weight:bold">' . esc_html( kilic_opt( 'telefon' ) ) . '</a></p>';
 		$k .= '<p>Freundliche Grüße<br><strong>' . esc_html( kilic_opt( 'inhaber' ) ) . '</strong><br>' . esc_html( kilic_opt( 'firma' ) ) . '</p>';
-		kilic_send_mail( $data['email'], 'Ihre Anfrage bei ' . kilic_opt( 'firma' ), kilic_mail_layout( $k, 'Wir haben Ihre Anfrage erhalten.' ), array(), kilic_inhaber_email() );
+		$ok = kilic_send_mail( $data['email'], 'Ihre Anfrage bei ' . kilic_opt( 'firma' ), kilic_mail_layout( $k, 'Wir haben Ihre Anfrage erhalten.' ) );
+		kilic_mail_protokoll( $id, $data['email'], 'Bestätigung Kunde', $ok );
+	}
+
+	// Inhaber: eigene Bestätigung im Firmendesign (nicht doppelt, wenn er schon die Büro-Mail bekommt).
+	$inhaber = kilic_inhaber_email();
+	if ( $inhaber && is_email( $inhaber ) && strtolower( $inhaber ) !== strtolower( $an_buero ) ) {
+		$i  = '<h1 style="font:bold 24px/1.2 Arial,sans-serif;margin:0 0 10px;text-transform:uppercase">Neue Anfrage eingegangen</h1>';
+		$i .= '<p style="margin:0 0 6px">Von <strong>' . esc_html( $anrede ) . '</strong> · ' . esc_html( get_the_date( 'd.m.Y H:i', $id ) ) . ' Uhr' . ( $reply ? ' · Bestätigung an ' . esc_html( $reply ) . ' gesendet' : '' ) . '</p>';
+		$i .= kilic_mail_tabelle( $zeilen );
+		$i .= kilic_mail_button( 'Anfrage im Backend öffnen', admin_url( 'post.php?post=' . $id . '&action=edit' ) );
+		$ok = kilic_send_mail( $inhaber, 'Neue Anfrage: ' . get_the_title( $id ), kilic_mail_layout( $i, 'Neue Anfrage über die Website' ), array(), '', $reply );
+		kilic_mail_protokoll( $id, $inhaber, 'Bestätigung Inhaber', $ok );
 	}
 }
 

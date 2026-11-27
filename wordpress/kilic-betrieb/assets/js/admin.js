@@ -304,3 +304,30 @@
   if (kunde) kunde.addEventListener("change", upd);
   upd();
 })();
+
+/* Website-Bilder: Mehrfach-Upload und Bild je Platz wählen */
+(function () {
+  var input = document.getElementById("kb_dateien");
+  if (input) {
+    var drop = input.closest(".kb-drop"), anz = document.querySelector(".kb-anzahl");
+    input.addEventListener("change", function () { anz.textContent = input.files.length ? input.files.length + " Bild(er) ausgewählt" : ""; });
+    ["dragenter", "dragover"].forEach(function (t) { drop.addEventListener(t, function () { drop.classList.add("is-over"); }); });
+    ["dragleave", "drop"].forEach(function (t) { drop.addEventListener(t, function () { drop.classList.remove("is-over"); }); });
+    input.form.addEventListener("submit", function (e) {
+      if (!input.files.length) { e.preventDefault(); alert("Bitte zuerst Bilder auswählen."); return; }
+      var b = input.form.querySelector(".kb-senden"); b.disabled = true; b.textContent = "Wird hochgeladen …";
+    });
+  }
+  document.querySelectorAll(".kb-waehlen").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      if (!window.wp || !wp.media) return;
+      var karte = btn.closest(".kb-karte"), feld = karte.querySelector("input[type=hidden]");
+      var frame = wp.media({ title: "Bild für: " + btn.dataset.label, button: { text: "Dieses Bild verwenden" }, library: { type: "image" }, multiple: false });
+      frame.on("select", function () { feld.value = frame.state().get("selection").first().id; btn.form.submit(); });
+      frame.open();
+    });
+  });
+  document.querySelectorAll(".kb-weg").forEach(function (btn) {
+    btn.addEventListener("click", function () { btn.closest(".kb-karte").querySelector("input[type=hidden]").value = ""; btn.form.submit(); });
+  });
+})();

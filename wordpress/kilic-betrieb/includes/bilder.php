@@ -11,8 +11,49 @@
 
 defined( 'ABSPATH' ) || exit;
 
-/** URL zu einem Motiv – bevorzugt jpg/png (eigene Fotos), sonst webp. '' wenn keine Datei existiert. */
-function kilic_ph_url( $motiv ) {
+/** Alle Bildplätze der Website: Schlüssel => [Bezeichnung, wo es erscheint]. */
+function kilic_bild_plaetze() {
+	return array(
+		'hero-start'        => array( 'Startseite – großes Kopfbild', 'Startseite oben' ),
+		'hero-estrich'      => array( 'Estrich – Kopfbild', 'Estrich, Referenzen' ),
+		'hero-boden'        => array( 'Boden – Kopfbild', 'Boden und Unterseiten' ),
+		'hero-rohr'         => array( 'Rohrreinigung – Kopfbild', 'Rohrreinigung und Unterseiten' ),
+		'hero-kontakt'      => array( 'Kontakt / Anfrage – Kopfbild', 'Kontakt, Angebot anfragen' ),
+		'estrich-verteilen' => array( 'Estrich wird verteilt', 'Startseite Leistungskarte Estrich' ),
+		'heizestrich'       => array( 'Heizestrich', 'Seite Heizestrich' ),
+		'fliessestrich'     => array( 'Fließestrich', 'Seite Fließestrich' ),
+		'zementestrich'     => array( 'Zementestrich', 'Seite Zementestrich' ),
+		'schnellestrich'    => array( 'Schnellestrich', 'Seite Schnellestrich' ),
+		'trockenestrich'    => array( 'Trockenestrich', 'Seite Trockenestrich' ),
+		'industrie'         => array( 'Industrie- & Gefälleestrich', 'Seite Industrieestrich' ),
+		'sanierung-vorher'  => array( 'Sanierung – vorher', 'Vorher/Nachher-Vergleich' ),
+		'sanierung-nachher' => array( 'Sanierung – nachher', 'Vorher/Nachher, Bodensanierung' ),
+		'bodenverlegung'    => array( 'Bodenverlegung', 'Seite Bodenverlegung, Leistungskarte' ),
+		'ausgleichsmasse'   => array( 'Ausgleichsmasse', 'Seite Ausgleichen & Nivellieren' ),
+		'rohrreinigung'     => array( 'Rohrreinigung', 'Leistungskarte Rohrreinigung' ),
+		'notdienst'         => array( 'Notdienst', 'Seite 24/7 Notdienst' ),
+		'kanal-tv'          => array( 'Kanal-TV', 'Seite Kanal-TV-Inspektion' ),
+		'wartung'           => array( 'Wartung', 'Seite Wartung für Gewerbe' ),
+		'meister'           => array( 'Inhaber / Meister', 'Über uns, Startseite' ),
+		'werkzeug-estrich'  => array( 'Team: Vorarbeiter Estrich', 'Über uns – Team' ),
+		'werkzeug-boden'    => array( 'Team: Bodenleger', 'Über uns – Team' ),
+		'werkzeug-rohr'     => array( 'Team: Rohrreinigung', 'Über uns – Team' ),
+		'ref-neubau'        => array( 'Referenz ohne Foto: Neubau', 'Referenzen' ),
+		'ref-sanierung'     => array( 'Referenz ohne Foto: Sanierung', 'Referenzen' ),
+		'ref-gewerbe'       => array( 'Referenz ohne Foto: Gewerbe', 'Referenzen' ),
+		'ref-boden'         => array( 'Referenz ohne Foto: Bodenverlegung', 'Referenzen' ),
+		'ref-rohr'          => array( 'Referenz ohne Foto: Rohrreinigung', 'Referenzen' ),
+	);
+}
+
+/** Eigene Zuordnung aus dem Backend (Mediathek-ID je Bildplatz). */
+function kilic_bild_zuordnung() {
+	$z = get_option( 'kilic_bilder', array() );
+	return is_array( $z ) ? $z : array();
+}
+
+/** Eingebautes Bild (Datei im Plugin) – ohne eigene Zuordnung. */
+function kilic_ph_datei_url( $motiv ) {
 	$motiv = sanitize_file_name( $motiv );
 	foreach ( array( 'jpg', 'jpeg', 'png', 'webp' ) as $ext ) {
 		if ( file_exists( KILIC_DIR . 'assets/img/ph/' . $motiv . '.' . $ext ) ) {
@@ -20,6 +61,18 @@ function kilic_ph_url( $motiv ) {
 		}
 	}
 	return '';
+}
+
+/** URL zu einem Motiv: eigenes Bild aus der Mediathek, sonst eingebautes Bild, sonst ''. */
+function kilic_ph_url( $motiv ) {
+	$z = kilic_bild_zuordnung();
+	if ( ! empty( $z[ $motiv ] ) ) {
+		$u = wp_get_attachment_image_url( (int) $z[ $motiv ], 'full' );
+		if ( $u ) {
+			return $u;
+		}
+	}
+	return kilic_ph_datei_url( $motiv );
 }
 
 /** Hero-Motiv je Seite (Unterseiten erben vom Bereich). */
@@ -134,3 +187,174 @@ function kilic_ph_referenz( $kat_slugs ) {
 	}
 	return kilic_ph_url( 'ref-neubau' );
 }
+
+/* ---------- Backend: Seite „Website-Bilder“ ---------- */
+
+add_action( 'admin_menu', function () {
+	add_submenu_page( 'kilic', 'Website-Bilder', 'Website-Bilder', 'upload_files', 'kilic-bilder', 'kilic_render_bilder_seite' );
+}, 20 );
+
+add_action( 'admin_enqueue_scripts', function ( $hook ) {
+	if ( false !== strpos( (string) $hook, 'kilic-bilder' ) ) {
+		wp_enqueue_media();
+	}
+} );
+
+/** Dateiname → Bildplatz (z. B. „Heizestrich-1.JPG“ → heizestrich). */
+function kilic_bild_platz_aus_dateiname( $name ) {
+	$n = strtolower( remove_accents( pathinfo( $name, PATHINFO_FILENAME ) ) );
+	$n = str_replace( array( 'ae', 'oe', 'ue', ' ', '_' ), array( 'a', 'o', 'u', '-', '-' ), $n );
+	$n = preg_replace( '/-(scaled|\d+x\d+|\d+|kopie|copy|final)$/', '', $n );
+	$n = trim( preg_replace( '/[^a-z0-9-]+/', '-', $n ), '-' );
+	$keys = array_keys( kilic_bild_plaetze() );
+	$norm = function ( $k ) {
+		return str_replace( array( 'ae', 'oe', 'ue' ), array( 'a', 'o', 'u' ), $k );
+	};
+	foreach ( $keys as $k ) {
+		if ( $n === $norm( $k ) ) {
+			return $k;
+		}
+	}
+	// längster Schlüssel, der im Namen vorkommt (z. B. „kilic-heizestrich-v2“)
+	usort( $keys, function ( $a, $b ) {
+		return strlen( $b ) - strlen( $a );
+	} );
+	foreach ( $keys as $k ) {
+		if ( false !== strpos( $n, $norm( $k ) ) ) {
+			return $k;
+		}
+	}
+	return '';
+}
+
+function kilic_render_bilder_seite() {
+	if ( ! current_user_can( 'upload_files' ) ) {
+		wp_die( 'Keine Berechtigung.' );
+	}
+	$z      = kilic_bild_zuordnung();
+	$plaetze = kilic_bild_plaetze();
+	$eigene = count( array_filter( array_intersect_key( $z, $plaetze ) ) );
+	?>
+	<div class="wrap kilic-wrap kb-bilder">
+		<h1>Website-Bilder</h1>
+		<p class="kb-intro">Hier legst du fest, welches Foto an welcher Stelle der Website erscheint. Eigene Bilder bleiben bei Plugin-Updates erhalten. <strong><?php echo (int) $eigene; ?> von <?php echo count( $plaetze ); ?></strong> Plätzen haben ein eigenes Bild.</p>
+		<?php if ( isset( $_GET['ok'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+			<div class="notice notice-success inline" role="status"><p><?php echo esc_html( sanitize_text_field( wp_unslash( $_GET['ok'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification ?></p></div>
+		<?php endif; ?>
+		<?php if ( ! empty( $_GET['offen'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+			<div class="notice notice-warning inline"><p>Nicht automatisch zugeordnet (liegen in der Mediathek, unten per „Bild wählen“ zuweisen): <?php echo esc_html( sanitize_text_field( wp_unslash( $_GET['offen'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification ?></p></div>
+		<?php endif; ?>
+
+		<form class="kb-upload" method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="kilic_bilder_upload">
+			<?php wp_nonce_field( 'kilic_bilder_upload' ); ?>
+			<label class="kb-drop" for="kb_dateien">
+				<span class="dashicons dashicons-images-alt2"></span>
+				<strong>Viele Bilder auf einmal hochladen</strong>
+				<span>Alle Bilder aus deinem Ordner markieren (Strg + A) und hierher ziehen – oder tippen zum Auswählen.<br>Heißt eine Datei wie ein Bildplatz (z. B. <code>heizestrich.jpg</code>, <code>hero-start.png</code>), wird sie automatisch zugeordnet.</span>
+				<input type="file" id="kb_dateien" name="kb_dateien[]" accept="image/jpeg,image/png,image/webp" multiple>
+				<em class="kb-anzahl" aria-live="polite"></em>
+			</label>
+			<button type="submit" class="button button-primary button-hero kb-senden">Hochladen &amp; zuordnen</button>
+		</form>
+
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="kb-form">
+			<input type="hidden" name="action" value="kilic_bilder_speichern">
+			<?php wp_nonce_field( 'kilic_bilder_speichern' ); ?>
+			<div class="kb-grid">
+				<?php foreach ( $plaetze as $k => $info ) :
+					$id  = (int) ( $z[ $k ] ?? 0 );
+					$url = $id ? wp_get_attachment_image_url( $id, 'medium_large' ) : '';
+					$def = kilic_ph_datei_url( $k );
+					?>
+					<div class="kb-karte<?php echo $url ? ' is-eigen' : ''; ?>">
+						<div class="kb-bild" style="background-image:url('<?php echo esc_url( $url ? $url : $def ); ?>')">
+							<span class="kb-tag"><?php echo $url ? 'Eigenes Bild' : 'Platzhalter'; ?></span>
+						</div>
+						<div class="kb-text">
+							<strong><?php echo esc_html( $info[0] ); ?></strong>
+							<small><?php echo esc_html( $info[1] ); ?> · Dateiname: <code><?php echo esc_html( $k ); ?></code></small>
+						</div>
+						<input type="hidden" name="kilic_bild[<?php echo esc_attr( $k ); ?>]" value="<?php echo $id ? (int) $id : ''; ?>">
+						<div class="kb-knoepfe">
+							<button type="button" class="button kb-waehlen" data-label="<?php echo esc_attr( $info[0] ); ?>">Bild wählen</button>
+							<?php if ( $id ) : ?><button type="button" class="button-link kb-weg">Platzhalter verwenden</button><?php endif; ?>
+						</div>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</form>
+	</div>
+	<?php
+}
+
+add_action( 'admin_post_kilic_bilder_upload', function () {
+	check_admin_referer( 'kilic_bilder_upload' );
+	if ( ! current_user_can( 'upload_files' ) ) {
+		wp_die( 'Keine Berechtigung.' );
+	}
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+	require_once ABSPATH . 'wp-admin/includes/media.php';
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+	$z     = kilic_bild_zuordnung();
+	$files = $_FILES['kb_dateien'] ?? null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+	$ok    = 0;
+	$neu   = 0;
+	$offen = array();
+	if ( $files && is_array( $files['name'] ) ) {
+		$n = count( $files['name'] );
+		for ( $i = 0; $i < $n; $i++ ) {
+			if ( UPLOAD_ERR_OK !== $files['error'][ $i ] ) {
+				continue;
+			}
+			$typ = wp_check_filetype_and_ext( $files['tmp_name'][ $i ], $files['name'][ $i ] );
+			if ( ! in_array( $typ['type'], array( 'image/jpeg', 'image/png', 'image/webp' ), true ) ) {
+				continue;
+			}
+			$file = array(
+				'name'     => sanitize_file_name( $files['name'][ $i ] ),
+				'type'     => $typ['type'],
+				'tmp_name' => $files['tmp_name'][ $i ],
+				'error'    => 0,
+				'size'     => $files['size'][ $i ],
+			);
+			$id = media_handle_sideload( $file, 0, pathinfo( $files['name'][ $i ], PATHINFO_FILENAME ) );
+			if ( is_wp_error( $id ) ) {
+				continue;
+			}
+			$neu++;
+			$platz = kilic_bild_platz_aus_dateiname( $files['name'][ $i ] );
+			if ( $platz ) {
+				$z[ $platz ] = (int) $id;
+				$ok++;
+			} else {
+				$offen[] = sanitize_file_name( $files['name'][ $i ] );
+			}
+		}
+	}
+	update_option( 'kilic_bilder', $z, false );
+	$args = array( 'page' => 'kilic-bilder', 'ok' => sprintf( '%d Bilder hochgeladen, %d automatisch zugeordnet.', $neu, $ok ) );
+	if ( $offen ) {
+		$args['offen'] = implode( ', ', array_slice( $offen, 0, 30 ) );
+	}
+	wp_safe_redirect( add_query_arg( array_map( 'rawurlencode', $args ), admin_url( 'admin.php' ) ) );
+	exit;
+} );
+
+add_action( 'admin_post_kilic_bilder_speichern', function () {
+	check_admin_referer( 'kilic_bilder_speichern' );
+	if ( ! current_user_can( 'upload_files' ) ) {
+		wp_die( 'Keine Berechtigung.' );
+	}
+	$in = isset( $_POST['kilic_bild'] ) ? (array) wp_unslash( $_POST['kilic_bild'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+	$z  = array();
+	foreach ( kilic_bild_plaetze() as $k => $info ) {
+		$id = absint( $in[ $k ] ?? 0 );
+		if ( $id && wp_attachment_is_image( $id ) ) {
+			$z[ $k ] = $id;
+		}
+	}
+	update_option( 'kilic_bilder', $z, false );
+	wp_safe_redirect( add_query_arg( array( 'page' => 'kilic-bilder', 'ok' => rawurlencode( 'Gespeichert.' ) ), admin_url( 'admin.php' ) ) );
+	exit;
+} );

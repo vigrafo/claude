@@ -31,6 +31,9 @@ function kilic_nav_punkte() {
 		array( 'Fotos', admin_url( 'admin.php?page=kilic-fotos' ), 'page:kilic-fotos', 'camera' ),
 		array( 'Referenzen', admin_url( 'edit.php?post_type=kilic_referenz' ), 'kilic_referenz', 'format-gallery' ),
 	);
+	if ( current_user_can( 'upload_files' ) ) {
+		$p[] = array( 'Website-Bilder', admin_url( 'admin.php?page=kilic-bilder' ), 'page:kilic-bilder', 'format-image' );
+	}
 	if ( current_user_can( 'manage_options' ) ) {
 		$p[] = array( 'Einstellungen', admin_url( 'admin.php?page=kilic-einstellungen' ), 'page:kilic-einstellungen', 'admin-generic' );
 	}

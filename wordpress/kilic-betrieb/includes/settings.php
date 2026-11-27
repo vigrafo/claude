@@ -44,7 +44,14 @@ function kilic_settings_fields() {
 		'Anfragen' => array(
 			'empfaenger'   => array( 'Benachrichtigung an', 'email', 'Leer = Firmen-E-Mail bzw. WordPress-Admin-E-Mail.' ),
 			'bestaetigung' => array( 'Eingangsbestätigung an Kunden senden', 'checkbox' ),
-			'inhaber_email' => array( 'Kopie der Eingangsbestätigung an (Inhaber)', 'email', 'Leer = WordPress-Admin-E-Mail. Angebote und Rechnungen gehen ohne Kopie raus – die Kopie liegt am Beleg im Backend.' ),
+			'inhaber_email' => array( 'Bestätigung an Inhaber', 'email', 'Der Inhaber bekommt bei jeder Anfrage eine eigene Bestätigung im Firmendesign. Leer = WordPress-Admin-E-Mail. Angebote und Rechnungen gehen ohne Kopie raus – die Kopie liegt am Beleg im Backend.' ),
+			'absender'      => array( 'Absender-Adresse', 'email', 'Von dieser Adresse kommen alle E-Mails (Anfrage-Bestätigungen, Angebote, Rechnungen). Damit sie sicher ankommen, unten das Postfach-Passwort eintragen.' ),
+		),
+		'E-Mail-Postfach (SMTP)' => array(
+			'smtp_host' => array( 'Postausgangsserver', 'text', 'mail.com: smtp.mail.com · GMX: mail.gmx.net · Gmail: smtp.gmail.com · IONOS: smtp.ionos.de' ),
+			'smtp_port' => array( 'Port', 'number', 'Normalerweise 587.' ),
+			'smtp_user' => array( 'Benutzername', 'text', 'Meist die vollständige E-Mail-Adresse, z. B. vigrafo@mail.com.' ),
+			'smtp_pass' => array( 'Passwort', 'password', 'Passwort des Postfachs (bei Gmail ein App-Passwort). Leer lassen = bisheriges Passwort bleibt. Ohne Passwort sendet der Webserver selbst – das landet oft im Spam.' ),
 		),
 	);
 }
@@ -74,6 +81,10 @@ function kilic_sanitize_settings( $input ) {
 					break;
 				case 'checkbox':
 					$out[ $key ] = empty( $v ) ? '0' : '1';
+					break;
+				case 'password':
+					$alt         = get_option( 'kilic_settings', array() );
+					$out[ $key ] = '' === trim( (string) $v ) ? ( $alt[ $key ] ?? '' ) : trim( (string) $v );
 					break;
 				case 'media':
 					$out[ $key ] = esc_url_raw( $v );
@@ -131,6 +142,8 @@ function kilic_render_settings() {
 								<?php elseif ( 'checkbox' === $f[1] ) : ?>
 									<input type="hidden" name="<?php echo esc_attr( $name ); ?>" value="0">
 									<label><input type="checkbox" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="1" <?php checked( '1', $val ); ?>> Ja</label>
+								<?php elseif ( 'password' === $f[1] ) : ?>
+									<input type="password" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="" class="regular-text" autocomplete="new-password" placeholder="<?php echo $val ? '•••••••• (gespeichert)' : 'noch nicht eingetragen'; ?>">
 								<?php else : ?>
 									<input type="<?php echo 'number' === $f[1] ? 'number' : esc_attr( $f[1] ); ?>" step="any" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $val ); ?>" class="<?php echo 'number' === $f[1] ? 'small-text' : 'regular-text'; ?>">
 								<?php endif; ?>
@@ -143,6 +156,19 @@ function kilic_render_settings() {
 				</table>
 			<?php endforeach; ?>
 			<?php submit_button( 'Einstellungen speichern' ); ?>
+		</form>
+
+		<h2>E-Mail-Versand testen</h2>
+		<p>Schickt eine Test-E-Mail im Firmendesign. Absender: <code><?php echo esc_html( kilic_absender_email() ); ?></code> · Versand: <strong><?php echo kilic_smtp_aktiv() ? 'über Postfach ' . esc_html( kilic_opt( 'smtp_host' ) ) : 'direkt vom Webserver (unsicher – Passwort oben eintragen)'; ?></strong></p>
+		<?php if ( isset( $_GET['kilic_test'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+			<?php $t = get_transient( 'kilic_mailtest' ); ?>
+			<div class="notice <?php echo ! empty( $t['ok'] ) ? 'notice-success' : 'notice-error'; ?> inline"><p><?php echo ! empty( $t['ok'] ) ? 'Test-E-Mail wurde an ' . esc_html( $t['an'] ?? '' ) . ' übergeben. Bitte Posteingang (und Spam-Ordner) prüfen.' : 'Versand fehlgeschlagen: ' . esc_html( $t['fehler'] ?? 'unbekannter Fehler' ) . '. Tipp: Plugin „WP Mail SMTP“ installieren und das Postfach der Firma eintragen.'; ?></p></div>
+		<?php endif; ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="kilic-mailtest">
+			<input type="hidden" name="action" value="kilic_mailtest">
+			<?php wp_nonce_field( 'kilic_mailtest' ); ?>
+			<p><label for="kilic_test_an">An</label><br><input type="email" id="kilic_test_an" name="an" value="<?php echo esc_attr( kilic_inhaber_email() ); ?>" class="regular-text" required></p>
+			<?php submit_button( 'Test-E-Mail senden', 'secondary', 'submit', false ); ?>
 		</form>
 
 		<h2>Seiten neu einrichten</h2>

@@ -37,6 +37,11 @@ function kilic_defaults() {
 		'empfaenger'     => '',
 		'inhaber_email'  => '',
 		'bestaetigung'   => '1',
+		'absender'       => 'vigrafo@mail.com',
+		'smtp_host'      => 'smtp.mail.com',
+		'smtp_port'      => '587',
+		'smtp_user'      => 'vigrafo@mail.com',
+		'smtp_pass'      => '',
 	);
 }
 

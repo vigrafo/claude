@@ -195,6 +195,7 @@ function kilic_anfrage_uploads( $anfrage_id ) {
 add_action( 'add_meta_boxes_kilic_anfrage', function () {
 	add_meta_box( 'kilic_anfrage_daten', 'Anfrage', 'kilic_anfrage_box', 'kilic_anfrage', 'normal', 'high' );
 	add_meta_box( 'kilic_anfrage_status', 'Bearbeitung', 'kilic_anfrage_status_box', 'kilic_anfrage', 'side', 'high' );
+	add_meta_box( 'kilic_anfrage_mails', 'E-Mails zu dieser Anfrage', 'kilic_anfrage_mails_box', 'kilic_anfrage', 'side', 'default' );
 } );
 
 function kilic_anfrage_box( $post ) {
@@ -431,4 +432,26 @@ function kilic_anzahl_neue_anfragen() {
 		'meta_value'     => 'neu',
 	) );
 	return (int) $q->found_posts;
+}
+
+/** Protokoll: welche Bestätigungen verschickt wurden. */
+function kilic_anfrage_mails_box( $post ) {
+	$log = array_filter( (array) get_post_meta( $post->ID, '_mail_log', true ) );
+	if ( ! $log ) {
+		echo '<p class="description">Für diese Anfrage wurden keine E-Mails verschickt (z. B. im Backend erfasst).</p>';
+		return;
+	}
+	echo '<ul class="kilic-mail-log">';
+	foreach ( $log as $e ) {
+		printf(
+			'<li class="%s"><strong>%s %s</strong><br><small>%s · %s%s</small></li>',
+			$e['ok'] ? 'ok' : 'fehler',
+			$e['ok'] ? '✓' : '✗',
+			esc_html( $e['was'] ),
+			esc_html( $e['an'] ),
+			esc_html( mysql2date( 'd.m.Y H:i', $e['zeit'] ) ),
+			$e['ok'] ? '' : ' · nicht gesendet' . ( $e['fehler'] ? ': ' . esc_html( $e['fehler'] ) : '' )
+		);
+	}
+	echo '</ul><p class="description">„✓“ heißt: an den Mailserver übergeben. Kommt trotzdem nichts an, Spam-Ordner prüfen und unter Einstellungen → „Test-E-Mail senden“ testen.</p>';
 }

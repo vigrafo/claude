@@ -433,3 +433,28 @@ body.kilic-ui {
   .kilic-ui .kc-payments td:nth-child(2) { grid-column: 1 / -1; order: -1; font-weight: 600; }
   .kilic-ui .kc-payments td.r { text-align: right; }
 }
+
+.kilic-ui .kilic-mail-log { margin: 0; padding: 0; list-style: none; }
+.kilic-ui .kilic-mail-log li { margin: 0 0 8px; padding: 8px 10px; border-radius: 10px; background: #e9f6ee; }
+.kilic-ui .kilic-mail-log li.fehler { background: #fdecec; color: #8f1d22; }
+/* Website-Bilder */
+.kilic-ui .kb-intro { font-size: 15px; max-width: 760px; }
+.kilic-ui .kb-upload { display: grid; gap: 12px; margin: 16px 0 26px; max-width: 760px; }
+.kilic-ui .kb-drop { position: relative; display: grid; gap: 6px; justify-items: center; text-align: center; padding: 28px 20px; border: 2px dashed var(--k-line); border-radius: 18px; background: #fff; cursor: pointer; }
+.kilic-ui .kb-drop.is-over { border-color: var(--k-accent); background: var(--k-accent-soft); }
+.kilic-ui .kb-drop .dashicons { font-size: 40px; width: 40px; height: 40px; color: var(--k-accent-d); }
+.kilic-ui .kb-drop strong { font-size: 17px; }
+.kilic-ui .kb-drop span { color: var(--k-muted); font-size: 14px; }
+.kilic-ui .kb-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.kilic-ui .kb-anzahl { font-style: normal; font-weight: 600; color: var(--k-accent-d); }
+.kilic-ui .kb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.kilic-ui .kb-karte { display: flex; flex-direction: column; border-radius: 16px; background: #fff; border: 1px solid var(--k-line); overflow: hidden; }
+.kilic-ui .kb-karte.is-eigen { border-color: var(--k-green); }
+.kilic-ui .kb-bild { position: relative; aspect-ratio: 16 / 10; background: var(--k-concrete) center / cover no-repeat; }
+.kilic-ui .kb-tag { position: absolute; left: 10px; top: 10px; padding: 3px 9px; border-radius: 999px; background: rgba(27,31,35,.75); color: #fff; font-size: 12px; font-weight: 600; }
+.kilic-ui .kb-karte.is-eigen .kb-tag { background: var(--k-green); }
+.kilic-ui .kb-text { padding: 12px 14px 4px; }
+.kilic-ui .kb-text strong { display: block; font-size: 15px; }
+.kilic-ui .kb-text small { color: var(--k-muted); }
+.kilic-ui .kb-knoepfe { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 14px 14px; margin-top: auto; }
+.kilic-ui .kb-knoepfe .button { min-height: 40px; }
