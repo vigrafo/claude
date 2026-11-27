@@ -94,6 +94,24 @@ function kilic_anfrage_empfangen() {
 		}
 	}
 
+	// Vor-/Nachname und Hausnummer kommen getrennt (Angebotsanfrage).
+	foreach ( array( 'vorname', 'nachname', 'hausnr' ) as $k ) {
+		if ( isset( $_POST[ $k ] ) && '' !== trim( (string) wp_unslash( $_POST[ $k ] ) ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+			$data[ $k ] = mb_substr( sanitize_text_field( wp_unslash( $_POST[ $k ] ) ), 0, 120 ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		}
+	}
+	if ( 'anfrage' === $form ) {
+		foreach ( array( 'vorname', 'nachname', 'email', 'tel', 'strasse', 'hausnr', 'plz', 'ort' ) as $k ) {
+			if ( empty( $data[ $k ] ) ) {
+				$fail( 'pflicht' );
+			}
+		}
+		if ( ! is_email( $data['email'] ) ) {
+			$fail( 'pflicht' );
+		}
+		$data['name']    = trim( $data['vorname'] . ' ' . $data['nachname'] );
+		$data['strasse'] = trim( $data['strasse'] . ' ' . $data['hausnr'] );
+	}
 	if ( empty( $data['name'] ) || ( empty( $data['email'] ) && empty( $data['tel'] ) ) ) {
 		$fail( 'pflicht' );
 	}
@@ -326,6 +344,8 @@ add_action( 'admin_post_kilic_anfrage_angebot', function () {
 	}
 	$d     = (array) get_post_meta( $id, '_daten', true );
 	$kunde = kilic_kunde_finden_oder_anlegen( $d['name'] ?? '', array(
+		'vorname'  => $d['vorname'] ?? '',
+		'nachname' => $d['nachname'] ?? '',
 		'firma'   => $d['firma'] ?? '',
 		'strasse' => $d['strasse'] ?? '',
 		'plz'     => $d['plz'] ?? '',

@@ -1307,3 +1307,35 @@ body.kilic-site #kilic-main .example blockquote { border-left: 3px solid var(--a
 /* Eigenes Logo aus den Einstellungen */
 .logo .logo-img { display: block; max-height: 54px; width: auto; }
 .site-footer .logo .logo-img { max-height: 48px; background: #fff; padding: 6px; border-radius: 6px; }
+
+/* Anfrage: Adresse als Gruppe, Straße/Nr. und PLZ/Ort nebeneinander (auch am Handy) */
+.wizard fieldset.addr, fieldset.addr { border: 0; margin: 0 0 4px; padding: 0; min-width: 0; }
+fieldset.addr legend { padding: 0; margin: 0 0 10px; font-weight: 600; color: var(--ink); }
+.field-row.addr-a { grid-template-columns: 1fr 110px; }
+.field-row.addr-b { grid-template-columns: 120px 1fr; }
+.field-error { border-color: var(--red) !important; background: #fff6f6 !important; }
+
+/* Wizard-Navigation am Handy: Schrittanzeige oben, Knöpfe in voller Breite */
+@media (max-width: 640px) {
+  .field-row.addr-a { grid-template-columns: 1fr 88px; gap: 10px; }
+  .field-row.addr-b { grid-template-columns: 100px 1fr; gap: 10px; }
+  .wizard-nav { flex-wrap: wrap; gap: 10px; padding: 14px 16px 18px; }
+  .wizard-nav .step-info { order: -1; flex: 1 0 100%; text-align: center; }
+  .wizard-nav .btn { flex: 1 1 0; min-width: 0; min-height: 52px; padding-left: 12px; padding-right: 12px; justify-content: center; white-space: normal; text-align: center; line-height: 1.15; }
+  .wizard-nav.is-first [data-prev] { display: none; }
+  .wizard-nav [data-submit]:not([hidden]) { flex: 2 1 0; }
+}
+
+/* Nach dem Absenden: Danke-Meldung ganz oben */
+body.kilic-danke .hero { display: none; }
+body.kilic-danke #anfrage, body.kilic-danke #kontakt { margin-top: 24px; scroll-margin-top: 100px; }
+#anfrage, #kontakt, #wizard { scroll-margin-top: 100px; }
+
+/* WordPress-Adminleiste (nur für Eingeloggte) am Handy ausblenden – überdeckt sonst die Kopfzeile */
+@media (max-width: 782px) {
+  #wpadminbar { display: none !important; }
+  html { margin-top: 0 !important; }
+  body.admin-bar .site-header, body.admin-bar .topbar { top: 0 !important; }
+}
+body.kilic-danke .wizard .summary { display: none; }
+body.kilic-danke .wizard { grid-template-columns: 1fr; }

@@ -117,6 +117,14 @@ add_filter( 'use_block_editor_for_post_type', function ( $use, $type ) {
 	return 'kilic_referenz' === $type ? false : $use;
 }, 10, 2 );
 
+/** Nach erfolgreichem Absenden: Kopfbild ausblenden, Danke-Meldung steht ganz oben. */
+add_filter( 'body_class', function ( $c ) {
+	if ( 'danke' === ( $_GET['anfrage'] ?? '' ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		$c[] = 'kilic-danke';
+	}
+	return $c;
+} );
+
 /* ---------- Header & Footer ---------- */
 
 function kilic_logo( $footer = false ) {
@@ -271,7 +279,7 @@ function kilic_form_meldung( $form ) {
 	}
 	$grund = sanitize_key( $_GET['grund'] ?? '' ); // phpcs:ignore WordPress.Security.NonceVerification
 	$texte = array(
-		'pflicht'     => 'Bitte geben Sie Ihren Namen und eine E-Mail-Adresse oder Telefonnummer an.',
+		'pflicht'     => 'Bitte füllen Sie alle Pflichtfelder aus: Vorname, Nachname, E-Mail, Telefon und die Adresse des Objekts.',
 		'datenschutz' => 'Bitte bestätigen Sie die Datenschutzerklärung.',
 		'sitzung'     => 'Die Sitzung ist abgelaufen. Bitte laden Sie die Seite neu und senden Sie das Formular erneut.',
 		'spam'        => 'Das Formular wurde zu schnell abgeschickt. Bitte versuchen Sie es noch einmal.',

@@ -353,23 +353,23 @@ function kilic_beleg_pos_box( $post ) {
 		<tbody>
 		<?php foreach ( $pos as $i => $p ) : ?>
 			<tr class="kilic-pos-row">
-				<td class="kilic-pos-nr"><?php echo (int) $i + 1; ?></td>
-				<td><textarea name="kilic_pos[text][]" rows="2" <?php disabled( $gesperrt ); ?>><?php echo esc_textarea( $p['text'] ); ?></textarea></td>
-				<td><input type="text" name="kilic_pos[menge][]" value="<?php echo esc_attr( kilic_num( $p['menge'], 3 ) ); ?>" <?php disabled( $gesperrt ); ?>></td>
-				<td><select name="kilic_pos[einheit][]" <?php disabled( $gesperrt ); ?>>
+				<td class="kilic-pos-nr" data-label="Pos."><?php echo (int) $i + 1; ?></td>
+				<td class="kp-text" data-label="Leistung / Beschreibung"><textarea name="kilic_pos[text][]" aria-label="Leistung / Beschreibung" rows="2" <?php disabled( $gesperrt ); ?>><?php echo esc_textarea( $p['text'] ); ?></textarea></td>
+				<td class="kp-f" data-label="Menge"><input type="text" inputmode="decimal" aria-label="Menge" name="kilic_pos[menge][]" value="<?php echo esc_attr( kilic_num( $p['menge'], 3 ) ); ?>" <?php disabled( $gesperrt ); ?>></td>
+				<td class="kp-f" data-label="Einheit"><select aria-label="Einheit" name="kilic_pos[einheit][]" <?php disabled( $gesperrt ); ?>>
 					<?php foreach ( kilic_einheiten() as $e ) : ?>
 						<option <?php selected( $p['einheit'], $e ); ?>><?php echo esc_html( $e ); ?></option>
 					<?php endforeach; ?>
 				</select></td>
-				<td><input type="text" name="kilic_pos[preis][]" value="<?php echo esc_attr( number_format( (int) $p['preis'] / 100, 2, ',', '' ) ); ?>" <?php disabled( $gesperrt ); ?>></td>
-				<td><input type="text" name="kilic_pos[rabatt][]" value="<?php echo esc_attr( ! empty( $p['rabatt'] ) ? kilic_num( $p['rabatt'], 2 ) : '' ); ?>" placeholder="0" <?php disabled( $gesperrt ); ?>></td>
-				<td class="kilic-pos-sum" style="text-align:right"></td>
-				<td><?php if ( ! $gesperrt ) : ?><button type="button" class="button-link kilic-pos-del" aria-label="Position entfernen">✕</button><?php endif; ?></td>
+				<td class="kp-f" data-label="Einzelpreis netto (€)"><input type="text" inputmode="decimal" aria-label="Einzelpreis netto" name="kilic_pos[preis][]" value="<?php echo esc_attr( number_format( (int) $p['preis'] / 100, 2, ',', '' ) ); ?>" <?php disabled( $gesperrt ); ?>></td>
+				<td class="kp-f" data-label="Rabatt %"><input type="text" inputmode="decimal" aria-label="Rabatt in Prozent" name="kilic_pos[rabatt][]" value="<?php echo esc_attr( ! empty( $p['rabatt'] ) ? kilic_num( $p['rabatt'], 2 ) : '' ); ?>" placeholder="0" <?php disabled( $gesperrt ); ?>></td>
+				<td class="kilic-pos-sum" data-label="Gesamt netto" style="text-align:right"></td>
+				<td class="kp-del"><?php if ( ! $gesperrt ) : ?><button type="button" class="button-link kilic-pos-del" aria-label="Position entfernen">✕</button><?php endif; ?></td>
 			</tr>
 		<?php endforeach; ?>
 		</tbody>
 		<tfoot>
-			<tr><td colspan="6"><?php if ( ! $gesperrt ) : ?><button type="button" class="button kilic-pos-add">+ Position hinzufügen</button>
+			<tr class="kp-add-zeile"><td colspan="6"><?php if ( ! $gesperrt ) : ?><button type="button" class="button kilic-pos-add">+ Position hinzufügen</button>
 				<span class="kilic-vorlagen"><label for="kilic-katalog">Aus Leistungskatalog:</label>
 					<select id="kilic-katalog" class="kilic-pos-vorlage">
 						<option value="">– Leistung wählen –</option>

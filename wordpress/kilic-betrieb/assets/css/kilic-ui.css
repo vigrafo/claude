@@ -371,3 +371,65 @@ body.kilic-ui {
 .kilic-ui .kv-pdf { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 12px; border-radius: 999px; background: var(--k-accent-soft); color: var(--k-accent-d); font-weight: 600; text-decoration: none; }
 .kilic-ui .kv-hinweis { margin: 0; font-size: 13px; color: var(--k-muted); }
 @media (max-width: 600px) { .kilic-ui .kv-liste li { flex-wrap: wrap; } .kilic-ui .kv-btn { flex: 1 1 100%; justify-content: center; } }
+
+/* Positionen am Handy: jede Position als Karte, Summen als Liste */
+@media (max-width: 782px) {
+  .kilic-ui table.kilic-pos, .kilic-ui .kilic-pos tbody, .kilic-ui .kilic-pos tfoot, .kilic-ui .kilic-pos tr, .kilic-ui .kilic-pos td { display: block; width: auto !important; box-sizing: border-box; }
+  .kilic-ui .kilic-pos thead { display: none; }
+  .kilic-ui .kilic-pos { border: 0; background: transparent; }
+  .kilic-ui .kilic-pos .kilic-pos-row { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; margin: 0 0 14px; padding: 14px; border: 1px solid var(--k-line); border-radius: 14px; background: #fff; }
+  .kilic-ui .kilic-pos .kilic-pos-row td { padding: 0; border: 0; }
+  .kilic-ui .kilic-pos td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 4px; font-size: 12px; font-weight: 600; color: var(--k-muted); }
+  .kilic-ui .kilic-pos .kilic-pos-nr { grid-column: 1 / -1; padding: 0 40px 0 0; font-weight: 700; color: var(--k-ink); }
+  .kilic-ui .kilic-pos .kilic-pos-nr::before { content: "Position"; display: inline; margin-right: 6px; font-size: 14px; color: var(--k-ink); }
+  .kilic-ui .kilic-pos .kp-text { grid-column: 1 / -1; }
+  .kilic-ui .kilic-pos .kp-text textarea { min-height: 70px; }
+  .kilic-ui .kilic-pos .kp-f input, .kilic-ui .kilic-pos .kp-f select { width: 100%; min-height: 44px; }
+  .kilic-ui .kilic-pos .kilic-pos-sum { grid-column: 1 / -1; display: flex !important; justify-content: space-between; align-items: baseline; padding-top: 8px; border-top: 1px solid var(--k-line); font-size: 16px; text-align: right; }
+  .kilic-ui .kilic-pos .kilic-pos-sum::before { margin: 0; font-size: 14px; }
+  .kilic-ui .kilic-pos .kp-del { position: absolute; top: 6px; right: 6px; }
+  .kilic-ui .kilic-pos .kp-del button { min-width: 44px; min-height: 44px; }
+  .kilic-ui .kilic-pos tfoot tr { padding: 0; }
+  .kilic-ui .kilic-pos tfoot td { padding: 0; border: 0; }
+  .kilic-ui .kilic-pos tfoot td:empty { display: none; }
+  .kilic-ui .kilic-pos .kp-add-zeile td { display: grid; gap: 10px; padding-bottom: 14px; }
+  .kilic-ui .kilic-pos .kp-add-zeile .kilic-pos-add { width: 100%; min-height: 48px; }
+  .kilic-ui .kilic-pos .kilic-vorlagen { display: grid; gap: 6px; }
+  .kilic-ui .kilic-pos .kilic-vorlagen select { width: 100%; max-width: none; min-height: 44px; }
+  .kilic-ui .kilic-pos tr.kilic-sum { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 2px; border-top: 1px solid var(--k-line); }
+  .kilic-ui .kilic-pos tr.kilic-sum td { text-align: left !important; }
+  .kilic-ui .kilic-pos tr.kilic-sum td:nth-child(2) { white-space: nowrap; text-align: right !important; font-weight: 600; }
+  .kilic-ui .kilic-pos tr.kilic-rabatt-zeile { flex-wrap: wrap; }
+  .kilic-ui .kilic-pos tr.kilic-rabatt-zeile td:first-child { flex: 1 1 100%; display: grid; grid-template-columns: 1fr 100px; gap: 8px; }
+  .kilic-ui .kilic-pos tr.kilic-rabatt-zeile label { grid-column: 1 / -1; }
+  .kilic-ui .kilic-pos tr.kilic-rabatt-zeile input, .kilic-ui .kilic-pos tr.kilic-rabatt-zeile select { width: 100% !important; min-height: 44px; }
+  .kilic-ui .kilic-pos tr.kilic-rabatt-zeile input[name*="rabatt_text"] { grid-column: 1 / -1; }
+  .kilic-ui .kilic-pos tr.kilic-rabatt-zeile td.kilic-rabatt { margin-left: auto; }
+  .kilic-ui .kilic-pos tr.kilic-sum-total { font-size: 17px; border-top: 2px solid var(--k-ink); }
+}
+
+/* Alle Kilic-Masken am Handy: nichts breiter als der Bildschirm */
+@media (max-width: 782px) {
+  .kilic-ui #wpbody-content, .kilic-ui #poststuff, .kilic-ui #post-body, .kilic-ui .postbox, .kilic-ui .postbox .inside { min-width: 0 !important; max-width: 100%; box-sizing: border-box; }
+  .kilic-ui .postbox .inside { overflow-wrap: anywhere; }
+  .kilic-ui .form-table, .kilic-ui .form-table tbody, .kilic-ui .form-table tr, .kilic-ui .form-table th, .kilic-ui .form-table td { display: block; width: auto !important; max-width: 100%; box-sizing: border-box; }
+  .kilic-ui .form-table td { padding-left: 10px; padding-right: 10px; }
+  .kilic-ui .form-table input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not(.kk-klein):not(.kk-gross),
+  .kilic-ui .form-table select:not(.kk-klein),
+  .kilic-ui .form-table textarea,
+  .kilic-ui .kilic-neuer-kunde input:not([type=checkbox]):not(.kk-klein):not(.kk-gross) {
+    width: 100% !important; max-width: 100% !important; min-width: 0 !important; box-sizing: border-box; margin: 0 0 8px;
+  }
+  .kilic-ui .kk-duo { max-width: 100%; }
+  .kilic-ui .kk-duo .kk-gross { min-width: 0; }
+  .kilic-ui .kilic-kunde-suche { width: 100% !important; }
+  .kilic-ui #kilic_beleg_aktionen .button, .kilic-ui #kilic_beleg_aktionen .button-primary { width: 100%; min-height: 48px; margin: 0 0 8px; box-sizing: border-box; text-align: center; }
+  .kilic-ui .widefat:not(.kilic-pos) { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+@media (max-width: 782px) {
+  .kilic-ui .kc-payments table, .kilic-ui .kc-payments tbody { display: block; width: 100%; }
+  .kilic-ui .kc-payments tr { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; padding: 10px 0; border-bottom: 1px solid var(--k-line); }
+  .kilic-ui .kc-payments td { padding: 0; border: 0; overflow-wrap: anywhere; }
+  .kilic-ui .kc-payments td:nth-child(2) { grid-column: 1 / -1; order: -1; font-weight: 600; }
+  .kilic-ui .kc-payments td.r { text-align: right; }
+}

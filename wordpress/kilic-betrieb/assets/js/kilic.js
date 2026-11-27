@@ -75,6 +75,7 @@
         p.classList.toggle("current", k === cur);
       });
       prev.style.visibility = cur === 0 ? "hidden" : "visible";
+      prev.parentNode.classList.toggle("is-first", cur === 0);
       var last = cur === steps.length - 1;
       next.hidden = last;
       submit.hidden = !last;
@@ -93,24 +94,28 @@
 
     form.addEventListener("submit", function (e) {
       var errors = [];
-      var name = form.querySelector("[name=name]");
-      var email = form.querySelector("[name=email]");
-      var tel = form.querySelector("[name=tel]");
       var dsgvo = form.querySelector("[name=dsgvo]");
-      [name, email, tel].forEach(function (f) { f.classList.remove("field-error"); });
-      if (!name.value.trim()) { errors.push("Bitte geben Sie Ihren Namen an."); name.classList.add("field-error"); }
-      if (!email.value.trim() && !tel.value.trim()) {
-        errors.push("Bitte geben Sie eine E-Mail-Adresse oder Telefonnummer an.");
-        email.classList.add("field-error"); tel.classList.add("field-error");
-      } else if (email.value.trim() && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value.trim())) {
-        errors.push("Bitte prüfen Sie die E-Mail-Adresse."); email.classList.add("field-error");
-      }
+      var pflicht = [["vorname", "Vorname"], ["nachname", "Nachname"], ["email", "E-Mail"], ["tel", "Telefon"], ["strasse", "Straße"], ["hausnr", "Hausnummer"], ["plz", "PLZ"], ["ort", "Ort"]];
+      var fehlt = [], erstes = null;
+      pflicht.forEach(function (p) {
+        var f = form.querySelector("[name=" + p[0] + "]");
+        if (!f) return;
+        var leer = !f.value.trim();
+        var falsch = p[0] === "email" && !leer && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.value.trim());
+        f.classList.toggle("field-error", leer || falsch);
+        f.setAttribute("aria-invalid", leer || falsch ? "true" : "false");
+        if (leer) fehlt.push(p[1]);
+        if (falsch) errors.push("Bitte prüfen Sie die E-Mail-Adresse.");
+        if ((leer || falsch) && !erstes) erstes = f;
+      });
+      if (fehlt.length) errors.unshift("Bitte noch ausfüllen: " + fehlt.join(", ") + ".");
       if (!dsgvo.checked) errors.push("Bitte bestätigen Sie die Datenschutzerklärung.");
       if (errors.length) {
         e.preventDefault();
         show(steps.length - 1);
         errBox.textContent = errors.join(" ");
         errBox.hidden = false;
+        if (erstes) { erstes.focus(); erstes.scrollIntoView({ block: "center" }); } else errBox.scrollIntoView({ block: "center" });
         return;
       }
       submit.disabled = true;
@@ -118,7 +123,10 @@
     });
 
     form.addEventListener("change", function () { toggleConditional(); updateSummary(); });
-    form.addEventListener("input", updateSummary);
+    form.addEventListener("input", function (e) {
+      if (e.target.classList && e.target.classList.contains("field-error") && e.target.value.trim()) { e.target.classList.remove("field-error"); e.target.setAttribute("aria-invalid", "false"); }
+      updateSummary();
+    });
 
     function val(name) {
       var els = form.querySelectorAll('[name="' + name + '"], [name="' + name + '[]"]');
@@ -233,4 +241,15 @@
     toggleConditional();
     show(0);
   }
+})();
+
+/* Nach dem Absenden direkt zur Meldung springen (auch am Handy) */
+(function () {
+  if (!/[?&]anfrage=(danke|fehler)/.test(location.search)) return;
+  function go() {
+    var el = document.querySelector('.kilic-danke [role="status"], .form-msg, #anfrage [role="status"]');
+    if (!el && location.hash) el = document.querySelector(location.hash);
+    if (el) el.scrollIntoView({ block: "start" });
+  }
+  if (document.readyState === "complete") go(); else window.addEventListener("load", go);
 })();

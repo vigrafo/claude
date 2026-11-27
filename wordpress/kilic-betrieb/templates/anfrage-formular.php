@@ -179,21 +179,27 @@ $choice = function ( $name, $id, $value, $title, $text = '', $icon = '', $checke
 			<div class="wizard-step">
 				<h3>Ihre Kontaktdaten</h3>
 				<p>Damit wir Ihnen das Angebot zusenden können.</p>
+				<p class="hint" style="margin-top:-6px">Felder mit <span class="req">*</span> bitte ausfüllen.</p>
 				<div class="field-row">
-					<div class="field"><label for="name">Vor- und Nachname <span class="req">*</span></label><input type="text" id="name" name="name" autocomplete="name" data-required="1"></div>
-					<div class="field"><label for="firma">Firma (optional)</label><input type="text" id="firma" name="firma" placeholder="z. B. Bauträger, Architekt" autocomplete="organization"></div>
+					<div class="field"><label for="vorname">Vorname <span class="req">*</span></label><input type="text" id="vorname" name="vorname" autocomplete="given-name" required></div>
+					<div class="field"><label for="nachname">Nachname <span class="req">*</span></label><input type="text" id="nachname" name="nachname" autocomplete="family-name" required></div>
 				</div>
+				<div class="field"><label for="firma">Firma (optional)</label><input type="text" id="firma" name="firma" placeholder="z. B. Bauträger, Architekt" autocomplete="organization"></div>
 				<div class="field-row">
-					<div class="field"><label for="email">E-Mail <span class="req">*</span></label><input type="email" id="email" name="email" autocomplete="email"></div>
-					<div class="field"><label for="tel">Telefon <span class="req">*</span></label><input type="tel" id="tel" name="tel" autocomplete="tel"></div>
+					<div class="field"><label for="email">E-Mail <span class="req">*</span></label><input type="email" id="email" name="email" autocomplete="email" required></div>
+					<div class="field"><label for="tel">Telefon <span class="req">*</span></label><input type="tel" id="tel" name="tel" autocomplete="tel" required></div>
 				</div>
-				<p class="hint" style="margin-top:-8px;margin-bottom:16px">E-Mail oder Telefon genügt.</p>
-				<label>Adresse des Objekts</label>
-				<div class="field-row three">
-					<div class="field"><input type="text" name="strasse" placeholder="Straße, Nr." aria-label="Straße, Nr." autocomplete="street-address"></div>
-					<div class="field"><input type="text" name="plz" placeholder="PLZ" aria-label="PLZ" autocomplete="postal-code" inputmode="numeric"></div>
-					<div class="field"><input type="text" name="ort" placeholder="Ort" aria-label="Ort" autocomplete="address-level2"></div>
-				</div>
+				<fieldset class="addr">
+					<legend>Adresse des Objekts <span class="req">*</span></legend>
+					<div class="field-row addr-a">
+						<div class="field"><label for="strasse">Straße <span class="req">*</span></label><input type="text" id="strasse" name="strasse" autocomplete="address-line1" required></div>
+						<div class="field"><label for="hausnr">Nr. <span class="req">*</span></label><input type="text" id="hausnr" name="hausnr" required></div>
+					</div>
+					<div class="field-row addr-b">
+						<div class="field"><label for="plz">PLZ <span class="req">*</span></label><input type="text" id="plz" name="plz" autocomplete="postal-code" inputmode="numeric" required></div>
+						<div class="field"><label for="ort">Ort <span class="req">*</span></label><input type="text" id="ort" name="ort" autocomplete="address-level2" required></div>
+					</div>
+				</fieldset>
 				<div class="field"><label for="rueckruf">Bevorzugte Kontaktaufnahme</label><select id="rueckruf" name="rueckruf"><option>Per E-Mail</option><option>Rückruf vormittags</option><option>Rückruf nachmittags</option><option>WhatsApp</option></select></div>
 				<label class="check"><input type="checkbox" name="dsgvo" value="1" data-required="1"> <span>Ich habe die <a href="<?php echo esc_url( kilic_datenschutz_link() ); ?>" target="_blank">Datenschutzerklärung</a> gelesen und bin mit der Verarbeitung meiner Angaben zur Bearbeitung der Anfrage einverstanden. <span class="req">*</span></span></label>
 				<div class="form-msg err wizard-error" role="alert" hidden></div>
