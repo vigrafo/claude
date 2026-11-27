@@ -484,3 +484,19 @@ add_filter( 'the_content', function ( $html ) {
 	}
 	return preg_replace( '#<div class="wrap prose">\s*<h1>Impressum</h1>.*?Verbraucherschlichtungsstelle teilzunehmen\.</p>#s', '<div class="wrap prose prose-impressum"><h1>Impressum</h1>' . kilic_impressum_html(), $html, 1 );
 }, 102 );
+
+/** Favicon im Firmendesign (Website, Backend, Login). Ein in WordPress gesetztes „Website-Icon“ hat Vorrang. */
+function kilic_favicon_tags() {
+	if ( function_exists( 'has_site_icon' ) && has_site_icon() ) {
+		return;
+	}
+	$u = KILIC_URL . 'assets/img/favicon/';
+	$v = '?v=' . KILIC_VERSION;
+	echo '<link rel="icon" href="' . esc_url( $u . 'favicon.ico' . $v ) . '" sizes="32x32">' . "\n";
+	echo '<link rel="icon" href="' . esc_url( $u . 'favicon.svg' . $v ) . '" type="image/svg+xml">' . "\n";
+	echo '<link rel="apple-touch-icon" href="' . esc_url( $u . 'apple-touch-icon.png' . $v ) . '">' . "\n";
+	echo '<meta name="theme-color" content="#1b1f23">' . "\n";
+}
+add_action( 'wp_head', 'kilic_favicon_tags', 2 );
+add_action( 'admin_head', 'kilic_favicon_tags', 2 );
+add_action( 'login_head', 'kilic_favicon_tags', 2 );
