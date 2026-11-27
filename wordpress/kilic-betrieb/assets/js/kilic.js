@@ -12,9 +12,23 @@
   function initNav() {
     var toggle = document.querySelector(".nav-toggle");
     if (!toggle) return;
-    toggle.addEventListener("click", function () {
-      var open = document.body.classList.toggle("nav-open");
+    var nav = document.querySelector(".main-nav");
+    var header = document.querySelector(".site-header");
+    function place() {
+      if (nav && header) nav.style.top = header.offsetHeight + "px";
+    }
+    function setOpen(open) {
+      document.body.classList.toggle("nav-open", open);
       toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      toggle.setAttribute("aria-label", open ? "Menü schließen" : "Menü öffnen");
+      if (open) place();
+    }
+    toggle.addEventListener("click", function () { setOpen(!document.body.classList.contains("nav-open")); });
+    window.addEventListener("resize", function () { if (document.body.classList.contains("nav-open")) place(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") setOpen(false); });
+    if (nav) nav.addEventListener("click", function (e) {
+      var a = e.target.closest("a");
+      if (a && a.getAttribute("href") && a.getAttribute("href").charAt(0) !== "#") setOpen(false);
     });
   }
 

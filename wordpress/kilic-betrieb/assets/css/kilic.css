@@ -1339,3 +1339,17 @@ body.kilic-danke #anfrage, body.kilic-danke #kontakt { margin-top: 24px; scroll-
 }
 body.kilic-danke .wizard .summary { display: none; }
 body.kilic-danke .wizard { grid-template-columns: 1fr; }
+
+/* Handy-Menü: Kopfzeile darf kein backdrop-filter haben, sonst wird das feste Menü in der Kopfzeile eingesperrt */
+@media (max-width: 1300px) {
+  .site-header { backdrop-filter: none; -webkit-backdrop-filter: none; background: #fff; }
+  .main-nav { top: 124px; bottom: 0; left: 0; right: 0; height: auto; z-index: 70; box-shadow: 0 20px 40px rgba(0,0,0,.12); }
+  body.nav-open { overflow: hidden; }
+  .main-nav > ul > li > a { min-height: 44px; display: flex; align-items: center; }
+}
+@media (max-width: 1300px) {
+  body.nav-open .site-header { position: fixed; top: 0; left: 0; right: 0; z-index: 80; }
+  body.nav-open .nav-toggle span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+  body.nav-open .nav-toggle span:nth-child(2) { opacity: 0; }
+  body.nav-open .nav-toggle span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+}
