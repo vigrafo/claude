@@ -65,12 +65,9 @@ function kilic_anfrage_empfangen() {
 	if ( ! isset( $_POST['kilic_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['kilic_nonce'] ), 'kilic_anfrage' ) ) {
 		$fail( 'sitzung' );
 	}
-	// Spam-Schutz: verstecktes Feld muss leer sein, Formular nicht in unter 3 Sekunden ausgefüllt.
+	// Spam-Schutz Stufe 1: verstecktes Feld muss leer sein.
 	if ( ! empty( $_POST['website'] ) ) {
-		$fail( 'spam' );
-	}
-	$start = absint( $_POST['kilic_t'] ?? 0 );
-	if ( $start && time() - $start < 3 ) {
+		kilic_spam_merken( 'lockfeld' );
 		$fail( 'spam' );
 	}
 
@@ -118,6 +115,12 @@ function kilic_anfrage_empfangen() {
 	if ( empty( $_POST['dsgvo'] ) ) {
 		$fail( 'datenschutz' );
 	}
+	// Spam-Schutz Stufe 2–5: Zeit, Browser-Prüfung, Inhalt, Tageslimit.
+	$spam = kilic_spam_pruefen( $data );
+	if ( $spam ) {
+		kilic_spam_merken( $spam );
+		$fail( $spam );
+	}
 	if ( 'kontakt' === $form ) {
 		$data['leistung'] = 'Kontakt';
 	}
@@ -143,6 +146,7 @@ function kilic_anfrage_empfangen() {
 
 	$dateien = kilic_anfrage_uploads( $id );
 
+	kilic_spam_gezaehlt( $data );
 	kilic_anfrage_mails_html( $id, $data, $dateien );
 
 	wp_safe_redirect( add_query_arg( 'anfrage', 'danke', $back ) . '#' . $form );

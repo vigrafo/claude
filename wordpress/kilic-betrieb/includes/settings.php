@@ -52,6 +52,11 @@ function kilic_settings_fields() {
 			'inhaber_email' => array( 'Bestätigung an Inhaber', 'email', 'Der Inhaber bekommt bei jeder Anfrage eine eigene Bestätigung im Firmendesign. Leer = WordPress-Admin-E-Mail. Angebote und Rechnungen gehen ohne Kopie raus – die Kopie liegt am Beleg im Backend.' ),
 			'absender'      => array( 'Antwort-Adresse', 'email', 'Antwortet ein Kunde auf eine E-Mail der Website, landet die Antwort hier. (Absender ist immer das Postfach bzw. eine Adresse der Website.)' ),
 		),
+		'Spamschutz' => array(
+			'spam_limit'   => array( 'Anfragen pro Tag und Absender', 'number', 'Höchstens so viele Anfragen darf eine Person (gleiche Internetverbindung oder gleiche E-Mail) pro Tag senden. 0 = unbegrenzt. Standard: 2.' ),
+			'spam_links'   => array( 'Erlaubte Links pro Anfrage', 'number', 'Spam enthält fast immer Links. Standard: 1. 0 = gar keine Links erlaubt.' ),
+			'spam_woerter' => array( 'Sperrwörter', 'textarea', 'Anfragen mit einem dieser Wörter werden abgelehnt. Ein Wort pro Zeile oder mit Komma getrennt, z. B. casino, viagra, crypto, SEO-Agentur.' ),
+		),
 		'E-Mail-Versand' => array(
 			'pdf_anhang' => array( 'PDF zusätzlich als Anhang mitschicken', 'checkbox', 'Aus (empfohlen) = Der Kunde bekommt in der E-Mail einen Knopf „PDF öffnen“. E-Mails ohne Anhang kommen viel zuverlässiger an. Ein = PDF hängt zusätzlich an (nur sinnvoll mit Postfach-Versand).' ),
 		),
@@ -212,6 +217,17 @@ function kilic_render_settings() {
 			</tbody></table></div>
 			<p class="description">„✓ an Mailserver übergeben“ heißt: Die Website hat die E-Mail abgeschickt. Kommt sie trotzdem nicht an, lehnt der Empfänger sie ab (meist fehlendes SPF/DKIM) – dann den Postfach-Versand oben einrichten.</p>
 		<?php endif; ?>
+
+		<?php $st = (array) get_option( 'kilic_spam_stat', array() ); ?>
+		<h2>Spamschutz – Übersicht</h2>
+		<div class="kilic-diagnose is-ok">
+			<h3>✓ Spamschutz ist aktiv</h3>
+			<p>Abgewehrte Versuche bisher: <strong><?php echo (int) ( $st['gesamt'] ?? 0 ); ?></strong><?php echo ! empty( $st['zuletzt'] ) ? ' · zuletzt am ' . esc_html( mysql2date( 'd.m.Y H:i', $st['zuletzt'] ) ) : ''; ?></p>
+			<?php if ( ! empty( $st['gruende'] ) ) : $namen = array( 'lockfeld' => 'Bot (verstecktes Feld)', 'spam' => 'Bot (zu schnell / kein Browser)', 'inhalt' => 'Links oder Sperrwörter', 'limit' => 'Tageslimit erreicht' ); ?>
+				<table><?php foreach ( $st['gruende'] as $g => $n ) : ?><tr><td><?php echo esc_html( $namen[ $g ] ?? $g ); ?></td><td><strong><?php echo (int) $n; ?></strong></td></tr><?php endforeach; ?></table>
+			<?php endif; ?>
+			<p class="description">Schutzstufen: verstecktes Lockfeld · Mindest-Ausfüllzeit · Browser-Prüfung · Tageslimit (<?php echo (int) kilic_spam_limit(); ?> pro Tag) · Link- und Sperrwort-Prüfung. Ohne Google-Captcha, DSGVO-freundlich – IP-Adressen werden nur verschlüsselt und höchstens einen Tag gespeichert. Angemeldete Mitarbeiter sind vom Limit ausgenommen.</p>
+		</div>
 
 		<h2>Seiten neu einrichten</h2>
 		<p>Fehlende Standardseiten (Estrich, Boden, Rohrreinigung, Unterseiten, Kontakt …) und das Hauptmenü neu anlegen. Bestehende Seiten werden nicht überschrieben.</p>

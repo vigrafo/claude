@@ -288,7 +288,9 @@ function kilic_form_meldung( $form ) {
 		'pflicht'     => 'Bitte füllen Sie alle Pflichtfelder aus: Vorname, Nachname, E-Mail, Telefon und die Adresse des Objekts.',
 		'datenschutz' => 'Bitte bestätigen Sie die Datenschutzerklärung.',
 		'sitzung'     => 'Die Sitzung ist abgelaufen. Bitte laden Sie die Seite neu und senden Sie das Formular erneut.',
-		'spam'        => 'Das Formular wurde zu schnell abgeschickt. Bitte versuchen Sie es noch einmal.',
+		'spam'        => 'Die Anfrage konnte nicht geprüft werden. Bitte laden Sie die Seite neu und senden Sie das Formular noch einmal.',
+		'inhalt'      => 'Ihre Nachricht enthält Links oder Inhalte, die wir aus Sicherheitsgründen nicht annehmen. Bitte entfernen Sie Links oder rufen Sie uns an.',
+		'limit'       => 'Sie haben heute schon die maximale Anzahl an Anfragen gesendet. Wir melden uns bei Ihnen – oder rufen Sie uns direkt an.',
 		'speichern'   => 'Die Anfrage konnte nicht gespeichert werden. Bitte rufen Sie uns an.',
 	);
 	return '<div class="form-msg err" role="alert">' . esc_html( $texte[ $grund ] ?? 'Die Anfrage konnte nicht gesendet werden.' ) . ' Telefon: ' . esc_html( kilic_opt( 'telefon' ) ) . '</div>';
@@ -297,7 +299,7 @@ function kilic_form_meldung( $form ) {
 function kilic_form_hidden( $form ) {
 	return '<input type="hidden" name="action" value="kilic_anfrage">'
 		. '<input type="hidden" name="kilic_form" value="' . esc_attr( $form ) . '">'
-		. '<input type="hidden" name="kilic_t" value="' . esc_attr( time() ) . '">'
+		. '<input type="hidden" name="kilic_t" value="">'
 		. wp_nonce_field( 'kilic_anfrage', 'kilic_nonce', false, false )
 		. '<div class="hp-field" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>';
 }
