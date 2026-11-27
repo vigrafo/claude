@@ -170,6 +170,26 @@ function kilic_render_settings() {
 			<?php $t = get_transient( 'kilic_mailtest' ); ?>
 			<div class="notice <?php echo ! empty( $t['ok'] ) ? 'notice-success' : 'notice-error'; ?> inline"><p><?php echo ! empty( $t['ok'] ) ? 'Test-E-Mail wurde an ' . esc_html( $t['an'] ?? '' ) . ' übergeben. Bitte Posteingang (und Spam-Ordner) prüfen.' : 'Versand fehlgeschlagen: ' . esc_html( $t['fehler'] ?? 'unbekannter Fehler' ) . '. Tipp: Haken „Über ein Postfach senden“ entfernen – dann geht die E-Mail direkt über die Website.'; ?></p></div>
 		<?php endif; ?>
+		<?php $dg = kilic_mail_diagnose(); $gut = $dg['smtp'] || ( $dg['spf'] && $dg['dkim'] ); ?>
+		<div class="kilic-diagnose <?php echo $gut ? 'is-ok' : 'is-warn'; ?>">
+			<h3><?php echo $gut ? '✓ E-Mail-Versand ist richtig eingerichtet' : '⚠ E-Mails können beim Empfänger abgelehnt werden oder im Spam landen'; ?></h3>
+			<table>
+				<tr><td>Absender</td><td><code><?php echo esc_html( $dg['absender'] ); ?></code></td></tr>
+				<tr><td>Versandweg</td><td><?php echo $dg['smtp'] ? '✓ über Postfach (mit Anmeldung) – kommt zuverlässig an' : 'direkt über die Website (ohne Anmeldung)'; ?></td></tr>
+				<?php if ( ! $dg['smtp'] ) : ?>
+				<tr><td>SPF (<?php echo esc_html( $dg['domain'] ); ?>)</td><td><?php echo $dg['spf'] ? '✓ ' . esc_html( $dg['spf'] ) : '✗ fehlt'; ?></td></tr>
+				<tr><td>DKIM-Signatur</td><td><?php echo $dg['dkim'] ? '✓ vorhanden' : '✗ fehlt'; ?></td></tr>
+				<tr><td>DMARC</td><td><?php echo $dg['dmarc'] ? '✓ vorhanden' : '– nicht eingerichtet (empfohlen)'; ?></td></tr>
+				<?php endif; ?>
+			</table>
+			<?php if ( ! $gut ) : ?>
+				<p><strong>So kommen E-Mails sicher an (eine Möglichkeit reicht):</strong></p>
+				<ol>
+					<li><strong>Empfohlen:</strong> In Plesk unter <em>E-Mail</em> ein Postfach anlegen (z. B. <code>info@<?php echo esc_html( kilic_site_domain() ); ?></code>). Oben bei „E-Mail-Postfach (SMTP)“ den Haken setzen und eintragen: Server <code>localhost</code>, Port <code>587</code>, Benutzer = diese Adresse, Passwort aus Plesk. Bei „Antwort-Adresse“ die Postfach-Adresse eintragen.</li>
+					<li>Oder in Plesk für <code><?php echo esc_html( $dg['domain'] ); ?></code> unter <em>Mail-Einstellungen</em> „DKIM-Signatur für ausgehende E-Mails“ einschalten und unter <em>DNS-Einstellungen</em> einen SPF-Eintrag anlegen: <code>v=spf1 a mx ~all</code></li>
+				</ol>
+			<?php endif; ?>
+		</div>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="kilic-mailtest">
 			<input type="hidden" name="action" value="kilic_mailtest">
 			<?php wp_nonce_field( 'kilic_mailtest' ); ?>

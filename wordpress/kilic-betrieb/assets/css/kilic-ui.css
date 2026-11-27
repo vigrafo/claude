@@ -505,3 +505,9 @@ body.kilic-ui {
 .kilic-ui .kb-balken span { display: block; height: 100%; width: 0; background: var(--k-accent); transition: width .3s; }
 .kilic-ui .kb-status { margin: 0; font-weight: 600; }
 .kilic-ui .kb-scan { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: -10px 0 26px; }
+
+.kilic-ui .kilic-diagnose { margin: 12px 0 18px; padding: 16px 20px; border-radius: 14px; background: #e9f6ee; max-width: 900px; }
+.kilic-ui .kilic-diagnose.is-warn { background: #fff5e6; }
+.kilic-ui .kilic-diagnose h3 { margin: 0 0 10px; font-size: 16px; }
+.kilic-ui .kilic-diagnose table td { padding: 4px 14px 4px 0; vertical-align: top; }
+.kilic-ui .kilic-diagnose code { word-break: break-all; }

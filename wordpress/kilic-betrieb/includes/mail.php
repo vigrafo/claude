@@ -54,9 +54,15 @@ function kilic_mail_button( $text, $url ) {
 }
 
 function kilic_mail_tabelle( $zeilen ) {
-	$out = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:16px 0;font:14px/1.5 Arial,sans-serif">';
+	// Bezeichnung klein über dem Wert – passt auf jedes Handy, ohne Worttrennung.
+	$out = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:16px 0;font:15px/1.45 Arial,sans-serif">';
 	foreach ( $zeilen as $k => $v ) {
-		$out .= '<tr><td style="padding:8px 10px 8px 0;border-bottom:1px solid #e4e1db;color:#6b7279;width:42%;vertical-align:top">' . esc_html( $k ) . '</td><td style="padding:8px 0;border-bottom:1px solid #e4e1db;vertical-align:top"><strong>' . nl2br( esc_html( $v ) ) . '</strong></td></tr>';
+		if ( '' === trim( (string) $v ) ) {
+			continue;
+		}
+		$out .= '<tr><td style="padding:10px 0;border-bottom:1px solid #e4e1db">'
+			. '<div style="font-size:11px;line-height:1.3;letter-spacing:.08em;text-transform:uppercase;color:#8a8f94;margin:0 0 3px">' . esc_html( $k ) . '</div>'
+			. '<div style="font-weight:bold;color:#1b1f23">' . nl2br( esc_html( $v ) ) . '</div></td></tr>';
 	}
 	return $out . '</table>';
 }
@@ -103,6 +109,14 @@ add_action( 'phpmailer_init', function ( $m ) {
 	$m->Password   = kilic_opt( 'smtp_pass' ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName
 	$m->SMTPSecure = 465 === (int) kilic_opt( 'smtp_port' ) ? 'ssl' : 'tls'; // phpcs:ignore WordPress.NamingConventions.ValidVariableName
 	$m->Timeout    = 15; // phpcs:ignore WordPress.NamingConventions.ValidVariableName
+	// Eigener Server (Plesk): Zertifikat gilt oft nur für den Hostnamen – trotzdem verschlüsselt verbinden.
+	$h = strtolower( (string) $m->Host );
+	if ( ! empty( $GLOBALS['kilic_smtp_lokal'] ) || in_array( $h, array( 'localhost', '127.0.0.1', kilic_site_domain(), 'mail.' . kilic_site_domain() ), true ) ) {
+		if ( ! empty( $GLOBALS['kilic_smtp_lokal'] ) ) {
+			$m->Host = 'localhost'; // phpcs:ignore WordPress.NamingConventions.ValidVariableName
+		}
+		$m->SMTPOptions = array( 'ssl' => array( 'verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true ) ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName
+	}
 }, 5 );
 
 /** Antwortadresse: Firmen-E-Mail, sonst Benachrichtigungsadresse. */
@@ -136,6 +150,12 @@ function kilic_send_mail( $an, $betreff, $html, $anhaenge = array(), $bcc = '', 
 	add_action( 'phpmailer_init', $sender );
 	$ok = wp_mail( $an, $betreff, $html, $headers, $anhaenge );
 	remove_action( 'phpmailer_init', $sender );
+	if ( ! $ok && kilic_smtp_aktiv() && empty( $GLOBALS['kilic_smtp_lokal'] ) && false !== stripos( (string) ( $GLOBALS['kilic_mail_fehler'] ?? '' ), 'connect' ) ) {
+		// Server erreicht sich selbst nicht über den Domainnamen → über „localhost“ versuchen.
+		$GLOBALS['kilic_smtp_lokal'] = true;
+		$ok = kilic_send_mail( $an, $betreff, $html, $anhaenge, $bcc, $reply_to );
+		$GLOBALS['kilic_smtp_lokal'] = false;
+	}
 	if ( ! $ok && kilic_smtp_aktiv() ) {
 		// Postfach nicht erreichbar → einmal direkt über die Website senden.
 		$fehler                    = $GLOBALS['kilic_mail_fehler'] ?? '';
@@ -189,8 +209,19 @@ add_action( 'admin_post_kilic_mailtest', function () {
 function kilic_anfrage_mails_html( $id, $data, $dateien ) {
 	$felder = kilic_anfrage_felder();
 	$zeilen = array();
+	// Kontakt zuerst, zusammengefasst; Einzelteile (Vorname, Nachname, Nr.) nicht doppelt zeigen.
+	$zeilen['Name'] = trim( ( $data['vorname'] ?? '' ) . ' ' . ( $data['nachname'] ?? '' ) ) ?: ( $data['name'] ?? '' );
+	if ( ! empty( $data['firma'] ) ) {
+		$zeilen['Firma'] = $data['firma'];
+	}
+	$zeilen['Telefon'] = $data['tel'] ?? '';
+	$zeilen['E-Mail']  = $data['email'] ?? '';
+	$zeilen['Adresse des Objekts'] = trim( ( $data['strasse'] ?? '' ) . "\n" . trim( ( $data['plz'] ?? '' ) . ' ' . ( $data['ort'] ?? '' ) ) );
+	$weg = array( 'name', 'vorname', 'nachname', 'hausnr', 'firma', 'tel', 'email', 'strasse', 'plz', 'ort' );
 	foreach ( $data as $k => $v ) {
-		$zeilen[ $felder[ $k ] ?? $k ] = $v;
+		if ( ! in_array( $k, $weg, true ) ) {
+			$zeilen[ $felder[ $k ] ?? ucfirst( $k ) ] = $v;
+		}
 	}
 
 	// Büro: Benachrichtigung.
@@ -468,3 +499,32 @@ add_action( 'admin_post_kilic_kopie', function () {
 	readfile( $datei ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 	exit;
 } );
+
+
+/** Prüft auf dem Server, ob die Absender-Domain für E-Mail eingerichtet ist (SPF, DKIM, DMARC, MX). */
+function kilic_mail_diagnose() {
+	$von    = kilic_absender_email();
+	$domain = strtolower( substr( strrchr( $von, '@' ), 1 ) );
+	$txt    = function ( $name ) {
+		$r = function_exists( 'dns_get_record' ) ? @dns_get_record( $name, DNS_TXT ) : array(); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+		return array_map( function ( $x ) { return $x['txt'] ?? ''; }, (array) $r );
+	};
+	$spf  = array_values( array_filter( $txt( $domain ), function ( $t ) { return 0 === stripos( $t, 'v=spf1' ); } ) );
+	$dmarc = array_values( array_filter( $txt( '_dmarc.' . $domain ), function ( $t ) { return 0 === stripos( $t, 'v=DMARC1' ); } ) );
+	$dkim = array();
+	foreach ( array( 'default', 'mail', 'dkim', 'selector1', 'google' ) as $sel ) {
+		if ( array_filter( $txt( $sel . '._domainkey.' . $domain ), function ( $t ) { return false !== stripos( $t, 'p=' ); } ) ) {
+			$dkim[] = $sel;
+		}
+	}
+	$mx = function_exists( 'dns_get_record' ) ? (array) @dns_get_record( $domain, DNS_MX ) : array(); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+	return array(
+		'absender' => $von,
+		'domain'   => $domain,
+		'smtp'     => kilic_smtp_aktiv(),
+		'spf'      => $spf ? $spf[0] : '',
+		'dkim'     => $dkim ? implode( ', ', $dkim ) : '',
+		'dmarc'    => $dmarc ? $dmarc[0] : '',
+		'mx'       => $mx ? implode( ', ', wp_list_pluck( $mx, 'target' ) ) : '',
+	);
+}
