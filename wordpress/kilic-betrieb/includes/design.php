@@ -27,7 +27,7 @@ function kilic_nav_punkte() {
 		array( 'Anfragen', admin_url( 'edit.php?post_type=kilic_anfrage' ), 'kilic_anfrage', 'email-alt' ),
 		array( 'Angebote & Rechnungen', admin_url( 'edit.php?post_type=kilic_beleg' ), 'kilic_beleg', 'media-document' ),
 		array( 'Kunden', admin_url( 'edit.php?post_type=kilic_kunde' ), 'kilic_kunde', 'groups' ),
-		array( 'Leistungen', admin_url( 'edit.php?post_type=kilic_leistung' ), 'kilic_leistung', 'list-view' ),
+		array( 'Leistungen', admin_url( 'admin.php?page=kilic-katalog' ), 'page:kilic-katalog', 'list-view' ),
 		array( 'Fotos', admin_url( 'admin.php?page=kilic-fotos' ), 'page:kilic-fotos', 'camera' ),
 		array( 'Referenzen', admin_url( 'edit.php?post_type=kilic_referenz' ), 'kilic_referenz', 'format-gallery' ),
 	);

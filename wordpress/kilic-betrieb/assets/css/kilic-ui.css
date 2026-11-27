@@ -573,3 +573,74 @@ body.ks-offen { overflow: hidden; }
 .ks .ks-mini, .ks .ks-mini:visited { color: #3a3a3c; }
 .ks .ks-mini:hover { color: #fff; }
 .ks-feld input[type=search]::-webkit-search-cancel-button, .ks-feld input[type=search]::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
+
+/* ---------- Leistungskatalog ---------- */
+.kk-wrap { max-width: 1200px; }
+.kk-kopf { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 6px 0 18px; }
+.kk-kopf h1 { margin: 0 0 4px; }
+.kk-intro { margin: 0; color: var(--k-muted); font-size: 15px; }
+.kk-neu-knopf { display: inline-flex; align-items: center; gap: 6px; min-height: 46px; padding: 0 20px; border: 0; border-radius: 999px; background: var(--k-accent); color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; box-shadow: 0 6px 16px rgba(232,137,43,.3); }
+.kk-neu-knopf:hover { background: var(--k-accent-d); }
+.kk-werkzeuge { position: sticky; top: 64px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 0; margin-bottom: 6px; background: var(--a-bg, #f5f5f7); }
+.kk-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.kk-chip { min-height: 38px; padding: 0 14px; border: 1px solid #e5e5ea; border-radius: 999px; background: #fff; color: #3a3a3c; font-size: 14px; font-weight: 600; cursor: pointer; }
+.kk-chip b { margin-left: 4px; padding: 1px 7px; border-radius: 999px; background: #f2f2f7; font-size: 12px; color: #6e6e73; }
+.kk-chip.is-aktiv { background: #1d1d1f; border-color: #1d1d1f; color: #fff; }
+.kk-chip.is-aktiv b { background: rgba(255,255,255,.18); color: #fff; }
+.kk-chip-warn { border-color: #f5c58e; color: #b3561a; }
+.kk-suche { display: flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 999px; background: rgba(118,118,128,.12); }
+.kk-suche input { border: 0 !important; background: transparent !important; box-shadow: none !important; min-width: 220px; font-size: 14px; }
+.kk-suche .dashicons { color: #8e8e93; }
+.kk-gruppe { margin: 18px 0 26px; }
+.kk-gruppe-kopf { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 4px 10px; }
+.kk-gruppe-kopf h2 { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8e8e93; }
+.kk-neu-mini { border: 0; background: none; color: var(--k-accent-d); font-weight: 600; font-size: 14px; cursor: pointer; min-height: 36px; }
+.kk-liste { display: grid; gap: 10px; }
+.kk-leer { margin: 0 4px; color: #8e8e93; }
+.kk-zeile { background: #fff; border-radius: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 14px rgba(0,0,0,.05); padding: 12px 14px; border: 1px solid transparent; transition: border-color .2s, opacity .2s; }
+.kk-zeile:focus-within { border-color: var(--k-accent); }
+.kk-zeile.blitz { animation: kkBlitz 1.2s ease; }
+@keyframes kkBlitz { 0% { background: var(--k-accent-soft); } 100% { background: #fff; } }
+.kk-zeile.weg { opacity: .35; }
+.kk-haupt { display: grid; grid-template-columns: minmax(220px, 1fr) 150px 120px 140px auto; gap: 12px; align-items: end; }
+.kk-f { display: flex; flex-direction: column; gap: 4px; margin: 0; }
+.kk-f > span:first-child { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8e8e93; }
+.kk-f input[type=text], .kk-f select, .kk-f textarea { width: 100%; min-height: 42px; border: 1px solid #e5e5ea !important; border-radius: 10px !important; background: #fafafa !important; font-size: 15px; box-sizing: border-box; box-shadow: none !important; }
+.kk-f input[type=text]:focus, .kk-f select:focus, .kk-f textarea:focus { background: #fff !important; border-color: var(--k-accent) !important; outline: none; }
+.kk-name input { font-weight: 600; }
+.kk-euro { position: relative; display: block; }
+.kk-euro input { padding-right: 28px !important; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.kk-euro b { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); color: #8e8e93; font-weight: 500; }
+.kk-zeile.ohne-preis .kk-euro input { border-color: #f5c58e !important; background: #fff8ef !important; }
+.kk-knoepfe { display: flex; align-items: center; gap: 6px; min-height: 42px; position: relative; }
+.kk-btn { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; min-width: 40px; padding: 0 10px; border: 0; border-radius: 10px; background: #f2f2f7; color: #3a3a3c; cursor: pointer; font-size: 13px; font-weight: 600; justify-content: center; }
+.kk-btn:hover, .kk-btn.is-auf { background: var(--k-accent-soft); color: var(--k-accent-d); }
+.kk-weg:hover { background: #fdecec; color: #d7262f; }
+.kk-status { position: absolute; right: 0; top: -20px; font-size: 12px; white-space: nowrap; color: #8e8e93; }
+.kk-status.ok { color: #1f9d55; font-weight: 600; } .kk-status.fehler { color: #d7262f; font-weight: 600; }
+.kk-textfeld { margin-top: 12px; }
+.kk-textfeld textarea { min-height: 80px; line-height: 1.5; }
+@media (max-width: 960px) {
+  .kk-haupt { grid-template-columns: 1fr 1fr; }
+  .kk-name { grid-column: 1 / -1; }
+  .kk-knoepfe { grid-column: 1 / -1; justify-content: flex-end; }
+  .kk-status { position: static; margin-right: auto; }
+}
+@media (max-width: 782px) {
+  .kk-werkzeuge { top: 0; position: static; }
+  .kk-suche { width: 100%; } .kk-suche input { min-width: 0; flex: 1; }
+  .kk-chips { flex-wrap: nowrap; overflow-x: auto; width: 100%; padding-bottom: 4px; }
+  .kk-chip { flex: 0 0 auto; }
+  .kk-neu-knopf { width: 100%; justify-content: center; }
+  .kk-lbl { display: inline; }
+}
+@media (max-width: 782px) {
+  .kk-zeile { padding: 12px; }
+  .kk-haupt { grid-template-columns: 1.1fr .8fr 1fr; gap: 8px 8px; }
+  .kk-name, .kk-knoepfe { grid-column: 1 / -1; }
+  .kk-knoepfe { min-height: 0; }
+  .kk-f input[type=text], .kk-f select { min-height: 44px; font-size: 16px; padding-left: 8px; padding-right: 6px; }
+  .kk-euro input { padding-right: 22px !important; }
+  .kk-euro b { right: 8px; }
+  .kk-f > span:first-child { font-size: 10px; }
+}

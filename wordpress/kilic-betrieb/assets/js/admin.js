@@ -375,3 +375,71 @@
     btn.addEventListener("click", function () { btn.closest(".kb-karte").querySelector("input[type=hidden]").value = ""; btn.form.submit(); });
   });
 })();
+
+/* Leistungskatalog: direkt bearbeiten, automatisch speichern */
+(function () {
+  var wrap = document.querySelector(".kk-wrap");
+  if (!wrap) return;
+  var ajax = wrap.dataset.ajax, nonce = wrap.dataset.nonce, filter = "", suche = "";
+  function post(data) {
+    var fd = new FormData(); fd.append("action", "kilic_katalog"); fd.append("n", nonce);
+    Object.keys(data).forEach(function (k) { fd.append(k, data[k]); });
+    return fetch(ajax, { method: "POST", body: fd, credentials: "same-origin" }).then(function (r) { return r.json(); });
+  }
+  function status(z, txt, art) { var s = z.querySelector(".kk-status"); s.textContent = txt; s.className = "kk-status " + (art || ""); if (art === "ok") setTimeout(function () { if (s.textContent === txt) s.textContent = ""; }, 1800); }
+  function speichern(feld) {
+    var z = feld.closest(".kk-zeile"); status(z, "Speichert …", "laeuft");
+    post({ tun: "feld", id: z.dataset.id, feld: feld.dataset.feld, wert: feld.value }).then(function (j) {
+      if (!j || !j.success) { status(z, "Nicht gespeichert", "fehler"); return; }
+      status(z, "✓ Gespeichert", "ok");
+      if (feld.dataset.feld === "preis") { feld.value = j.data.preis; z.classList.toggle("ohne-preis", !j.data.preis); zaehlen(); }
+      if (feld.dataset.feld === "bereich") { z.dataset.bereich = feld.value; var ziel = wrap.querySelector('.kk-gruppe[data-bereich="' + feld.value + '"] .kk-liste'); ziel.appendChild(z); leer(); zaehlen(); z.scrollIntoView({ block: "center", behavior: "smooth" }); z.classList.add("blitz"); setTimeout(function () { z.classList.remove("blitz"); }, 1200); }
+    }).catch(function () { status(z, "Nicht gespeichert", "fehler"); });
+  }
+  var timer = {};
+  wrap.addEventListener("input", function (e) {
+    var f = e.target; if (!f.dataset || !f.dataset.feld) return;
+    if (f.tagName === "SELECT") return;
+    var id = f.closest(".kk-zeile").dataset.id + f.dataset.feld;
+    clearTimeout(timer[id]); timer[id] = setTimeout(function () { speichern(f); }, f.dataset.feld === "preis" ? 900 : 700);
+  });
+  wrap.addEventListener("change", function (e) { var f = e.target; if (f.dataset && f.dataset.feld) { clearTimeout(timer[f.closest(".kk-zeile").dataset.id + f.dataset.feld]); speichern(f); } });
+  wrap.addEventListener("click", function (e) {
+    var t = e.target.closest("button"); if (!t) return;
+    var z = t.closest(".kk-zeile");
+    if (t.classList.contains("kk-text-auf")) { var tf = z.querySelector(".kk-textfeld"); tf.hidden = !tf.hidden; t.setAttribute("aria-expanded", tf.hidden ? "false" : "true"); t.classList.toggle("is-auf", !tf.hidden); if (!tf.hidden) tf.querySelector("textarea").focus(); }
+    else if (t.classList.contains("kk-weg")) {
+      var name = z.querySelector('[data-feld="titel"]').value;
+      if (!confirm("„" + name + "“ aus dem Katalog löschen?\nBestehende Angebote und Rechnungen bleiben unverändert.")) return;
+      z.classList.add("weg");
+      post({ tun: "loeschen", id: z.dataset.id }).then(function (j) { if (j && j.success) { z.remove(); leer(); zaehlen(); } else { z.classList.remove("weg"); alert("Konnte nicht gelöscht werden."); } });
+    }
+    else if (t.classList.contains("kk-chip")) { wrap.querySelectorAll(".kk-chip").forEach(function (c) { c.classList.toggle("is-aktiv", c === t); }); filter = t.dataset.filter; anzeigen(); }
+    else if (t.classList.contains("kk-neu-knopf") || t.classList.contains("kk-neu-mini")) {
+      var b = t.dataset.bereich; if (t.classList.contains("kk-neu-knopf") && filter && filter !== "ohne-preis") b = filter;
+      t.disabled = true;
+      post({ tun: "neu", bereich: b }).then(function (j) {
+        t.disabled = false; if (!j || !j.success) { alert("Konnte nicht angelegt werden."); return; }
+        var d = document.createElement("div"); d.innerHTML = j.data.html.trim(); var neu = d.firstChild;
+        wrap.querySelector('.kk-gruppe[data-bereich="' + b + '"] .kk-liste').appendChild(neu); leer(); zaehlen(); anzeigen();
+        var n = neu.querySelector('[data-feld="titel"]'); neu.scrollIntoView({ block: "center", behavior: "smooth" }); n.focus(); n.select(); neu.classList.add("blitz");
+      });
+    }
+  });
+  wrap.querySelector(".kk-suche input").addEventListener("input", function (e) { suche = e.target.value.toLowerCase().trim(); anzeigen(); });
+  function anzeigen() {
+    wrap.querySelectorAll(".kk-zeile").forEach(function (z) {
+      var txt = [].map.call(z.querySelectorAll("input,textarea"), function (i) { return i.value; }).join(" ").toLowerCase();
+      var ok = (!filter || (filter === "ohne-preis" ? z.classList.contains("ohne-preis") : z.dataset.bereich === filter)) && (!suche || suche.split(/\s+/).every(function (w) { return txt.indexOf(w) !== -1; }));
+      z.hidden = !ok;
+    });
+    wrap.querySelectorAll(".kk-gruppe").forEach(function (g) { g.hidden = (filter && filter !== "ohne-preis" && g.dataset.bereich !== filter) || ((filter === "ohne-preis" || suche) && !g.querySelector(".kk-zeile:not([hidden])")); });
+  }
+  function leer() { wrap.querySelectorAll(".kk-gruppe").forEach(function (g) { g.querySelector(".kk-leer").hidden = !!g.querySelector(".kk-zeile"); }); }
+  function zaehlen() {
+    wrap.querySelectorAll(".kk-chip").forEach(function (c) {
+      var f = c.dataset.filter, n = f === "" ? wrap.querySelectorAll(".kk-zeile").length : f === "ohne-preis" ? wrap.querySelectorAll(".kk-zeile.ohne-preis").length : wrap.querySelectorAll('.kk-gruppe[data-bereich="' + f + '"] .kk-zeile').length;
+      c.querySelector("b").textContent = n; if (f === "ohne-preis") c.hidden = !n;
+    });
+  }
+})();

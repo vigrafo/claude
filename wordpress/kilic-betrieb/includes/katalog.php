@@ -188,3 +188,144 @@ function kilic_setup_katalog() {
 	}
 	update_option( 'kilic_katalog_angelegt', 1 );
 }
+
+/* ---------- Katalog-Editor: alles direkt in der Liste ändern ---------- */
+
+add_action( 'admin_menu', function () {
+	add_submenu_page( 'kilic', 'Leistungskatalog', 'Leistungskatalog', 'edit_kilic_vorgaenge', 'kilic-katalog', 'kilic_render_katalog' );
+}, 15 );
+
+/** Die alte WordPress-Liste auf den neuen Editor umleiten. */
+add_action( 'load-edit.php', function () {
+	if ( 'kilic_leistung' === ( $_GET['post_type'] ?? '' ) && empty( $_GET['liste'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		wp_safe_redirect( admin_url( 'admin.php?page=kilic-katalog' ) );
+		exit;
+	}
+} );
+
+function kilic_katalog_zeile( $p ) {
+	$b     = get_post_meta( $p->ID, '_bereich', true );
+	$e     = get_post_meta( $p->ID, '_einheit', true );
+	$preis = (int) get_post_meta( $p->ID, '_preis', true );
+	$text  = (string) get_post_meta( $p->ID, '_text', true );
+	ob_start();
+	?>
+	<div class="kk-zeile<?php echo $preis ? '' : ' ohne-preis'; ?>" data-id="<?php echo (int) $p->ID; ?>" data-bereich="<?php echo esc_attr( $b ); ?>">
+		<div class="kk-haupt">
+			<label class="kk-f kk-name"><span>Leistung</span><input type="text" data-feld="titel" value="<?php echo esc_attr( $p->post_title ); ?>" placeholder="Bezeichnung, z. B. Heizestrich CAF"></label>
+			<label class="kk-f kk-bereich"><span>Bereich</span><select data-feld="bereich">
+				<?php foreach ( kilic_katalog_bereiche() as $k => $l ) : ?><option value="<?php echo esc_attr( $k ); ?>" <?php selected( $b, $k ); ?>><?php echo esc_html( $l ); ?></option><?php endforeach; ?>
+			</select></label>
+			<label class="kk-f kk-einheit"><span>Einheit</span><select data-feld="einheit">
+				<?php foreach ( kilic_einheiten() as $x ) : ?><option <?php selected( $e, $x ); ?>><?php echo esc_html( $x ); ?></option><?php endforeach; ?>
+			</select></label>
+			<label class="kk-f kk-preis"><span>Preis netto</span><span class="kk-euro"><input type="text" inputmode="decimal" data-feld="preis" value="<?php echo $preis ? esc_attr( number_format( $preis / 100, 2, ',', '.' ) ) : ''; ?>" placeholder="Preis"><b>€</b></span></label>
+			<div class="kk-knoepfe">
+				<button type="button" class="kk-btn kk-text-auf" aria-expanded="false" title="Text für Angebot/Rechnung"><span class="dashicons dashicons-text-page"></span><span class="kk-lbl">Text</span></button>
+				<button type="button" class="kk-btn kk-weg" title="Leistung löschen" aria-label="Leistung löschen"><span class="dashicons dashicons-trash"></span></button>
+				<span class="kk-status" aria-live="polite"></span>
+			</div>
+		</div>
+		<div class="kk-textfeld" hidden>
+			<label class="kk-f"><span>So steht die Position auf Angebot und Rechnung (leer = Bezeichnung)</span><textarea data-feld="text" rows="3" placeholder="z. B. Calciumsulfat-Fließestrich CAF-C25-F5 als Heizestrich, ca. 45 mm über Rohr …"><?php echo esc_textarea( $text ); ?></textarea></label>
+		</div>
+	</div>
+	<?php
+	return ob_get_clean();
+}
+
+function kilic_render_katalog() {
+	$alle = get_posts( array( 'post_type' => 'kilic_leistung', 'numberposts' => -1, 'post_status' => 'publish', 'orderby' => array( 'menu_order' => 'ASC', 'title' => 'ASC' ) ) );
+	$gr   = array();
+	foreach ( kilic_katalog_bereiche() as $k => $l ) {
+		$gr[ $k ] = array();
+	}
+	foreach ( $alle as $p ) {
+		$b = get_post_meta( $p->ID, '_bereich', true );
+		$gr[ isset( $gr[ $b ] ) ? $b : 'sonstige' ][] = $p;
+	}
+	$ohne = count( array_filter( $alle, function ( $p ) { return ! (int) get_post_meta( $p->ID, '_preis', true ); } ) );
+	?>
+	<div class="wrap kilic-wrap kk-wrap" data-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'kilic_katalog' ) ); ?>">
+		<div class="kk-kopf">
+			<div>
+				<h1>Leistungskatalog</h1>
+				<p class="kk-intro">Alles direkt hier ändern – wird automatisch gespeichert. Diese Leistungen stehen in jedem Angebot und jeder Rechnung zur Auswahl.</p>
+			</div>
+			<button type="button" class="kk-neu-knopf" data-bereich="estrich"><span class="dashicons dashicons-plus-alt2"></span> Neue Leistung</button>
+		</div>
+		<div class="kk-werkzeuge">
+			<div class="kk-chips" role="tablist">
+				<button type="button" class="kk-chip is-aktiv" data-filter="">Alle <b><?php echo count( $alle ); ?></b></button>
+				<?php foreach ( kilic_katalog_bereiche() as $k => $l ) : ?>
+					<button type="button" class="kk-chip" data-filter="<?php echo esc_attr( $k ); ?>"><?php echo esc_html( $l ); ?> <b><?php echo count( $gr[ $k ] ); ?></b></button>
+				<?php endforeach; ?>
+				<?php if ( $ohne ) : ?><button type="button" class="kk-chip kk-chip-warn" data-filter="ohne-preis">Ohne Preis <b><?php echo (int) $ohne; ?></b></button><?php endif; ?>
+			</div>
+			<label class="kk-suche"><span class="dashicons dashicons-search"></span><input type="search" placeholder="Im Katalog suchen …" aria-label="Im Katalog suchen"></label>
+		</div>
+		<?php foreach ( kilic_katalog_bereiche() as $k => $l ) : ?>
+			<section class="kk-gruppe" data-bereich="<?php echo esc_attr( $k ); ?>">
+				<div class="kk-gruppe-kopf"><h2><?php echo esc_html( $l ); ?></h2><button type="button" class="kk-neu-mini" data-bereich="<?php echo esc_attr( $k ); ?>">+ Leistung in „<?php echo esc_html( $l ); ?>“</button></div>
+				<div class="kk-liste">
+					<?php foreach ( $gr[ $k ] as $p ) { echo kilic_katalog_zeile( $p ); } // phpcs:ignore WordPress.Security.EscapeOutput ?>
+				</div>
+				<p class="kk-leer"<?php echo $gr[ $k ] ? ' hidden' : ''; ?>>Noch keine Leistungen in diesem Bereich.</p>
+			</section>
+		<?php endforeach; ?>
+	</div>
+	<?php
+}
+
+add_action( 'wp_ajax_kilic_katalog', function () {
+	check_ajax_referer( 'kilic_katalog', 'n' );
+	$tun = sanitize_key( $_POST['tun'] ?? '' );
+	if ( 'neu' === $tun ) {
+		if ( ! current_user_can( get_post_type_object( 'kilic_leistung' )->cap->create_posts ) ) {
+			wp_send_json_error( array( 'text' => 'Keine Berechtigung.' ), 403 );
+		}
+		$b  = sanitize_key( $_POST['bereich'] ?? 'sonstige' );
+		$b  = isset( kilic_katalog_bereiche()[ $b ] ) ? $b : 'sonstige';
+		$id = wp_insert_post( array( 'post_type' => 'kilic_leistung', 'post_status' => 'publish', 'post_title' => 'Neue Leistung' ) );
+		update_post_meta( $id, '_bereich', $b );
+		update_post_meta( $id, '_einheit', 'rohr' === $b ? 'pauschal' : 'm²' );
+		update_post_meta( $id, '_preis', 0 );
+		wp_send_json_success( array( 'html' => kilic_katalog_zeile( get_post( $id ) ) ) );
+	}
+	$id = absint( $_POST['id'] ?? 0 );
+	if ( ! $id || 'kilic_leistung' !== get_post_type( $id ) || ! current_user_can( 'edit_post', $id ) ) {
+		wp_send_json_error( array( 'text' => 'Keine Berechtigung.' ), 403 );
+	}
+	if ( 'loeschen' === $tun ) {
+		if ( ! current_user_can( 'delete_post', $id ) ) {
+			wp_send_json_error( array( 'text' => 'Keine Berechtigung.' ), 403 );
+		}
+		wp_trash_post( $id );
+		wp_send_json_success();
+	}
+	$feld = sanitize_key( $_POST['feld'] ?? '' );
+	$wert = wp_unslash( (string) ( $_POST['wert'] ?? '' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+	switch ( $feld ) {
+		case 'titel':
+			$t = sanitize_text_field( $wert );
+			wp_update_post( array( 'ID' => $id, 'post_title' => '' !== $t ? $t : 'Leistung' ) );
+			break;
+		case 'bereich':
+			$b = sanitize_key( $wert );
+			update_post_meta( $id, '_bereich', isset( kilic_katalog_bereiche()[ $b ] ) ? $b : 'sonstige' );
+			break;
+		case 'einheit':
+			update_post_meta( $id, '_einheit', in_array( $wert, kilic_einheiten(), true ) ? $wert : 'Stk.' );
+			break;
+		case 'preis':
+			update_post_meta( $id, '_preis', kilic_to_cents( $wert ) );
+			break;
+		case 'text':
+			update_post_meta( $id, '_text', sanitize_textarea_field( $wert ) );
+			break;
+		default:
+			wp_send_json_error( array( 'text' => 'Unbekanntes Feld.' ) );
+	}
+	$p = (int) get_post_meta( $id, '_preis', true );
+	wp_send_json_success( array( 'preis' => $p ? number_format( $p / 100, 2, ',', '.' ) : '' ) );
+} );
