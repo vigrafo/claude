@@ -314,8 +314,52 @@
     ["dragenter", "dragover"].forEach(function (t) { drop.addEventListener(t, function () { drop.classList.add("is-over"); }); });
     ["dragleave", "drop"].forEach(function (t) { drop.addEventListener(t, function () { drop.classList.remove("is-over"); }); });
     input.form.addEventListener("submit", function (e) {
-      if (!input.files.length) { e.preventDefault(); alert("Bitte zuerst Bilder auswählen."); return; }
-      var b = input.form.querySelector(".kb-senden"); b.disabled = true; b.textContent = "Wird hochgeladen …";
+      e.preventDefault();
+      if (!input.files.length) { alert("Bitte zuerst Bilder auswählen."); return; }
+      var form = input.form, b = form.querySelector(".kb-senden");
+      var box = form.querySelector(".kb-fortschritt"), bar = box.querySelector(".kb-balken span"), st = box.querySelector(".kb-status");
+      var files = [].slice.call(input.files), nonce = form.querySelector("[name=_wpnonce]").value;
+      var ok = 0, zu = 0, fehler = [], offen = [], i = 0;
+      b.disabled = true; b.textContent = "Wird hochgeladen …"; box.hidden = false;
+      /* Große Bilder im Browser verkleinern (max. 2400 px, JPG) – schneller und unter jeder Upload-Grenze */
+      function verkleinern(f) {
+        var basis = f.name.replace(/\.[^.]+$/, "");
+        if (f.size < 1200000 || !window.createImageBitmap) return Promise.resolve({ blob: f, name: f.name });
+        return createImageBitmap(f).then(function (img) {
+          var s = Math.min(1, 2400 / Math.max(img.width, img.height));
+          var c = document.createElement("canvas");
+          c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+          c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+          return new Promise(function (res) {
+            c.toBlob(function (blob) { res(blob ? { blob: blob, name: basis + ".jpg" } : { blob: f, name: f.name }); }, "image/jpeg", 0.86);
+          });
+        }).catch(function () { return { blob: f, name: f.name }; });
+      }
+      function next() {
+        if (i >= files.length) {
+          var msg = ok + " Bilder hochgeladen, " + zu + " automatisch zugeordnet.";
+          var url = location.pathname + "?page=kilic-bilder&ok=" + encodeURIComponent(msg);
+          if (offen.length) url += "&offen=" + encodeURIComponent(offen.join(", "));
+          if (fehler.length) url += "&offen=" + encodeURIComponent("FEHLER: " + fehler.join(" · "));
+          location.href = url; return;
+        }
+        var f = files[i];
+        st.textContent = "Bild " + (i + 1) + " von " + files.length + ": " + f.name;
+        bar.style.width = Math.round(i / files.length * 100) + "%";
+        verkleinern(f).then(function (datei) {
+        var fd = new FormData();
+        fd.append("action", "kilic_bild_einzeln"); fd.append("_ajax_nonce", nonce); fd.append("datei", datei.blob, datei.name);
+        return fetch(form.dataset.ajax, { method: "POST", body: fd, credentials: "same-origin" });
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            if (j && j.success) { ok++; if (j.data.platz) zu++; else offen.push(j.data.name); }
+            else fehler.push(f.name + ": " + ((j && j.data && j.data.text) || "Fehler"));
+          })
+          .catch(function () { fehler.push(f.name + " (Zeitüberschreitung)"); })
+          .then(function () { i++; next(); });
+      }
+      next();
     });
   }
   document.querySelectorAll(".kb-waehlen").forEach(function (btn) {

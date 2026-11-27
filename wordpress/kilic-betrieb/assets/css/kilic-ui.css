@@ -499,3 +499,9 @@ body.kilic-ui {
   .kilic-ui .wp-list-table tbody td.column-druck .kl-aktionen { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .kilic-ui .wp-list-table tbody td.column-druck .kl-btn { width: 100%; }
 }
+
+.kilic-ui .kb-fortschritt { display: grid; gap: 8px; }
+.kilic-ui .kb-balken { height: 10px; border-radius: 999px; background: var(--k-line); overflow: hidden; }
+.kilic-ui .kb-balken span { display: block; height: 100%; width: 0; background: var(--k-accent); transition: width .3s; }
+.kilic-ui .kb-status { margin: 0; font-weight: 600; }
+.kilic-ui .kb-scan { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: -10px 0 26px; }

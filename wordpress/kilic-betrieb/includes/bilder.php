@@ -245,7 +245,7 @@ function kilic_render_bilder_seite() {
 			<div class="notice notice-warning inline"><p>Nicht automatisch zugeordnet (liegen in der Mediathek, unten per „Bild wählen“ zuweisen): <?php echo esc_html( sanitize_text_field( wp_unslash( $_GET['offen'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification ?></p></div>
 		<?php endif; ?>
 
-		<form class="kb-upload" method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+		<form class="kb-upload" data-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="kilic_bilder_upload">
 			<?php wp_nonce_field( 'kilic_bilder_upload' ); ?>
 			<label class="kb-drop" for="kb_dateien">
@@ -256,6 +256,13 @@ function kilic_render_bilder_seite() {
 				<em class="kb-anzahl" aria-live="polite"></em>
 			</label>
 			<button type="submit" class="button button-primary button-hero kb-senden">Hochladen &amp; zuordnen</button>
+			<div class="kb-fortschritt" hidden><div class="kb-balken"><span></span></div><p class="kb-status" aria-live="polite"></p></div>
+		</form>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="kb-scan">
+			<input type="hidden" name="action" value="kilic_bilder_scan">
+			<?php wp_nonce_field( 'kilic_bilder_scan' ); ?>
+			<button type="submit" class="button">Bilder aus der Mediathek automatisch zuordnen</button>
+			<span class="description">Für Bilder, die schon in der Mediathek liegen (z. B. nach einem abgebrochenen Upload).</span>
 		</form>
 
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="kb-form">
@@ -356,5 +363,75 @@ add_action( 'admin_post_kilic_bilder_speichern', function () {
 	}
 	update_option( 'kilic_bilder', $z, false );
 	wp_safe_redirect( add_query_arg( array( 'page' => 'kilic-bilder', 'ok' => rawurlencode( 'Gespeichert.' ) ), admin_url( 'admin.php' ) ) );
+	exit;
+} );
+
+/** Weniger Vorschaugrößen beim Hochladen hier – schneller, kein Server-Timeout. */
+function kilic_bilder_schnell( $sizes ) {
+	return array_intersect_key( $sizes, array_flip( array( 'thumbnail', 'medium', 'medium_large' ) ) );
+}
+
+/** Vorhandenes Bild gleichen Namens in der Mediathek finden (verhindert Doppel-Uploads). */
+function kilic_bild_in_mediathek( $dateiname ) {
+	$titel = sanitize_title( pathinfo( $dateiname, PATHINFO_FILENAME ) );
+	$q = get_posts( array( 'post_type' => 'attachment', 'post_mime_type' => 'image', 'name' => $titel, 'numberposts' => 1, 'fields' => 'ids', 'post_status' => 'inherit' ) );
+	return $q ? (int) $q[0] : 0;
+}
+
+/** Ein Bild hochladen (per JavaScript einzeln nacheinander aufgerufen). */
+add_action( 'wp_ajax_kilic_bild_einzeln', function () {
+	check_ajax_referer( 'kilic_bilder_upload' );
+	if ( ! current_user_can( 'upload_files' ) ) {
+		wp_send_json_error( array( 'text' => 'Keine Berechtigung.' ), 403 );
+	}
+	if ( empty( $_FILES['datei'] ) || UPLOAD_ERR_OK !== $_FILES['datei']['error'] ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		wp_send_json_error( array( 'text' => 'Datei zu groß oder fehlerhaft.' ) );
+	}
+	$name  = sanitize_file_name( wp_unslash( $_FILES['datei']['name'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+	$platz = kilic_bild_platz_aus_dateiname( $name );
+	$id    = kilic_bild_in_mediathek( $name );
+	$neu   = false;
+	if ( ! $id ) {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		$typ = wp_check_filetype_and_ext( $_FILES['datei']['tmp_name'], $name ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		if ( ! in_array( $typ['type'], array( 'image/jpeg', 'image/png', 'image/webp' ), true ) ) {
+			wp_send_json_error( array( 'text' => $name . ': kein JPG/PNG/WebP.' ) );
+		}
+		add_filter( 'intermediate_image_sizes_advanced', 'kilic_bilder_schnell' );
+		$id = media_handle_upload( 'datei', 0, array( 'post_title' => pathinfo( $name, PATHINFO_FILENAME ) ) );
+		remove_filter( 'intermediate_image_sizes_advanced', 'kilic_bilder_schnell' );
+		if ( is_wp_error( $id ) ) {
+			wp_send_json_error( array( 'text' => $name . ': ' . $id->get_error_message() ) );
+		}
+		$neu = true;
+	}
+	if ( $platz ) {
+		$z           = kilic_bild_zuordnung();
+		$z[ $platz ] = (int) $id;
+		update_option( 'kilic_bilder', $z, false );
+	}
+	wp_send_json_success( array( 'name' => $name, 'platz' => $platz, 'neu' => $neu ) );
+} );
+
+/** Bereits hochgeladene Bilder aus der Mediathek den Plätzen zuordnen (nach Dateiname). */
+add_action( 'admin_post_kilic_bilder_scan', function () {
+	check_admin_referer( 'kilic_bilder_scan' );
+	if ( ! current_user_can( 'upload_files' ) ) {
+		wp_die( 'Keine Berechtigung.' );
+	}
+	$z   = kilic_bild_zuordnung();
+	$ids = get_posts( array( 'post_type' => 'attachment', 'post_mime_type' => 'image', 'numberposts' => 500, 'fields' => 'ids', 'post_status' => 'inherit', 'orderby' => 'date', 'order' => 'ASC' ) );
+	$n   = 0;
+	foreach ( $ids as $id ) {
+		$platz = kilic_bild_platz_aus_dateiname( basename( (string) get_attached_file( $id ) ) );
+		if ( $platz ) {
+			$z[ $platz ] = (int) $id;
+			$n++;
+		}
+	}
+	update_option( 'kilic_bilder', $z, false );
+	wp_safe_redirect( add_query_arg( array( 'page' => 'kilic-bilder', 'ok' => rawurlencode( $n . ' Bilder aus der Mediathek zugeordnet.' ) ), admin_url( 'admin.php' ) ) );
 	exit;
 } );
