@@ -1374,3 +1374,7 @@ body.kilic-danke .wizard { grid-template-columns: 1fr; }
 
 /* Interne Notizen (Platzhalter-Hinweise) nie auf der Website zeigen */
 .todo { display: none !important; }
+
+.footer-credit a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.footer-credit a:hover, .footer-credit a:focus { color: var(--accent); }
+@media (max-width: 640px) { .footer-credit { display: block; margin-top: 6px; } .fc-trenner { display: none; } }

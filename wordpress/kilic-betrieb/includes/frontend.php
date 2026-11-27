@@ -230,7 +230,7 @@ function kilic_footer() {
 			</div>
 		</div>
 		<div class="wrap footer-bottom">
-			<span>© <?php echo esc_html( gmdate( 'Y' ) ); ?> <?php echo esc_html( kilic_opt( 'firma' ) ); ?> · <?php echo esc_html( kilic_opt( 'firma2' ) ); ?></span>
+			<span>© <?php echo esc_html( gmdate( 'Y' ) ); ?> <?php echo esc_html( kilic_opt( 'firma' ) ); ?> · <?php echo esc_html( kilic_opt( 'firma2' ) ); ?><span class="footer-credit"><span class="fc-trenner"> · </span>Webdesign umgesetzt durch <a href="https://vigrafo.de/" target="_blank" rel="noopener">ViGraFo</a></span></span>
 			<nav aria-label="Rechtliches">
 				<?php
 				wp_nav_menu( array(
