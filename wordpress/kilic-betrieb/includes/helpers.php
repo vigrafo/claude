@@ -39,6 +39,7 @@ function kilic_defaults() {
 		'bestaetigung'   => '1',
 		'absender'       => 'vigrafo@mail.com',
 		'smtp_an'        => '0',
+		'pdf_anhang'     => '0',
 		'smtp_host'      => 'smtp.mail.com',
 		'smtp_port'      => '587',
 		'smtp_user'      => 'vigrafo@mail.com',

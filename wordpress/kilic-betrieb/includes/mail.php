@@ -356,7 +356,7 @@ function kilic_render_senden() {
 				<tr><th><label for="ks_an">An</label></th><td><input type="email" id="ks_an" name="an" value="<?php echo esc_attr( $email ); ?>" class="regular-text" required><?php if ( ! $email ) : ?><p class="description kilic-ueberfaellig">Beim Kunden ist keine E-Mail-Adresse hinterlegt – bitte hier eintragen (wird beim Kunden gespeichert).</p><?php endif; ?></td></tr>
 				<tr><th><label for="ks_betreff">Betreff</label></th><td><input type="text" id="ks_betreff" name="betreff" value="<?php echo esc_attr( $dok . ( $nummer ? ' ' . $nummer : '' ) . ' – ' . kilic_opt( 'firma' ) ); ?>" class="large-text" required></td></tr>
 				<tr><th><label for="ks_text">Nachricht</label></th><td><textarea id="ks_text" name="text" rows="10" class="large-text"><?php echo esc_textarea( $text ); ?></textarea></td></tr>
-				<tr><th>Anhang</th><td><span class="dashicons dashicons-pdf"></span> <?php echo esc_html( $dok ); ?> als PDF (im Firmendesign) · <a target="_blank" href="<?php echo esc_url( kilic_druck_url( $id, $art ) ); ?>">Vorschau</a></td></tr>
+				<tr><th>PDF</th><td><span class="dashicons dashicons-pdf"></span> <?php echo esc_html( $dok ); ?> im Firmendesign – der Kunde bekommt einen Knopf „PDF öffnen“<?php echo '1' === kilic_opt( 'pdf_anhang' ) ? ' und das PDF als Anhang' : ''; ?> · <a target="_blank" href="<?php echo esc_url( kilic_druck_url( $id, $art ) ); ?>">Vorschau</a></td></tr>
 			</tbody></table>
 			<?php submit_button( 'Jetzt an den Kunden senden', 'primary large', 'submit', false ); ?>
 		</form>
@@ -392,6 +392,7 @@ add_action( 'admin_post_kilic_senden', function () {
 	kilic_beleg_titel_setzen( $id );
 
 	$datei = kilic_beleg_pdf( $id, $art );
+	$link  = kilic_pdf_link( $datei );
 	$sum   = kilic_beleg_summen( $id );
 	$typ   = kilic_beleg_typ( $id );
 	$inhalt  = '<p>' . nl2br( esc_html( $text ) ) . '</p>';
@@ -401,7 +402,14 @@ add_action( 'admin_post_kilic_senden', function () {
 		$eckdaten['Bankverbindung'] = trim( kilic_opt( 'bank' ) . "\nIBAN " . kilic_opt( 'iban' ) );
 	}
 	$inhalt .= kilic_mail_tabelle( $eckdaten );
-	$ok = kilic_send_mail( $an, $betreff, kilic_mail_layout( $inhalt, $betreff ), array( $datei ) );
+	$dok_name = 'mahnung' === $art ? 'Zahlungserinnerung' : ( 'ab' === $art ? 'Auftragsbestätigung' : ( 'rechnung' === $typ ? 'Rechnung' : 'Angebot' ) );
+	$inhalt .= kilic_mail_button( $dok_name . ' als PDF öffnen', $link );
+	$inhalt .= '<p style="font-size:13px;color:#6b7279">Der Link ist 12 Monate gültig. Sie können das PDF dort speichern oder ausdrucken.</p>';
+	$anh = '1' === kilic_opt( 'pdf_anhang' ) ? array( $datei ) : array();
+	$ok  = kilic_send_mail( $an, $betreff, kilic_mail_layout( $inhalt, $betreff ), $anh );
+	if ( ! $ok && $anh ) {
+		$ok = kilic_send_mail( $an, $betreff, kilic_mail_layout( $inhalt, $betreff ), array() );
+	}
 
 	// Kopie im Backend ablegen.
 	$v   = get_post_meta( $id, '_versand', true );
@@ -553,3 +561,35 @@ function kilic_versand_log( $an, $betreff, $ok, $von, $anhaenge ) {
 	);
 	update_option( 'kilic_versand_log', array_slice( $log, -30 ), false );
 }
+
+
+/** Geheimer, nicht erratbarer Download-Link für ein gesendetes PDF (12 Monate gültig). */
+function kilic_pdf_link( $datei ) {
+	$name = basename( (string) $datei );
+	$bis  = time() + YEAR_IN_SECONDS;
+	$sig  = hash_hmac( 'sha256', $name . '|' . $bis, wp_salt( 'auth' ) );
+	return add_query_arg( array( 'action' => 'kilic_pdf', 'f' => rawurlencode( $name ), 'b' => $bis, 's' => $sig ), admin_url( 'admin-post.php' ) );
+}
+
+function kilic_pdf_ausliefern() {
+	$name = basename( sanitize_file_name( wp_unslash( $_GET['f'] ?? '' ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
+	$bis  = absint( $_GET['b'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification
+	$sig  = sanitize_text_field( wp_unslash( $_GET['s'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
+	$soll = hash_hmac( 'sha256', $name . '|' . $bis, wp_salt( 'auth' ) );
+	if ( ! $name || ! $sig || ! hash_equals( $soll, $sig ) || $bis < time() || ! preg_match( '/\.pdf$/', $name ) ) {
+		wp_die( 'Dieser Link ist ungültig oder abgelaufen. Bitte fordern Sie das Dokument erneut an: ' . esc_html( kilic_opt( 'telefon' ) ), 'Link ungültig', array( 'response' => 403 ) );
+	}
+	$up    = wp_upload_dir();
+	$datei = trailingslashit( $up['basedir'] ) . 'kilic-belege/' . $name;
+	if ( ! is_readable( $datei ) ) {
+		wp_die( 'Dokument nicht gefunden.', '', array( 'response' => 404 ) );
+	}
+	nocache_headers();
+	header( 'Content-Type: application/pdf' );
+	header( 'X-Robots-Tag: noindex' );
+	header( 'Content-Disposition: inline; filename="' . preg_replace( '/-\d{8}-\d{6}-\w{6}\.pdf$/', '.pdf', $name ) . '"' );
+	readfile( $datei ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+	exit;
+}
+add_action( 'admin_post_nopriv_kilic_pdf', 'kilic_pdf_ausliefern' );
+add_action( 'admin_post_kilic_pdf', 'kilic_pdf_ausliefern' );

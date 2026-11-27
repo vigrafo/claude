@@ -52,6 +52,9 @@ function kilic_settings_fields() {
 			'inhaber_email' => array( 'Bestätigung an Inhaber', 'email', 'Der Inhaber bekommt bei jeder Anfrage eine eigene Bestätigung im Firmendesign. Leer = WordPress-Admin-E-Mail. Angebote und Rechnungen gehen ohne Kopie raus – die Kopie liegt am Beleg im Backend.' ),
 			'absender'      => array( 'Antwort-Adresse', 'email', 'Antwortet ein Kunde auf eine E-Mail der Website, landet die Antwort hier. (Absender ist immer das Postfach bzw. eine Adresse der Website.)' ),
 		),
+		'E-Mail-Versand' => array(
+			'pdf_anhang' => array( 'PDF zusätzlich als Anhang mitschicken', 'checkbox', 'Aus (empfohlen) = Der Kunde bekommt in der E-Mail einen Knopf „PDF öffnen“. E-Mails ohne Anhang kommen viel zuverlässiger an. Ein = PDF hängt zusätzlich an (nur sinnvoll mit Postfach-Versand).' ),
+		),
 		'E-Mail-Postfach (SMTP)' => array(
 			'smtp_an'   => array( 'Über ein Postfach senden statt über die Website', 'checkbox', 'Aus = E-Mails gehen direkt über die Website (empfohlen, ohne Passwort). Absender ist dann eine Adresse der Website-Domain, Antworten gehen an die Antwort-Adresse oben.' ),
 			'smtp_host' => array( 'Postausgangsserver', 'text', 'mail.com: smtp.mail.com · GMX: mail.gmx.net · Gmail: smtp.gmail.com · IONOS: smtp.ionos.de' ),
