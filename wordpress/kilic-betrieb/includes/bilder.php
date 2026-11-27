@@ -63,8 +63,32 @@ function kilic_ph_datei_url( $motiv ) {
 	return '';
 }
 
-/** URL zu einem Motiv: eigenes Bild aus der Mediathek, sonst eingebautes Bild, sonst ''. */
-function kilic_ph_url( $motiv ) {
+/** Ersatz, solange für einen Platz kein eigenes Foto da ist: thematisch passendes vorhandenes Foto. */
+function kilic_ph_ersatz() {
+	return array(
+		'zementestrich'    => 'estrich-verteilen',
+		'schnellestrich'   => 'hero-estrich',
+		'trockenestrich'   => 'hero-kontakt',
+		'sanierung-vorher' => 'hero-kontakt',
+		'sanierung-nachher'=> 'hero-boden',
+		'rohrreinigung'    => 'hero-rohr',
+		'notdienst'        => 'hero-rohr',
+		'kanal-tv'         => 'hero-rohr',
+		'wartung'          => 'industrie',
+		'meister'          => 'hero-start',
+		'werkzeug-estrich' => 'estrich-verteilen',
+		'werkzeug-boden'   => 'bodenverlegung',
+		'werkzeug-rohr'    => 'hero-rohr',
+		'ref-neubau'       => 'heizestrich',
+		'ref-sanierung'    => 'hero-boden',
+		'ref-gewerbe'      => 'industrie',
+		'ref-boden'        => 'bodenverlegung',
+		'ref-rohr'         => 'hero-rohr',
+	);
+}
+
+/** Eigenes Bild (Mediathek-Zuordnung oder Datei im Plugin) für genau diesen Platz. */
+function kilic_ph_eigen_url( $motiv ) {
 	$z = kilic_bild_zuordnung();
 	if ( ! empty( $z[ $motiv ] ) ) {
 		$u = wp_get_attachment_image_url( (int) $z[ $motiv ], 'full' );
@@ -73,6 +97,18 @@ function kilic_ph_url( $motiv ) {
 		}
 	}
 	return kilic_ph_datei_url( $motiv );
+}
+
+/** URL zu einem Motiv: eigenes Foto, sonst thematisch passender Ersatz, sonst ''. */
+function kilic_ph_url( $motiv ) {
+	$u = kilic_ph_eigen_url( $motiv );
+	if ( ! $u ) {
+		$e = kilic_ph_ersatz();
+		if ( isset( $e[ $motiv ] ) ) {
+			$u = kilic_ph_eigen_url( $e[ $motiv ] );
+		}
+	}
+	return $u;
 }
 
 /** Hero-Motiv je Seite (Unterseiten erben vom Bereich). */
@@ -272,7 +308,7 @@ function kilic_render_bilder_seite() {
 				<?php foreach ( $plaetze as $k => $info ) :
 					$id  = (int) ( $z[ $k ] ?? 0 );
 					$url = $id ? wp_get_attachment_image_url( $id, 'medium_large' ) : '';
-					$def = kilic_ph_datei_url( $k );
+					$def = kilic_ph_url( $k );
 					?>
 					<div class="kb-karte<?php echo $url ? ' is-eigen' : ''; ?>">
 						<div class="kb-bild" style="background-image:url('<?php echo esc_url( $url ? $url : $def ); ?>')">
