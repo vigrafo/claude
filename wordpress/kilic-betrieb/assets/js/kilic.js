@@ -81,7 +81,24 @@
     var errBox = form.querySelector(".wizard-error");
     var cur = 0;
 
+    var alleSteps = steps.slice(), alleProg = prog.slice();
+    /* Schritte, die zur gewählten Leistung nicht passen (z. B. Fläche bei Rohrreinigung), überspringen */
+    function schritteAnpassen() {
+      var service = val("leistung"), aktiv = steps[cur];
+      var weg = function (el) { return (el.dataset.skipIf || "").split(",").indexOf(service) !== -1; };
+      steps = alleSteps.filter(function (s) { return !weg(s); });
+      prog = alleProg.filter(function (p) { return !weg(p); });
+      alleSteps.forEach(function (s) { if (weg(s)) s.classList.remove("active"); });
+      alleProg.forEach(function (p) { p.hidden = weg(p); });
+      prog.forEach(function (p, k) { var b = p.querySelector("b"); if (b) b.textContent = k + 1; });
+      var rohr = service === "Rohrreinigung";
+      form.parentNode.classList.toggle("ist-rohr", rohr);
+      var ta = form.querySelector("#nachricht");
+      if (ta) { if (!ta.dataset.phBoden) ta.dataset.phBoden = ta.placeholder; ta.placeholder = rohr ? ta.dataset.phRohr : ta.dataset.phBoden; }
+      var neu = steps.indexOf(aktiv); if (neu !== -1) cur = neu; else if (cur > steps.length - 1) cur = steps.length - 1;
+    }
     function show(i) {
+      schritteAnpassen();
       cur = Math.max(0, Math.min(i, steps.length - 1));
       steps.forEach(function (s, k) { s.classList.toggle("active", k === cur); });
       prog.forEach(function (p, k) {
@@ -99,7 +116,7 @@
 
     prev.addEventListener("click", function () { show(cur - 1); scrollToForm(); });
     next.addEventListener("click", function () { show(cur + 1); scrollToForm(); });
-    prog.forEach(function (p, k) { p.addEventListener("click", function () { show(k); }); });
+    alleProg.forEach(function (p) { p.addEventListener("click", function () { var k = prog.indexOf(p); if (k !== -1) show(k); }); });
 
     function scrollToForm() {
       var top = form.getBoundingClientRect().top + window.scrollY - 110;
@@ -136,7 +153,7 @@
       submit.textContent = "Wird gesendet …";
     });
 
-    form.addEventListener("change", function () { toggleConditional(); updateSummary(); });
+    form.addEventListener("change", function () { toggleConditional(); show(cur); });
     form.addEventListener("input", function (e) {
       if (e.target.classList && e.target.classList.contains("field-error") && e.target.value.trim()) { e.target.classList.remove("field-error"); e.target.setAttribute("aria-invalid", "false"); }
       updateSummary();
@@ -220,6 +237,7 @@
         "s-fbh": val("fbh"),
         "s-staerke": val("staerke") ? val("staerke") + " mm" : "",
         "s-termin": val("termin"),
+        "s-problem": val("problem"),
         "s-ort": val("plz") || val("ort") ? (val("plz") + " " + val("ort")).trim() : ""
       };
       Object.keys(map).forEach(function (id) {

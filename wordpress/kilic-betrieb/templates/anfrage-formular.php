@@ -40,7 +40,7 @@ $choice = function ( $name, $id, $value, $title, $text = '', $icon = '', $checke
 		<ol class="progress">
 			<li><b>1</b>Leistung</li>
 			<li><b>2</b>Objekt</li>
-			<li><b>3</b>Fläche &amp; Estrich</li>
+			<li data-skip-if="Rohrreinigung"><b>3</b>Fläche &amp; Estrich</li>
 			<li><b>4</b>Termin &amp; Fotos</li>
 			<li><b>5</b>Kontakt</li>
 		</ol>
@@ -101,7 +101,7 @@ $choice = function ( $name, $id, $value, $title, $text = '', $icon = '', $checke
 				</div>
 			</div>
 
-			<div class="wizard-step">
+			<div class="wizard-step" data-skip-if="Rohrreinigung">
 				<h3>Fläche &amp; Ausführung</h3>
 				<p>Wie viele Quadratmeter – und welche Ausführung wünschen Sie?</p>
 				<div class="field-row">
@@ -161,13 +161,14 @@ $choice = function ( $name, $id, $value, $title, $text = '', $icon = '', $checke
 
 			<div class="wizard-step">
 				<h3>Termin, Details &amp; Fotos</h3>
-				<p>Wann soll es losgehen? Pläne oder Fotos helfen uns bei der Kalkulation.</p>
+				<p class="nur-boden">Wann soll es losgehen? Pläne oder Fotos helfen uns bei der Kalkulation.</p>
+				<p class="nur-rohr">Wann sollen wir kommen? Ein Foto vom Abfluss oder Schacht hilft uns bei der Vorbereitung. <strong>Akuter Notfall? Bitte direkt anrufen: <a href="<?php echo esc_attr( kilic_tel_href( $notdienst ) ); ?>"><?php echo esc_html( $notdienst ); ?></a></strong></p>
 				<div class="field-row">
 					<div class="field"><label for="termin">Wunschtermin</label><select id="termin" name="termin"><option value="">Bitte wählen</option><option>So schnell wie möglich</option><option>In 2–4 Wochen</option><option>In 1–3 Monaten</option><option>Später / noch offen</option></select></div>
 					<div class="field"><label for="datum">Konkretes Datum (optional)</label><input type="date" id="datum" name="datum"></div>
 				</div>
-				<div class="field"><label for="nachricht">Beschreibung Ihres Vorhabens</label><textarea id="nachricht" name="nachricht" placeholder="z. B. Neubau EFH, Bodenplatte gedämmt, Fußbodenheizung wird vom Heizungsbauer verlegt, Estrich in EG und OG …"></textarea></div>
-				<label for="dateien">Fotos, Grundriss oder Pläne</label>
+				<div class="field"><label for="nachricht"><span class="nur-boden">Beschreibung Ihres Vorhabens</span><span class="nur-rohr">Was ist passiert?</span></label><textarea id="nachricht" name="nachricht" placeholder="z. B. Neubau EFH, Bodenplatte gedämmt, Fußbodenheizung wird vom Heizungsbauer verlegt, Estrich in EG und OG …" data-ph-rohr="z. B. Toilette im Erdgeschoss läuft nicht ab, Wasser steht im Keller-Abfluss, seit heute Morgen …"></textarea></div>
+				<label for="dateien"><span class="nur-boden">Fotos, Grundriss oder Pläne</span><span class="nur-rohr">Fotos (optional)</span></label>
 				<div class="upload">
 					<span class="ki ki-upload" style="font-size:40px;color:var(--accent)"></span><br>
 					<strong>Dateien auswählen</strong> oder hierher ziehen<br><small>JPG, PNG, PDF · bis zu 5 Dateien · max. 10 MB je Datei</small>
@@ -217,18 +218,19 @@ $choice = function ( $name, $id, $value, $title, $text = '', $icon = '', $checke
 
 	<aside class="summary">
 		<h4><span class="ki ki-calc"></span> Ihre Anfrage</h4>
-		<div class="big" id="s-flaeche">– m²</div>
+		<div class="big nur-boden" id="s-flaeche">– m²</div>
 		<dl>
 			<div><dt>Leistung</dt><dd id="s-leistung" class="empty">–</dd></div>
 			<div><dt>Objekt</dt><dd id="s-objekt" class="empty">–</dd></div>
-			<div><dt>Bauvorhaben</dt><dd id="s-bau" class="empty">–</dd></div>
-			<div><dt>Estrichart</dt><dd id="s-estrich" class="empty">–</dd></div>
-			<div><dt>Fußbodenheizung</dt><dd id="s-fbh" class="empty">–</dd></div>
-			<div><dt>Estrichdicke</dt><dd id="s-staerke" class="empty">–</dd></div>
+			<div class="nur-rohr"><dt>Problem</dt><dd id="s-problem" class="empty">–</dd></div>
+			<div class="nur-boden"><dt>Bauvorhaben</dt><dd id="s-bau" class="empty">–</dd></div>
+			<div class="nur-boden"><dt>Estrichart</dt><dd id="s-estrich" class="empty">–</dd></div>
+			<div class="nur-boden"><dt>Fußbodenheizung</dt><dd id="s-fbh" class="empty">–</dd></div>
+			<div class="nur-boden"><dt>Estrichdicke</dt><dd id="s-staerke" class="empty">–</dd></div>
 			<div><dt>Termin</dt><dd id="s-termin" class="empty">–</dd></div>
 			<div><dt>Ort</dt><dd id="s-ort" class="empty">–</dd></div>
 		</dl>
-		<p class="summary-note">Ihre Angaben sind unverbindlich. Das finale Angebot erstellen wir nach Prüfung bzw. Aufmaß vor Ort.</p>
+		<p class="summary-note nur-boden">Ihre Angaben sind unverbindlich. Das finale Angebot erstellen wir nach Prüfung bzw. Aufmaß vor Ort.</p><p class="summary-note nur-rohr">Wir melden uns schnellstmöglich mit einem Termin. Bei akutem Rückstau bitte direkt anrufen.</p>
 		<div class="summary-help" style="border-left:3px solid var(--red)">Rohrreinigung-Notfall?<a href="<?php echo esc_attr( kilic_tel_href( $notdienst ) ); ?>"><?php echo esc_html( $notdienst ); ?></a><small style="color:#9aa1a8">24/7 · auch sonntags</small></div>
 	</aside>
 </div>

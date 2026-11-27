@@ -1383,3 +1383,22 @@ body.kilic-danke .wizard { grid-template-columns: 1fr; }
 .footer-credit a:hover, .footer-credit a:focus-visible { border-color: var(--accent); color: #cfd3d7; background: rgba(232,137,43,.08); }
 .footer-credit a:hover .fc-pfeil, .footer-credit a:focus-visible .fc-pfeil { transform: translate(2px,-2px); }
 @media (max-width: 640px) { .footer-credit { padding-bottom: 20px; } .footer-credit a { font-size: .74rem; } }
+
+/* Anfrage: Texte je nach Leistung */
+.wizard .nur-rohr { display: none; }
+.wizard.ist-rohr .nur-rohr { display: block; }
+.wizard.ist-rohr label .nur-rohr, .wizard label .nur-boden { display: inline; }
+.wizard.ist-rohr .nur-boden { display: none !important; }
+.wizard .progress li[hidden] { display: none; }
+
+/* Rechtliche Seiten (Impressum, Datenschutz): ruhig und gut lesbar */
+.section:has(> .prose) { background: var(--concrete); padding: clamp(40px, 7vw, 90px) 0; }
+.prose { max-width: 860px; margin-inline: auto; padding: clamp(28px, 5vw, 64px); background: #fff; border-radius: var(--radius-lg); box-shadow: var(--shadow); box-sizing: border-box; }
+.prose h1 { font-size: clamp(2rem, 4.6vw, 3.2rem); line-height: 1.05; margin: 0 0 .6em; hyphens: auto; -webkit-hyphens: auto; overflow-wrap: break-word; }
+.prose h1::before { content: "Rechtliches"; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; font-size: .8rem; letter-spacing: .2em; color: var(--accent-dark); }
+.prose h1::after { content: ""; display: block; width: 60px; height: 4px; margin-top: 22px; border-radius: 2px; background: var(--accent); }
+.prose h2 { font-size: clamp(1.15rem, 2.2vw, 1.4rem); letter-spacing: .03em; margin: 2em 0 .6em; padding-top: 1.4em; border-top: 1px solid var(--line); }
+.prose h1 + p + h2, .prose h1 + h2 { border-top: 0; padding-top: 0; margin-top: 1em; }
+.prose p, .prose li { color: var(--ink2, #2a3036); line-height: 1.75; font-size: 1rem; }
+.prose a { color: var(--accent-dark); text-underline-offset: 3px; }
+@media (max-width: 640px) { .prose { border-radius: 0; box-shadow: none; padding: 28px 18px; } .section:has(> .prose) { padding: 0; background: #fff; } }
