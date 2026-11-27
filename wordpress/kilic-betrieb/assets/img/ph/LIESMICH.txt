@@ -1,0 +1,11 @@
+Eigene Bilder hier ablegen (JPG, PNG oder WebP). Der Dateiname bestimmt die Stelle auf der Website:
+
+hero-start, hero-estrich, hero-boden, hero-rohr, hero-kontakt,
+estrich-verteilen, heizestrich, fliessestrich, zementestrich, schnellestrich,
+trockenestrich, industrie, sanierung-vorher, sanierung-nachher, bodenverlegung,
+ausgleichsmasse, rohrreinigung, notdienst, kanal-tv, wartung,
+werkzeug-estrich, werkzeug-boden, werkzeug-rohr, meister,
+ref-neubau, ref-sanierung, ref-gewerbe, ref-boden, ref-rohr
+
+Beispiel: heizestrich.jpg  -> erscheint auf der Seite Heizestrich.
+Fehlt eine Datei, bleibt dort der bisherige graue Platzhalter.
