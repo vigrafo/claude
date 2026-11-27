@@ -1371,3 +1371,6 @@ body.kilic-danke .wizard { grid-template-columns: 1fr; }
   .topbar-emergency .te-label { font-size: 0; }
   .topbar-emergency .te-label::before { content: "Notdienst 24/7"; font-size: .82rem; }
 }
+
+/* Interne Notizen (Platzhalter-Hinweise) nie auf der Website zeigen */
+.todo { display: none !important; }
