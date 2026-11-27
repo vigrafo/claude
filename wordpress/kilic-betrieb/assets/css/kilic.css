@@ -1375,6 +1375,11 @@ body.kilic-danke .wizard { grid-template-columns: 1fr; }
 /* Interne Notizen (Platzhalter-Hinweise) nie auf der Website zeigen */
 .todo { display: none !important; }
 
-.footer-credit a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
-.footer-credit a:hover, .footer-credit a:focus { color: var(--accent); }
-@media (max-width: 640px) { .footer-credit { display: block; margin-top: 6px; } .fc-trenner { display: none; } }
+/* Webdesign-Hinweis */
+.footer-credit { display: flex; justify-content: center; padding: 0 0 26px; }
+.footer-credit a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 18px; border: 1px solid #2c3238; border-radius: 999px; color: #8d949b; text-decoration: none; font-size: .78rem; letter-spacing: .04em; transition: border-color .2s, color .2s, background .2s; }
+.footer-credit .fc-marke { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-head); font-size: 1.05rem; font-weight: 700; letter-spacing: .04em; color: #e9ecef; }
+.footer-credit .fc-pfeil { font-family: var(--font-body); font-size: .85rem; color: var(--accent); transition: transform .2s; }
+.footer-credit a:hover, .footer-credit a:focus-visible { border-color: var(--accent); color: #cfd3d7; background: rgba(232,137,43,.08); }
+.footer-credit a:hover .fc-pfeil, .footer-credit a:focus-visible .fc-pfeil { transform: translate(2px,-2px); }
+@media (max-width: 640px) { .footer-credit { padding-bottom: 20px; } .footer-credit a { font-size: .74rem; } }

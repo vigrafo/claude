@@ -230,7 +230,7 @@ function kilic_footer() {
 			</div>
 		</div>
 		<div class="wrap footer-bottom">
-			<span>© <?php echo esc_html( gmdate( 'Y' ) ); ?> <?php echo esc_html( kilic_opt( 'firma' ) ); ?> · <?php echo esc_html( kilic_opt( 'firma2' ) ); ?><span class="footer-credit"><span class="fc-trenner"> · </span>Webdesign umgesetzt durch <a href="https://vigrafo.de/" target="_blank" rel="noopener">ViGraFo</a></span></span>
+			<span>© <?php echo esc_html( gmdate( 'Y' ) ); ?> <?php echo esc_html( kilic_opt( 'firma' ) ); ?> · <?php echo esc_html( kilic_opt( 'firma2' ) ); ?></span>
 			<nav aria-label="Rechtliches">
 				<?php
 				wp_nav_menu( array(
@@ -243,6 +243,12 @@ function kilic_footer() {
 				) );
 				?>
 			</nav>
+		</div>
+		<div class="wrap footer-credit">
+			<a href="https://vigrafo.de/" target="_blank" rel="noopener" aria-label="Webdesign umgesetzt durch ViGraFo (öffnet vigrafo.de in neuem Tab)">
+				<span class="fc-text">Webdesign umgesetzt durch</span>
+				<span class="fc-marke">ViGraFo<span class="fc-pfeil" aria-hidden="true">↗</span></span>
+			</a>
 		</div>
 	</footer>
 	<div class="mobile-bar">
