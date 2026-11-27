@@ -20,6 +20,11 @@ function kilic_settings_fields() {
 			'web'             => array( 'Website', 'text' ),
 			'oeffnungszeiten' => array( 'Öffnungszeiten (Kurzform)', 'text' ),
 		),
+		'Impressum' => array(
+			'beruf'          => array( 'Berufsbezeichnung', 'text', 'z. B. Estrichlegermeister (verliehen in Deutschland)' ),
+			'kammer'         => array( 'Zuständige Handwerkskammer', 'text', 'z. B. Handwerkskammer Mannheim Rhein-Neckar-Odenwald' ),
+			'handwerksrolle' => array( 'Eintragung in der Handwerksrolle', 'text', 'Betriebsnummer bzw. Eintragungsnummer' ),
+		),
 		'Steuer & Bank (für Rechnungen)' => array(
 			'ust_id'       => array( 'USt-IdNr.', 'text' ),
 			'steuernr'     => array( 'Steuernummer', 'text', 'Auf Rechnungen muss die Steuernummer oder die USt-IdNr. stehen (§ 14 UStG).' ),

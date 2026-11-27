@@ -1402,3 +1402,17 @@ body.kilic-danke .wizard { grid-template-columns: 1fr; }
 .prose p, .prose li { color: var(--ink2, #2a3036); line-height: 1.75; font-size: 1rem; }
 .prose a { color: var(--accent-dark); text-underline-offset: 3px; }
 @media (max-width: 640px) { .prose { border-radius: 0; box-shadow: none; padding: 28px 18px; } .section:has(> .prose) { padding: 0; background: #fff; } }
+
+/* Impressum als Karten */
+.prose-impressum { max-width: 980px; }
+.imp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 8px; }
+.imp-karte { padding: 22px 24px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: #fbfaf8; }
+.imp-kopf { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.imp-ic { flex: 0 0 38px; width: 38px; height: 38px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-dark); display: inline-flex; align-items: center; justify-content: center; }
+.imp-ic .ki { width: 18px; height: 18px; }
+.prose .imp-kopf h2 { margin: 0; padding: 0; border: 0; font-size: 1.05rem; }
+.prose .imp-karte p { margin: 0; line-height: 1.8; }
+.imp-karte a { color: var(--ink); font-weight: 600; text-decoration: none; }
+.imp-karte a:hover { color: var(--accent-dark); }
+.prose .imp-hinweis h2 { font-size: 1.05rem; }
+@media (max-width: 760px) { .imp-grid { grid-template-columns: 1fr; } }

@@ -83,7 +83,14 @@ $absender = trim( $firma . ' · ' . kilic_opt( 'strasse' ) . ' · ' . kilic_opt(
 	.toolbar { position: sticky; top: 0; background: #1b1f23; color: #fff; padding: 10px 16px; display: flex; gap: 12px; align-items: center; justify-content: center; font-family: Arial, sans-serif; }
 	.toolbar button { background: #e8892b; color: #fff; border: 0; padding: 10px 18px; font-weight: 700; border-radius: 5px; cursor: pointer; font-size: 14px; }
 	@media print { body { background: #fff; } .sheet { margin: 0; box-shadow: none; } .toolbar { display: none; } }
+	/* Falz- und Lochmarken nach DIN 5008 (Form B): 105 mm, 148,5 mm, 210 mm – auf jeder Seite */
+	.falz { position: absolute; left: 0; width: 6mm; height: 0; border-top: 0.25mm solid #a9a39a; }
+	.falz.f1 { top: 105mm; }
+	.falz.loch { top: 148.5mm; width: 9mm; border-top-color: #e8892b; }
+	.falz.f2 { top: 210mm; }
+	@media print { .falz { position: fixed; } }
 	<?php if ( $pdf ) : ?>
+	.falz { position: fixed; left: 0; }
 	/* dompdf: ohne border-box – Breiten auf den Inhaltsbereich (210 − 25 − 20 mm) rechnen */
 	.sheet { width: auto; min-height: 0; padding: 0 20mm 0 25mm; }
 	table.head { height: auto; }
@@ -103,6 +110,7 @@ $absender = trim( $firma . ' · ' . kilic_opt( 'strasse' ) . ' · ' . kilic_opt(
 </div>
 <?php endif; ?>
 <div class="sheet">
+	<div class="falz f1"></div><div class="falz loch"></div><div class="falz f2"></div>
 	<?php if ( $entwurf ) : ?><div class="wm">ENTWURF</div><?php endif; ?>
 	<?php if ( 'storniert' === $status ) : ?><div class="wm">STORNIERT</div><?php endif; ?>
 	<table class="head"><tr>

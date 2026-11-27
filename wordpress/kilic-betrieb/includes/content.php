@@ -675,13 +675,7 @@ function kilic_inhalt_kontakt() {
 
 function kilic_inhalt_impressum() {
 	return kilic_divi( array(
-		'Impressum' => '<section class="section"><div class="wrap prose"><h1>Impressum</h1><p><span class="todo">Vorlage – bitte vollständig prüfen und ergänzen</span></p>'
-			. '<h2>Angaben gemäß § 5 DDG</h2><p>{{firma}}<br>{{firma2}}<br>Inhaber: {{inhaber}}<br>{{strasse}}<br>{{plz_ort}}</p>'
-			. '<h2>Kontakt</h2><p>Telefon: {{telefon}}<br>E-Mail: {{email}}</p>'
-			. '<h2>Umsatzsteuer</h2><p>Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG: <span class="todo">ergänzen</span></p>'
-			. '<h2>Berufsbezeichnung und berufsrechtliche Regelungen</h2><p>Berufsbezeichnung: <span class="todo">z. B. Estrichlegermeister (verliehen in Deutschland)</span><br>Zuständige Kammer: <span class="todo">Handwerkskammer – bitte eintragen</span><br>Eintragung in der Handwerksrolle: <span class="todo">ergänzen</span><br>Berufsrechtliche Regelungen: Handwerksordnung (HwO)</p>'
-			. '<h2>Verbraucherstreitbeilegung</h2><p>Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.</p>'
-			. '</div></section>',
+		'Impressum' => '<section class="section"><div class="wrap prose prose-impressum"><h1>Impressum</h1>[kilic_impressum]</div></section>',
 	) );
 }
 

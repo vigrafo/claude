@@ -431,3 +431,56 @@ add_action( 'wp_footer', function () {
 	</script>
 	<?php
 }, 999 );
+
+
+/** Impressum aus den Einstellungen – leere Angaben werden weggelassen. */
+function kilic_impressum_html() {
+	$o   = function ( $k ) {
+		return kilic_ist_platzhalter( $k ) ? '' : trim( (string) kilic_opt( $k ) );
+	};
+	$tel = $o( 'telefon' );
+	$nd  = $o( 'notdienst' );
+	$em  = trim( (string) kilic_opt( 'email' ) );
+	$karte = function ( $icon, $titel, $zeilen ) {
+		$zeilen = array_filter( $zeilen );
+		if ( ! $zeilen ) {
+			return '';
+		}
+		return '<div class="imp-karte"><div class="imp-kopf"><span class="imp-ic"><span class="ki ki-' . esc_attr( $icon ) . '"></span></span><h2>' . esc_html( $titel ) . '</h2></div><p>' . implode( '<br>', $zeilen ) . '</p></div>';
+	};
+	$h  = '<div class="imp-grid">';
+	$h .= $karte( 'pin', 'Angaben gemäß § 5 DDG', array(
+		'<strong>' . esc_html( $o( 'firma' ) ) . '</strong>',
+		esc_html( $o( 'firma2' ) ),
+		$o( 'inhaber' ) ? 'Inhaber: ' . esc_html( $o( 'inhaber' ) ) : '',
+		esc_html( $o( 'strasse' ) ),
+		esc_html( $o( 'plz_ort' ) ),
+	) );
+	$h .= $karte( 'phone', 'Kontakt', array(
+		$tel ? 'Telefon: <a href="' . esc_attr( kilic_tel_href( $tel ) ) . '">' . esc_html( $tel ) . '</a>' : '',
+		$nd && $nd !== $tel ? 'Notdienst 24/7: <a href="' . esc_attr( kilic_tel_href( $nd ) ) . '">' . esc_html( $nd ) . '</a>' : '',
+		$em ? 'E-Mail: <a href="mailto:' . esc_attr( $em ) . '">' . esc_html( $em ) . '</a>' : '',
+	) );
+	$h .= $karte( 'euro', 'Steuern', array(
+		$o( 'ust_id' ) ? 'USt-IdNr. gemäß § 27a UStG: ' . esc_html( $o( 'ust_id' ) ) : '',
+		$o( 'steuernr' ) ? 'Steuernummer: ' . esc_html( $o( 'steuernr' ) ) : '',
+	) );
+	$h .= $karte( 'medal', 'Berufsrechtliche Angaben', array(
+		$o( 'beruf' ) ? 'Berufsbezeichnung: ' . esc_html( $o( 'beruf' ) ) : '',
+		$o( 'kammer' ) ? 'Zuständige Kammer: ' . esc_html( $o( 'kammer' ) ) : '',
+		$o( 'handwerksrolle' ) ? 'Eintragung in der Handwerksrolle: ' . esc_html( $o( 'handwerksrolle' ) ) : '',
+		( $o( 'beruf' ) || $o( 'kammer' ) ) ? 'Berufsrechtliche Regelungen: Handwerksordnung (HwO)' : '',
+	) );
+	$h .= '</div>';
+	$h .= '<div class="imp-hinweis"><h2>Verbraucherstreitbeilegung</h2><p>Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.</p></div>';
+	return $h;
+}
+add_shortcode( 'kilic_impressum', 'kilic_impressum_html' );
+
+/** Bestehende Impressum-Seite (alte Vorlage) automatisch auf die neue Darstellung umstellen. */
+add_filter( 'the_content', function ( $html ) {
+	if ( false === strpos( $html, 'Angaben gemäß § 5 DDG' ) || false !== strpos( $html, 'imp-grid' ) || ! preg_match( '#<div class="wrap prose">\s*<h1>Impressum</h1>#', $html ) ) {
+		return $html;
+	}
+	return preg_replace( '#<div class="wrap prose">\s*<h1>Impressum</h1>.*?Verbraucherschlichtungsstelle teilzunehmen\.</p>#s', '<div class="wrap prose prose-impressum"><h1>Impressum</h1>' . kilic_impressum_html(), $html, 1 );
+}, 102 );
