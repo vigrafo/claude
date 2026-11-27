@@ -95,7 +95,8 @@ add_shortcode( 'kilic_referenzen', function ( $atts ) {
 		if ( has_post_thumbnail( $r ) ) {
 			echo get_the_post_thumbnail( $r, 'large', array( 'class' => 'project-img', 'loading' => 'lazy' ) );
 		} else {
-			echo '<img class="project-img" src="' . esc_url( KILIC_URL . 'assets/img/' . ( $blue ? 'ph-blau.svg' : 'ph-grau.svg' ) ) . '" alt="" loading="lazy">';
+			$ph = kilic_ph_referenz( wp_list_pluck( $cats, 'slug' ) );
+			echo '<img class="project-img" src="' . esc_url( $ph ? $ph : KILIC_URL . 'assets/img/' . ( $blue ? 'ph-blau.svg' : 'ph-grau.svg' ) ) . '" alt="" loading="lazy" width="1200" height="900">';
 		}
 		echo '<div class="body">';
 		if ( $names ) {

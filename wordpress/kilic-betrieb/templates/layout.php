@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 			$ort = get_post_meta( get_the_ID(), '_ort', true );
 			?>
 			<section class="hero hero-sub">
-				<img class="hero-img" src="<?php echo esc_url( KILIC_URL . 'assets/img/ph-dunkel.svg' ); ?>" alt="">
+				<img class="hero-img" src="<?php echo esc_url( kilic_ph_url( 'hero-start' ) ? kilic_ph_url( 'hero-start' ) : KILIC_URL . 'assets/img/ph-dunkel.svg' ); ?>" alt="">
 				<div class="wrap">
 					<div class="breadcrumb"><a href="<?php echo esc_url( home_url( '/' ) ); ?>">Start</a><span>/</span><a href="<?php echo esc_url( kilic_seite_url( 'referenzen' ) ); ?>">Referenzen</a><span>/</span><?php the_title(); ?></div>
 					<div class="eyebrow light">Referenzprojekt<?php echo $ort ? ' · ' . esc_html( $ort ) : ''; ?></div>
