@@ -313,19 +313,27 @@ function kilic_render_cockpit() {
 		<?php endif; ?>
 
 		<div class="kc-foot">
-			<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=kilic_kunde' ) ); ?>"><span class="dashicons dashicons-groups"></span> Alle Kunden</a>
-			<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=kilic_beleg' ) ); ?>"><span class="dashicons dashicons-archive"></span> Alle Angebote &amp; Rechnungen</a>
-			<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=kilic_leistung' ) ); ?>"><span class="dashicons dashicons-list-view"></span> Leistungskatalog &amp; Preise</a>
-			<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=kilic_referenz' ) ); ?>"><span class="dashicons dashicons-format-gallery"></span> Referenzen</a>
-			<?php if ( current_user_can( 'manage_options' ) ) : ?>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=kilic-einstellungen' ) ); ?>"><span class="dashicons dashicons-admin-generic"></span> Einstellungen</a>
-			<?php endif; ?>
+			<nav class="kc-schnell" aria-label="Schnellzugriff">
+				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=kilic_kunde' ) ); ?>"><span class="dashicons dashicons-groups"></span><span>Alle Kunden</span></a>
+				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=kilic_beleg' ) ); ?>"><span class="dashicons dashicons-media-document"></span><span>Angebote &amp; Rechnungen</span></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=kilic-katalog' ) ); ?>"><span class="dashicons dashicons-list-view"></span><span>Leistungen &amp; Preise</span></a>
+				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=kilic_referenz' ) ); ?>"><span class="dashicons dashicons-format-gallery"></span><span>Referenzen</span></a>
+				<?php if ( current_user_can( 'manage_options' ) ) : ?>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kilic-einstellungen' ) ); ?>"><span class="dashicons dashicons-admin-generic"></span><span>Einstellungen</span></a>
+				<?php endif; ?>
+			</nav>
 			<form method="get" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="kc-export">
 				<input type="hidden" name="action" value="kilic_export">
 				<?php wp_nonce_field( 'kilic_export', '_wpnonce', false ); ?>
-				<span class="dashicons dashicons-download"></span> Steuerberater-Export
-				<input type="number" name="jahr" value="<?php echo esc_attr( current_time( 'Y' ) ); ?>" aria-label="Jahr">
-				<button type="submit" class="button-link">CSV</button>
+				<div class="kc-export-txt"><strong><span class="dashicons dashicons-download"></span> Export für den Steuerberater</strong><small>Alle Rechnungen und Zahlungen eines Jahres als Tabelle (CSV, für Excel)</small></div>
+				<label class="kc-export-jahr"><span class="screen-reader-text">Jahr</span>
+					<select name="jahr">
+						<?php for ( $j = (int) current_time( 'Y' ); $j >= (int) current_time( 'Y' ) - 6; $j-- ) : ?>
+							<option value="<?php echo (int) $j; ?>"><?php echo (int) $j; ?></option>
+						<?php endfor; ?>
+					</select>
+				</label>
+				<button type="submit" class="kc-export-knopf">Herunterladen</button>
 			</form>
 		</div>
 	</div>

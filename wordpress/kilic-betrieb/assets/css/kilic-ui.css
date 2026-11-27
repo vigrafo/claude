@@ -862,3 +862,31 @@ body.kilic-ui.kui-dunkel {
 .kt-form input[type=text], .kt-form input[type=email] { width: 100% !important; max-width: 100% !important; box-sizing: border-box; margin: 0; }
 .kt-form .kk-pflicht { color: #d7262f; }
 .kt-zwei > label { min-width: 0; }
+
+/* ---------- Cockpit-Fußbereich ---------- */
+.kilic-ui .kc-foot { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; margin-top: 18px; padding: 16px 18px; background: var(--a-card, #fff) !important; }
+.kc-schnell { display: flex; flex-wrap: wrap; gap: 8px; }
+.kilic-ui .kc-schnell a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 12px; background: var(--a-fill, #f2f2f7); color: var(--a-text, #1d1d1f); font-weight: 600; font-size: 14px; text-decoration: none; }
+.kilic-ui .kc-schnell a:hover { background: var(--k-accent-soft); color: var(--k-accent-d); }
+.kc-schnell .dashicons { color: var(--k-accent-d); font-size: 18px; width: 18px; height: 18px; }
+.kilic-ui .kc-export { display: flex; align-items: center; gap: 10px; margin: 0; padding: 10px 12px 10px 16px; border-radius: 14px; background: var(--a-fill, #f2f2f7); }
+.kc-export-txt { display: flex; flex-direction: column; min-width: 0; }
+.kc-export-txt strong { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--a-text, #1d1d1f); }
+.kc-export-txt strong .dashicons { color: var(--k-accent-d); font-size: 18px; width: 18px; height: 18px; }
+.kc-export-txt small { color: var(--a-sub, #6e6e73); font-size: 12px; }
+.kilic-ui .kc-export select { min-height: 40px; min-width: 90px; border-radius: 10px !important; border: 1px solid var(--a-sep, #e5e5ea) !important; background-color: var(--a-card, #fff) !important; color: var(--a-text) !important; font-weight: 600; }
+.kc-export-knopf { min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--k-accent); color: #fff; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.kc-export-knopf:hover { background: var(--k-accent-d); }
+.kui-dunkel .kilic-ui .kc-foot, .kui-dunkel .kc-foot { background: var(--a-card) !important; }
+.kui-dunkel .kc-schnell a, .kui-dunkel .kc-export { background: var(--a-fill) !important; color: var(--a-text) !important; }
+.kui-dunkel .kc-schnell a:hover { background: #3a2a19 !important; color: #f0a258 !important; }
+.kui-dunkel .kc-schnell .dashicons, .kui-dunkel .kc-export-txt strong .dashicons { color: #f0a258; }
+@media (max-width: 1100px) { .kilic-ui .kc-foot { grid-template-columns: 1fr; } }
+@media (max-width: 600px) {
+  .kc-schnell { display: grid; grid-template-columns: 1fr 1fr; }
+  .kilic-ui .kc-schnell a { justify-content: flex-start; }
+  .kilic-ui .kc-export { flex-wrap: wrap; }
+  .kc-export-txt { flex: 1 1 100%; }
+  .kc-export-jahr { flex: 1; } .kilic-ui .kc-export select { width: 100%; }
+  .kc-export-knopf { flex: 1; }
+}
