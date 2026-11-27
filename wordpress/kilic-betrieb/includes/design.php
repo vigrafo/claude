@@ -65,6 +65,7 @@ add_action( 'in_admin_header', function () {
 	?>
 	<header class="kui-bar">
 		<a class="kui-brand" href="<?php echo esc_url( admin_url( 'admin.php?page=kilic' ) ); ?>"><?php echo kilic_logo_html( 'hell' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+		<button type="button" class="kui-suche-knopf" data-ks-auf aria-label="Suchen (Strg+K)"><span class="dashicons dashicons-search"></span><span class="kui-suche-text">Kunde, Rechnung … suchen</span><kbd>Strg K</kbd></button>
 		<button type="button" class="kui-burger" aria-label="Menü" onclick="document.body.classList.toggle('kui-nav-open')"><span class="dashicons dashicons-menu"></span></button>
 		<nav class="kui-nav" aria-label="Kilic Betrieb">
 			<?php foreach ( kilic_nav_punkte() as $n ) : ?>

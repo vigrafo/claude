@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Kilic Betrieb
  * Description: Website und Büro-Verwaltung für Kilic Estrich Meisterbetrieb / K & K Rohrreinigung: mehrstufige Seiten, Anfrage-Assistent, Anfragen, Kunden, Angebote und Rechnungen (druckbar), Referenzen. Kompatibel mit dem Divi Builder.
- * Version: 1.9.17
+ * Version: 1.10.0
  * Requires at least: 6.4
  * Requires PHP: 8.0
  * Author: Kilic Estrich
@@ -11,7 +11,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'KILIC_VERSION', '1.9.17' );
+define( 'KILIC_VERSION', '1.10.0' );
 define( 'KILIC_FILE', __FILE__ );
 define( 'KILIC_DIR', plugin_dir_path( __FILE__ ) );
 define( 'KILIC_URL', plugin_dir_url( __FILE__ ) );
@@ -30,6 +30,7 @@ require_once KILIC_DIR . 'includes/cockpit.php';
 require_once KILIC_DIR . 'includes/verlauf.php';
 require_once KILIC_DIR . 'includes/mail.php';
 require_once KILIC_DIR . 'includes/design.php';
+require_once KILIC_DIR . 'includes/suche.php';
 require_once KILIC_DIR . 'includes/frontend.php';
 require_once KILIC_DIR . 'includes/bilder.php';
 require_once KILIC_DIR . 'includes/content.php';
