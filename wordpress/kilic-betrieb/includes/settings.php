@@ -45,9 +45,10 @@ function kilic_settings_fields() {
 			'empfaenger'   => array( 'Benachrichtigung an', 'email', 'Leer = Firmen-E-Mail bzw. WordPress-Admin-E-Mail.' ),
 			'bestaetigung' => array( 'Eingangsbestätigung an Kunden senden', 'checkbox' ),
 			'inhaber_email' => array( 'Bestätigung an Inhaber', 'email', 'Der Inhaber bekommt bei jeder Anfrage eine eigene Bestätigung im Firmendesign. Leer = WordPress-Admin-E-Mail. Angebote und Rechnungen gehen ohne Kopie raus – die Kopie liegt am Beleg im Backend.' ),
-			'absender'      => array( 'Absender-Adresse', 'email', 'Von dieser Adresse kommen alle E-Mails (Anfrage-Bestätigungen, Angebote, Rechnungen). Damit sie sicher ankommen, unten das Postfach-Passwort eintragen.' ),
+			'absender'      => array( 'Antwort-Adresse', 'email', 'Antwortet ein Kunde auf eine E-Mail der Website, landet die Antwort hier.' ),
 		),
 		'E-Mail-Postfach (SMTP)' => array(
+			'smtp_an'   => array( 'Über ein Postfach senden statt über die Website', 'checkbox', 'Aus = E-Mails gehen direkt über die Website (empfohlen, ohne Passwort). Absender ist dann eine Adresse der Website-Domain, Antworten gehen an die Antwort-Adresse oben.' ),
 			'smtp_host' => array( 'Postausgangsserver', 'text', 'mail.com: smtp.mail.com · GMX: mail.gmx.net · Gmail: smtp.gmail.com · IONOS: smtp.ionos.de' ),
 			'smtp_port' => array( 'Port', 'number', 'Normalerweise 587.' ),
 			'smtp_user' => array( 'Benutzername', 'text', 'Meist die vollständige E-Mail-Adresse, z. B. vigrafo@mail.com.' ),
@@ -159,10 +160,10 @@ function kilic_render_settings() {
 		</form>
 
 		<h2>E-Mail-Versand testen</h2>
-		<p>Schickt eine Test-E-Mail im Firmendesign. Absender: <code><?php echo esc_html( kilic_absender_email() ); ?></code> · Versand: <strong><?php echo kilic_smtp_aktiv() ? 'über Postfach ' . esc_html( kilic_opt( 'smtp_host' ) ) : 'direkt vom Webserver (unsicher – Passwort oben eintragen)'; ?></strong></p>
+		<p>Schickt eine Test-E-Mail im Firmendesign. Absender: <code><?php echo esc_html( kilic_absender_email() ); ?></code> · Versand: <strong><?php echo kilic_smtp_aktiv() ? 'über Postfach ' . esc_html( kilic_opt( 'smtp_host' ) ) : 'direkt über die Website'; ?></strong></p>
 		<?php if ( isset( $_GET['kilic_test'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
 			<?php $t = get_transient( 'kilic_mailtest' ); ?>
-			<div class="notice <?php echo ! empty( $t['ok'] ) ? 'notice-success' : 'notice-error'; ?> inline"><p><?php echo ! empty( $t['ok'] ) ? 'Test-E-Mail wurde an ' . esc_html( $t['an'] ?? '' ) . ' übergeben. Bitte Posteingang (und Spam-Ordner) prüfen.' : 'Versand fehlgeschlagen: ' . esc_html( $t['fehler'] ?? 'unbekannter Fehler' ) . '. Tipp: Plugin „WP Mail SMTP“ installieren und das Postfach der Firma eintragen.'; ?></p></div>
+			<div class="notice <?php echo ! empty( $t['ok'] ) ? 'notice-success' : 'notice-error'; ?> inline"><p><?php echo ! empty( $t['ok'] ) ? 'Test-E-Mail wurde an ' . esc_html( $t['an'] ?? '' ) . ' übergeben. Bitte Posteingang (und Spam-Ordner) prüfen.' : 'Versand fehlgeschlagen: ' . esc_html( $t['fehler'] ?? 'unbekannter Fehler' ) . '. Tipp: Haken „Über ein Postfach senden“ entfernen – dann geht die E-Mail direkt über die Website.'; ?></p></div>
 		<?php endif; ?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="kilic-mailtest">
 			<input type="hidden" name="action" value="kilic_mailtest">

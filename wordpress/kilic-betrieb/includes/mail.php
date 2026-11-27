@@ -63,22 +63,34 @@ function kilic_mail_tabelle( $zeilen ) {
 
 /** Absender: eigene Domain (sonst Spam/Ablehnung bei Gmail & Co.). */
 function kilic_absender_email() {
-	$a = kilic_opt( 'absender' );
-	if ( $a && is_email( $a ) ) {
+	$a    = kilic_opt( 'absender' );
+	$host = kilic_site_domain();
+	if ( kilic_smtp_aktiv() && is_email( $a ) ) {
+		return $a; // Postfach-Versand: Absender = Postfach.
+	}
+	// Versand über die Website: Absender muss zur eigenen Domain passen.
+	if ( is_email( $a ) && $host && substr( strtolower( $a ), -strlen( '@' . $host ) ) === strtolower( '@' . $host ) ) {
 		return $a;
 	}
-	$host = wp_parse_url( home_url(), PHP_URL_HOST );
-	$host = preg_replace( '/^www\./', '', (string) $host );
 	if ( ! $host || 'localhost' === $host || false === strpos( $host, '.' ) ) {
 		return get_option( 'admin_email' );
 	}
 	return 'noreply@' . $host;
 }
 
-/** Versand über das Postfach (SMTP), sobald Benutzer und Passwort eingetragen sind. */
+/** Versand über ein Postfach (SMTP) – nur wenn eingeschaltet und vollständig eingetragen. */
 function kilic_smtp_aktiv() {
-	return kilic_opt( 'smtp_host' ) && kilic_opt( 'smtp_user' ) && kilic_opt( 'smtp_pass' );
+	if ( ! empty( $GLOBALS['kilic_smtp_aus'] ) ) {
+		return false;
+	}
+	return '1' === kilic_opt( 'smtp_an' ) && kilic_opt( 'smtp_host' ) && kilic_opt( 'smtp_user' ) && kilic_opt( 'smtp_pass' );
 }
+
+/** Domain der Website (ohne www). */
+function kilic_site_domain() {
+	return preg_replace( '/^www\./', '', (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
+}
+
 add_action( 'phpmailer_init', function ( $m ) {
 	if ( ! kilic_smtp_aktiv() ) {
 		return;
@@ -90,16 +102,16 @@ add_action( 'phpmailer_init', function ( $m ) {
 	$m->Username   = kilic_opt( 'smtp_user' ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName
 	$m->Password   = kilic_opt( 'smtp_pass' ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName
 	$m->SMTPSecure = 465 === (int) kilic_opt( 'smtp_port' ) ? 'ssl' : 'tls'; // phpcs:ignore WordPress.NamingConventions.ValidVariableName
-	$m->Timeout    = 20; // phpcs:ignore WordPress.NamingConventions.ValidVariableName
+	$m->Timeout    = 15; // phpcs:ignore WordPress.NamingConventions.ValidVariableName
 }, 5 );
 
 /** Antwortadresse: Firmen-E-Mail, sonst Benachrichtigungsadresse. */
 function kilic_antwort_email() {
 	$e = kilic_opt( 'email' );
-	if ( $e && ! kilic_ist_platzhalter( 'email' ) && is_email( $e ) ) {
-		return $e;
+	if ( is_email( kilic_opt( 'absender' ) ) ) {
+		return kilic_opt( 'absender' );
 	}
-	return is_email( kilic_opt( 'absender' ) ) ? kilic_opt( 'absender' ) : kilic_empfaenger();
+	return ( $e && ! kilic_ist_platzhalter( 'email' ) && is_email( $e ) ) ? $e : kilic_empfaenger();
 }
 
 /** Letzter Versandfehler (für Protokoll und Test). */
@@ -124,6 +136,16 @@ function kilic_send_mail( $an, $betreff, $html, $anhaenge = array(), $bcc = '', 
 	add_action( 'phpmailer_init', $sender );
 	$ok = wp_mail( $an, $betreff, $html, $headers, $anhaenge );
 	remove_action( 'phpmailer_init', $sender );
+	if ( ! $ok && kilic_smtp_aktiv() ) {
+		// Postfach nicht erreichbar → einmal direkt über die Website senden.
+		$fehler                    = $GLOBALS['kilic_mail_fehler'] ?? '';
+		$GLOBALS['kilic_smtp_aus'] = true;
+		$ok = kilic_send_mail( $an, $betreff, $html, $anhaenge, $bcc, $reply_to );
+		$GLOBALS['kilic_smtp_aus'] = false;
+		if ( ! $ok && $fehler ) {
+			$GLOBALS['kilic_mail_fehler'] = $fehler . ' / Website: ' . ( $GLOBALS['kilic_mail_fehler'] ?? '' );
+		}
+	}
 	return $ok;
 }
 
@@ -361,7 +383,7 @@ add_action( 'admin_post_kilic_senden', function () {
 	if ( 'mahnung' === $art ) {
 		update_post_meta( $id, '_mahnung', current_time( 'Y-m-d' ) );
 	}
-	$msg = $ok ? 'E-Mail an ' . $an . ' gesendet. Die Kopie liegt am Beleg unter „Versand & Kopien“.' : 'Die E-Mail konnte nicht gesendet werden. Bitte E-Mail-Versand des Servers prüfen (z. B. Plugin „WP Mail SMTP“). Die PDF-Kopie wurde trotzdem gespeichert.';
+	$msg = $ok ? 'E-Mail an ' . $an . ' gesendet. Die Kopie liegt am Beleg unter „Versand & Kopien“.' : 'Die E-Mail konnte nicht gesendet werden. Bitte unter Einstellungen „Test-E-Mail senden“ prüfen. Die PDF-Kopie wurde trotzdem gespeichert.';
 	wp_safe_redirect( add_query_arg( 'kilic_msg', rawurlencode( $msg ), admin_url( 'admin.php?page=kilic' ) ) );
 	exit;
 } );
