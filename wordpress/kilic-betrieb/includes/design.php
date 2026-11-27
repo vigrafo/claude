@@ -40,8 +40,35 @@ function kilic_nav_punkte() {
 	return $p;
 }
 
+/** Hell/Dunkel je Benutzer. */
+function kilic_ui_dunkel() {
+	return 'dunkel' === get_user_meta( get_current_user_id(), 'kilic_ui_modus', true );
+}
 add_filter( 'admin_body_class', function ( $c ) {
-	return kilic_ist_kilic_screen() ? $c . ' kilic-ui' : $c;
+	return kilic_ist_kilic_screen() ? $c . ' kilic-ui' . ( kilic_ui_dunkel() ? ' kui-dunkel' : '' ) : $c;
+} );
+add_action( 'wp_ajax_kilic_ui_modus', function () {
+	check_ajax_referer( 'kilic_ui_modus', 'n' );
+	$m = 'dunkel' === ( $_POST['modus'] ?? '' ) ? 'dunkel' : 'hell';
+	update_user_meta( get_current_user_id(), 'kilic_ui_modus', $m );
+	wp_send_json_success( array( 'modus' => $m ) );
+} );
+add_action( 'admin_footer', function () {
+	if ( ! kilic_ist_kilic_screen() ) {
+		return;
+	}
+	?>
+	<script>
+	document.querySelectorAll("[data-kui-modus]").forEach(function (b) {
+		b.addEventListener("click", function () {
+			var d = document.body.classList.toggle("kui-dunkel");
+			b.querySelector(".kui-modus-txt").textContent = d ? "Hell" : "Dunkel";
+			var fd = new FormData(); fd.append("action", "kilic_ui_modus"); fd.append("n", <?php echo wp_json_encode( wp_create_nonce( 'kilic_ui_modus' ) ); ?>); fd.append("modus", d ? "dunkel" : "hell");
+			fetch(<?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>, { method: "POST", body: fd, credentials: "same-origin" });
+		});
+	});
+	</script>
+	<?php
 } );
 
 add_action( 'admin_enqueue_scripts', function () {
@@ -73,9 +100,10 @@ add_action( 'in_admin_header', function () {
 			<?php endforeach; ?>
 		</nav>
 		<div class="kui-user">
-			<a href="<?php echo esc_url( home_url( '/' ) ); ?>" target="_blank"><span class="dashicons dashicons-admin-site-alt3"></span>Website</a>
+			<button type="button" class="kui-modus" data-kui-modus aria-label="Hell oder dunkel umschalten" title="Hell / Dunkel"><span class="dashicons dashicons-lightbulb"></span><span class="kui-modus-txt"><?php echo kilic_ui_dunkel() ? 'Hell' : 'Dunkel'; ?></span></button>
+			<a href="<?php echo esc_url( home_url( '/' ) ); ?>" target="_blank" title="Website ansehen"><span class="dashicons dashicons-admin-site-alt3"></span><span class="kui-u-txt">Website</span></a>
 			<?php if ( current_user_can( 'manage_options' ) ) : ?>
-				<a href="<?php echo esc_url( admin_url( 'index.php?wp=1' ) ); ?>" title="Seiten, Divi, Plugins"><span class="dashicons dashicons-wordpress"></span>WordPress</a>
+				<a href="<?php echo esc_url( admin_url( 'index.php?wp=1' ) ); ?>" title="WordPress: Seiten, Divi, Plugins"><span class="dashicons dashicons-wordpress"></span><span class="kui-u-txt">WordPress</span></a>
 			<?php endif; ?>
 			<span class="kui-name"><?php echo esc_html( $u->display_name ); ?></span>
 			<a href="<?php echo esc_url( wp_logout_url( home_url( '/buero' ) ) ); ?>"><span class="dashicons dashicons-exit"></span>Abmelden</a>

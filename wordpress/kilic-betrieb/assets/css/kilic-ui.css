@@ -644,3 +644,179 @@ body.ks-offen { overflow: hidden; }
   .kk-euro b { right: 8px; }
   .kk-f > span:first-child { font-size: 10px; }
 }
+
+/* ---------- Umsatz im Cockpit ---------- */
+.ku { margin: 0 0 18px; padding: 20px 22px; border-radius: 20px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.06); scroll-margin-top: 90px; }
+.ku-kopf { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ku-kopf h2 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
+.ku-seg { display: inline-flex; padding: 3px; border-radius: 12px; background: rgba(118,118,128,.12); }
+.ku-seg a { min-height: 36px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 9px; color: #3a3a3c; font-weight: 600; font-size: 14px; text-decoration: none; }
+.ku-seg a.is-aktiv { background: #fff; color: #1d1d1f; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.ku-zeit { display: flex; align-items: center; gap: 8px; margin: 14px 0 16px; flex-wrap: wrap; }
+.ku-pfeil { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: #f2f2f7; color: #1d1d1f; font-size: 22px; line-height: 1; text-decoration: none; }
+.ku-pfeil:hover { background: var(--k-accent-soft); color: var(--k-accent-d); }
+.ku-name { font-size: 17px; min-width: 150px; text-align: center; }
+.ku-heute { margin-left: 4px; padding: 6px 12px; border-radius: 999px; background: var(--k-accent-soft); color: var(--k-accent-d); font-weight: 600; text-decoration: none; font-size: 13px; }
+.ku-frei { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.ku-frei label { display: flex; flex-direction: column; font-size: 12px; color: #8e8e93; gap: 4px; }
+.ku-frei input { min-height: 40px; border-radius: 10px !important; border: 1px solid #e5e5ea !important; }
+.ku-frei button { min-height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--k-accent); color: #fff; font-weight: 700; cursor: pointer; }
+.ku-zahlen { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.ku-z { padding: 14px 16px; border-radius: 14px; background: #f7f7f9; }
+.ku-z span { display: block; font-size: 13px; color: #6e6e73; }
+.ku-z strong { display: block; font-size: 26px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin: 2px 0; }
+.ku-z small { color: #8e8e93; font-size: 12px; }
+.ku-gruen strong { color: #1f9d55; } .ku-orange strong { color: var(--k-accent-d); } .ku-rot strong { color: #d7262f; }
+.ku-diagramm-box { margin-top: 18px; }
+.ku-legende { display: flex; gap: 16px; font-size: 12px; color: #6e6e73; margin-bottom: 8px; }
+.ku-legende span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.ku-l-ein::before { background: #1f9d55; } .ku-l-rech::before { background: var(--k-accent); }
+.ku-diagramm { display: flex; align-items: stretch; gap: 6px; height: 190px; padding: 6px 2px 0; border-bottom: 1px solid #ececef; overflow-x: auto; }
+.ku-spalte { flex: 1 0 22px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; text-decoration: none; border-radius: 8px; padding: 0 1px; }
+.ku-spalte:hover { background: #f7f7f9; }
+.ku-wert { font-size: 10px; color: #6e6e73; white-space: nowrap; min-height: 12px; }
+.ku-balken { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 2px; }
+.ku-balken i { display: block; width: 42%; max-width: 18px; min-height: 2px; border-radius: 4px 4px 1px 1px; }
+.ku-b-ein { background: #1f9d55; } .ku-b-rech { background: var(--k-accent); opacity: .85; }
+.ku-x { font-size: 11px; color: #8e8e93; padding-bottom: 4px; }
+.ku-spalte.ist-heute .ku-x { color: var(--k-accent-d); font-weight: 700; }
+.ku-eng .ku-wert { display: none; }
+.ku-unten { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 18px; }
+.ku-liste h3 { margin: 0 0 8px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #8e8e93; }
+.ku-zeile { display: grid; grid-template-columns: minmax(90px, 1.2fr) 2fr auto; gap: 10px; align-items: center; padding: 7px 0; border-bottom: 1px solid #f0f0f3; font-size: 14px; }
+.ku-zeile a { color: #1d1d1f; text-decoration: none; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ku-zeile i { display: block; height: 8px; border-radius: 4px; background: #f2f2f7; overflow: hidden; }
+.ku-zeile i b { display: block; height: 100%; background: var(--k-accent); border-radius: 4px; }
+.ku-zeile strong { font-variant-numeric: tabular-nums; }
+.ku-leer { color: #8e8e93; margin: 6px 0; }
+@media (max-width: 960px) { .ku-zahlen { grid-template-columns: 1fr 1fr; } .ku-unten { grid-template-columns: 1fr; } }
+@media (max-width: 600px) {
+  .ku { padding: 16px 14px; border-radius: 16px; }
+  .ku-seg { width: 100%; } .ku-seg a { flex: 1; justify-content: center; padding: 0 6px; font-size: 13px; }
+  .ku-zeit { justify-content: center; }
+  .ku-z strong { font-size: 21px; }
+  .ku-diagramm { height: 160px; }
+  .ku-wert { display: none; }
+}
+
+/* ---------- Kopfleiste aufgeräumt: oben Logo · Suche · Konto, darunter Menü in einer Linie ---------- */
+@media (min-width: 783px) {
+  .kui-bar { flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 10px 24px 0; }
+  .kui-bar .kui-brand { order: 0; }
+  .kui-bar .kui-suche-knopf { order: 1; flex: 1 1 320px; max-width: 520px; margin: 0 auto; justify-content: flex-start; }
+  .kui-bar .kui-suche-knopf kbd { margin-left: auto; }
+  .kui-bar .kui-user { order: 2; margin-left: 0; gap: 2px; }
+  .kui-bar .kui-nav { order: 3; flex: 0 0 calc(100% + 48px); margin: 4px -24px 0; padding: 0 18px; display: flex; flex-wrap: nowrap; gap: 2px; overflow-x: auto; scrollbar-width: none; border-top: 1px solid rgba(0,0,0,.06); }
+  .kui-bar .kui-nav::-webkit-scrollbar { display: none; }
+  .kilic-ui .kui-bar .kui-nav a { flex: 0 0 auto; position: relative; padding: 13px 12px 14px; border-radius: 0; white-space: nowrap; background: transparent !important; }
+  .kilic-ui .kui-bar .kui-nav a::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: transparent; }
+  .kilic-ui .kui-bar .kui-nav a:hover { color: #1d1d1f; }
+  .kilic-ui .kui-bar .kui-nav a:hover::after { background: rgba(0,0,0,.12); }
+  .kilic-ui .kui-bar .kui-nav a.is-active { color: #c96f17; }
+  .kilic-ui .kui-bar .kui-nav a.is-active::after { background: #e8892b; }
+}
+@media (min-width: 783px) and (max-width: 1350px) { .kui-u-txt, .kui-modus-txt { display: none; } }
+@media (min-width: 783px) and (max-width: 1150px) { .kui-name { display: none; } }
+.kui-modus { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; color: #3a3a3c; font: 500 14px/1 -apple-system, BlinkMacSystemFont, "Kilic Inter", sans-serif; cursor: pointer; }
+.kui-modus:hover { background: rgba(0,0,0,.05); }
+.kui-modus .dashicons { color: #8e8e93; font-size: 17px; width: 17px; height: 17px; }
+@media (max-width: 782px) { .kui-modus { width: 100%; padding: 14px 12px; font-size: 17px; justify-content: flex-start; } }
+
+/* ---------- Dunkles Design ---------- */
+body.kilic-ui.kui-dunkel {
+  --a-bg: #0f1113; --a-card: #1b1e22; --a-text: #f2f2f4; --a-sub: #a1a1a8; --a-sep: #2c3036; --a-fill: #24282d;
+  --k-line: #2f343a; --k-concrete: #1b1e22; --k-muted: #a1a1a8; --k-ink: #f2f2f4; --k-ink2: #d6d6da; --k-accent-soft: #3a2a19;
+  background: var(--a-bg); color: var(--a-text); color-scheme: dark;
+}
+.kui-dunkel #wpwrap, .kui-dunkel #wpcontent, .kui-dunkel #wpbody, .kui-dunkel #wpbody-content { background: var(--a-bg); }
+.kui-dunkel, .kui-dunkel p, .kui-dunkel td, .kui-dunkel th, .kui-dunkel label, .kui-dunkel li, .kui-dunkel h1, .kui-dunkel h2, .kui-dunkel h3, .kui-dunkel h4, .kui-dunkel strong, .kui-dunkel .wrap > h1 { color: var(--a-text); }
+.kui-dunkel .description, .kui-dunkel small, .kui-dunkel .kc-kpi span, .kui-dunkel .ku-z span, .kui-dunkel .ku-z small, .kui-dunkel .kk-intro, .kui-dunkel .kb-intro { color: var(--a-sub) !important; }
+.kui-dunkel a { color: #f0a258; }
+/* Kopfleiste */
+.kui-dunkel .kui-bar { background: rgba(22,24,27,.85); border-bottom-color: rgba(255,255,255,.08); }
+.kui-dunkel .kui-bar .kui-nav { border-top-color: rgba(255,255,255,.06); }
+.kui-dunkel .kui-brand .kilic-logo-text strong { color: #fff !important; }
+.kilic-ui.kui-dunkel .kui-nav a, .kilic-ui.kui-dunkel .kui-user a, .kui-dunkel .kui-modus { color: #d6d6da; }
+.kilic-ui.kui-dunkel .kui-nav a:hover, .kilic-ui.kui-dunkel .kui-user a:hover, .kui-dunkel .kui-modus:hover { color: #fff; background: rgba(255,255,255,.06); }
+.kilic-ui.kui-dunkel .kui-bar .kui-nav a.is-active { color: #f0a258; }
+.kui-dunkel .kui-suche-knopf { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.08); color: #a1a1a8; }
+.kui-dunkel .kui-suche-knopf kbd { background: #24282d; border-color: #33383e; color: #a1a1a8; }
+.kui-dunkel .kui-burger, .kui-dunkel .kui-suche-knopf .dashicons { color: #f2f2f4; }
+.kui-dunkel .kui-tabbar { background: rgba(22,24,27,.92); border-top-color: rgba(255,255,255,.08); }
+/* Karten & Flächen */
+.kui-dunkel .postbox, .kui-dunkel .kc-kpi, .kui-dunkel .kc-big, .kui-dunkel .kc-col, .kui-dunkel .kc-card, .kui-dunkel .kc-start, .kui-dunkel .kc-schritt, .kui-dunkel .kc-payments, .kui-dunkel .kc-flow li,
+.kui-dunkel .ku, .kui-dunkel .kk-zeile, .kui-dunkel .kb-karte, .kui-dunkel .kb-drop, .kui-dunkel .kv-liste, .kui-dunkel .kilic-diagnose, .kui-dunkel .notice, .kui-dunkel .ks-box,
+.kui-dunkel .form-table, .kui-dunkel .wp-list-table, .kui-dunkel .wp-list-table tbody tr, .kui-dunkel .kilic-neuer-kunde, .kui-dunkel .kf-karte, .kui-dunkel .kf-drop { background: var(--a-card) !important; border-color: var(--a-sep) !important; color: var(--a-text); box-shadow: 0 1px 2px rgba(0,0,0,.4) !important; }
+.kui-dunkel .kc-col { background: #15181b !important; }
+.kui-dunkel .ku-z, .kui-dunkel .kv-status, .kui-dunkel .kc-schritt, .kui-dunkel .imp-karte { background: var(--a-fill) !important; }
+.kui-dunkel .kv-status.is-ok, .kui-dunkel .kilic-diagnose.is-ok { background: #13271b !important; }
+.kui-dunkel .kilic-diagnose.is-warn { background: #2e2213 !important; }
+.kui-dunkel .wp-list-table thead th, .kui-dunkel .wp-list-table tfoot th { background: #15181b !important; color: var(--a-sub) !important; border-color: var(--a-sep) !important; }
+.kui-dunkel .wp-list-table td, .kui-dunkel .wp-list-table th, .kui-dunkel .form-table th, .kui-dunkel .form-table td { border-color: var(--a-sep) !important; color: var(--a-text); }
+.kui-dunkel .wp-list-table tbody tr:hover, .kui-dunkel .striped > tbody > :nth-child(odd) { background: #202428 !important; }
+.kui-dunkel .row-title, .kui-dunkel .wp-list-table a.row-title { color: #fff !important; }
+/* Eingabefelder */
+.kui-dunkel input[type=text], .kui-dunkel input[type=email], .kui-dunkel input[type=tel], .kui-dunkel input[type=number], .kui-dunkel input[type=date], .kui-dunkel input[type=url], .kui-dunkel input[type=password], .kui-dunkel input[type=search], .kui-dunkel select, .kui-dunkel textarea,
+.kui-dunkel .kk-f input[type=text], .kui-dunkel .kk-f select, .kui-dunkel .kk-f textarea {
+  background: #24282d !important; border-color: #383d44 !important; color: #f2f2f4 !important; }
+.kui-dunkel input::placeholder, .kui-dunkel textarea::placeholder { color: #7c7f86 !important; }
+.kui-dunkel select option { background: #24282d; color: #f2f2f4; }
+.kui-dunkel .kk-zeile.ohne-preis .kk-euro input { background: #33261a !important; border-color: #7a4f22 !important; }
+/* Knöpfe */
+.kui-dunkel .button:not(.button-primary), .kui-dunkel .kv-btn:not(.kv-primaer), .kui-dunkel .kl-btn:not(.kl-primaer), .kui-dunkel .kk-btn, .kui-dunkel .kk-chip, .kui-dunkel .ku-pfeil, .kui-dunkel .ks-mini, .kui-dunkel .kc-btn:not(.primary):not(.ok):not(.warn) { background: #2a2e34 !important; border-color: #383d44 !important; color: #e6e6ea !important; }
+.kui-dunkel .kk-chip.is-aktiv { background: #f2f2f4 !important; color: #111 !important; }
+.kui-dunkel .kk-chip b, .kui-dunkel .ks-gruppe h3 small { background: rgba(255,255,255,.1); color: inherit; }
+.kui-dunkel .ku-seg { background: rgba(255,255,255,.08); } .kui-dunkel .ku-seg a { color: #d6d6da; } .kui-dunkel .ku-seg a.is-aktiv { background: #3a3f46; color: #fff; }
+.kui-dunkel .ku-zeile, .kui-dunkel .ku-diagramm { border-color: var(--a-sep); } .kui-dunkel .ku-zeile i { background: #2a2e34; } .kui-dunkel .ku-spalte:hover { background: #24282d; }
+.kui-dunkel .ku-zeile a, .kui-dunkel .ks-treffer, .kui-dunkel .ks .ks-txt strong { color: #f2f2f4 !important; }
+.kui-dunkel .kk-werkzeuge { background: var(--a-bg); }
+.kui-dunkel .kk-suche, .kui-dunkel .ks-feld { background: rgba(255,255,255,.06); border-color: var(--a-sep); }
+.kui-dunkel .ks-ic { background: #2a2e34; color: #c8c8ce; }
+.kui-dunkel .ks-treffer:hover, .kui-dunkel .ks-treffer.is-aktiv { background: #3a2a19; }
+.kui-dunkel .ks-fuss, .kui-dunkel .ks-feld { border-color: var(--a-sep); } .kui-dunkel .ks-fuss kbd { background: #2a2e34; border-color: #383d44; }
+.kui-dunkel .kv-liste li { border-color: var(--a-sep); }
+.kui-dunkel #wpfooter, .kui-dunkel #wpfooter p { color: var(--a-sub); }
+.kui-dunkel .kilic-pos .kilic-pos-row { background: var(--a-card) !important; border-color: var(--a-sep) !important; }
+.kui-dunkel img.kilic-logo-mark, .kui-dunkel .kb-bild { filter: none; }
+
+/* ---------- Ablauf-Spalten farbig: jede Phase eine eigene Farbe ---------- */
+.kc-board { --c1: #2f7de1; --c2: #e8892b; --c3: #8e5cd9; --c4: #d7262f; }
+.kc-board .kc-col:nth-of-type(1) { --c: var(--c1); --cs: #e8f1fd; }
+.kc-board .kc-col:nth-of-type(2) { --c: var(--c2); --cs: #fdf0e2; }
+.kc-board .kc-col:nth-of-type(3) { --c: var(--c3); --cs: #f1eafb; }
+.kc-board .kc-col:nth-of-type(4) { --c: var(--c4); --cs: #fdecec; }
+.kilic-ui .kc-board .kc-col { background: var(--cs); border-top: 5px solid var(--c); }
+.kilic-ui .kc-board .kc-col h2 { color: var(--c); }
+.kilic-ui .kc-board .kc-col h2 .kc-count, .kilic-ui .kc-board .kc-col h2 span:last-child { background: var(--c); color: #fff; }
+.kilic-ui .kc-board .kc-card { border-left: 4px solid var(--c) !important; }
+.kc-flow li:nth-child(1) b { background: #2f7de1 !important; } .kc-flow li:nth-child(2) b { background: #e8892b !important; }
+.kc-flow li:nth-child(3) b { background: #8e5cd9 !important; } .kc-flow li:nth-child(4) b { background: #d7262f !important; }
+.kc-flow li:nth-child(5) b { background: #1f9d55 !important; }
+/* Status-Kennzeichen deutlicher */
+.kilic-ui .kc-card .badge, .kilic-ui .kc-card [class*="status"] { font-weight: 700; }
+
+/* Dunkel: Erste Schritte und Spalten */
+.kui-dunkel .kc-start { background: var(--a-card) !important; }
+.kui-dunkel .kc-start li { background: var(--a-fill) !important; color: var(--a-text); }
+.kui-dunkel .kc-start li strong { color: var(--a-text) !important; }
+.kui-dunkel .kc-start-bar { background: #2a2e34; }
+.kui-dunkel .kc-board .kc-col:nth-of-type(1) { --cs: #142032; } .kui-dunkel .kc-board .kc-col:nth-of-type(2) { --cs: #2a1f14; }
+.kui-dunkel .kc-board .kc-col:nth-of-type(3) { --cs: #221a30; } .kui-dunkel .kc-board .kc-col:nth-of-type(4) { --cs: #2c1618; }
+.kui-dunkel .kc-board .kc-col { background: var(--cs) !important; }
+.kui-dunkel .kc-board .kc-col h2 { color: color-mix(in srgb, var(--c) 70%, #fff) !important; }
+.kui-dunkel .kc-big { background: var(--a-card) !important; }
+.kui-dunkel .kc-flow li { background: var(--a-card) !important; color: var(--a-text) !important; }
+.ku-z strong { line-height: 1.15; margin: 4px 0 3px; }
+.kui-dunkel .ku-gruen strong { color: #34c759 !important; } .kui-dunkel .ku-orange strong { color: #f0a258 !important; } .kui-dunkel .ku-rot strong { color: #ff5a5f !important; }
+.kui-dunkel .ku-spalte.ist-heute .ku-x { color: #f0a258; }
+.kui-dunkel .kc-btn.warn { background: #3a1d20 !important; color: #ff8a8f !important; }
+/* Diagramm: alle Tage passen in die Breite */
+.ku-spalte { flex: 1 1 0; min-width: 0; }
+.ku-diagramm { overflow-x: visible; gap: 3px; }
+.ku-eng .ku-balken i { width: 46%; }
+@media (max-width: 600px) {
+  .ku-diagramm { gap: 1px; }
+  .ku-eng .ku-balken { gap: 1px; }
+  .ku-eng .ku-x { font-size: 9px; }
+  .ku-eng .ku-spalte:not(:nth-child(5n+1)):not(.ist-heute) .ku-x { visibility: hidden; }
+}

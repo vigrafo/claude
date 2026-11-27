@@ -182,6 +182,8 @@ function kilic_render_cockpit() {
 			<div class="kc-kpi"><span>Zahlungseingang <?php echo esc_html( $jahr ); ?></span><strong><?php echo esc_html( kilic_eur( $k_jahr ) ); ?></strong></div>
 		</div>
 
+		<?php kilic_umsatz_panel(); ?>
+
 		<ol class="kc-flow">
 			<li><b>1</b> Anfrage kommt rein <span>(Website oder Telefon)</span></li>
 			<li><b>2</b> Angebot schreiben &amp; drucken</li>
