@@ -161,7 +161,7 @@ function kilic_header() {
 				<span><span class="ki ki-clock"></span> <?php echo esc_html( kilic_opt( 'oeffnungszeiten' ) ); ?></span>
 				<span><span class="ki ki-medal"></span> Meisterbetrieb</span>
 			</div>
-			<a class="topbar-emergency" href="<?php echo esc_attr( kilic_tel_href( $notdienst ) ); ?>"><i class="pulse"></i> Rohrreinigung 24/7 Notdienst: <?php echo esc_html( $notdienst ); ?></a>
+			<a class="topbar-emergency" href="<?php echo esc_attr( kilic_tel_href( $notdienst ) ); ?>" aria-label="Rohrreinigung 24/7 Notdienst anrufen: <?php echo esc_attr( $notdienst ); ?>"><i class="pulse"></i> <span class="te-label">Rohrreinigung 24/7 Notdienst<span class="te-doppel">:</span></span> <span class="te-nr"><span class="ki ki-phone"></span><?php echo esc_html( $notdienst ); ?></span></a>
 		</div>
 	</div>
 	<header class="site-header">
