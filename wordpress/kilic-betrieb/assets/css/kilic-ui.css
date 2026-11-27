@@ -458,3 +458,44 @@ body.kilic-ui {
 .kilic-ui .kb-text small { color: var(--k-muted); }
 .kilic-ui .kb-knoepfe { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 14px 14px; margin-top: auto; }
 .kilic-ui .kb-knoepfe .button { min-height: 40px; }
+
+/* Listen: Aktionsknöpfe */
+.kilic-ui .kl-aktionen { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.kilic-ui .kl-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--k-line); background: #fff; color: var(--k-ink); font-weight: 600; font-size: 13px; text-decoration: none; white-space: nowrap; box-sizing: border-box; }
+.kilic-ui .kl-btn .dashicons { font-size: 16px; width: 16px; height: 16px; }
+.kilic-ui .kl-btn:hover, .kilic-ui .kl-btn:focus { border-color: var(--k-accent); color: var(--k-accent-d); }
+.kilic-ui .kl-btn.kl-primaer { background: var(--k-accent); border-color: var(--k-accent); color: #fff; }
+.kilic-ui .kl-btn.kl-primaer:hover, .kilic-ui .kl-btn.kl-primaer:focus { background: var(--k-accent-d); color: #fff; }
+
+/* Listen am Handy: jede Zeile als Karte */
+@media (max-width: 782px) {
+  .kilic-ui .wp-list-table { display: block; border: 0; background: transparent; box-shadow: none !important; border-radius: 0; overflow: visible; }
+  .kilic-ui .wp-list-table thead, .kilic-ui .wp-list-table tfoot { display: none; }
+  .kilic-ui .wp-list-table tbody { display: block; }
+  .kilic-ui .wp-list-table tbody tr { display: block; position: relative; margin: 0 0 12px; padding: 14px 16px 12px; border-radius: 16px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 18px rgba(0,0,0,.06); }
+  .kilic-ui .wp-list-table tbody tr:hover { background: #fff; }
+  .kilic-ui .wp-list-table .check-column { display: none !important; }
+  .kilic-ui .wp-list-table .toggle-row { display: none !important; }
+  .kilic-ui .wp-list-table td, .kilic-ui .wp-list-table th { border: 0 !important; }
+  .kilic-ui .wp-list-table td.column-primary { display: block; padding: 0 0 8px !important; margin-bottom: 4px; border-bottom: 1px solid var(--k-line) !important; }
+  .kilic-ui .wp-list-table td.column-primary strong, .kilic-ui .wp-list-table .row-title { font-size: 16px; line-height: 1.3; }
+  .kilic-ui .wp-list-table .row-actions { position: static; left: auto; padding: 6px 0 0; font-size: 14px; color: var(--k-muted); }
+  .kilic-ui .wp-list-table .row-actions span { padding: 0; }
+  .kilic-ui .wp-list-table .row-actions a { display: inline-block; padding: 6px 10px 6px 0; }
+  .kilic-ui .wp-list-table tbody td:not(.column-primary):not(.check-column) { display: flex !important; justify-content: space-between; align-items: center; gap: 12px; padding: 7px 0 !important; min-height: 0; text-align: right; }
+  .kilic-ui .wp-list-table tbody td:not(.column-primary)::before { content: attr(data-colname); position: static !important; width: auto !important; display: block; flex: 0 0 auto; text-align: left; color: var(--k-muted); font-weight: 500; font-size: 14px; }
+  .kilic-ui .wp-list-table tbody td:not(.column-primary):empty { display: none !important; }
+  .kilic-ui .wp-list-table tbody td.column-druck { display: block !important; padding-top: 10px !important; }
+  .kilic-ui .wp-list-table tbody td.column-druck::before { display: none; }
+  .kilic-ui .wp-list-table td.column-druck .kl-aktionen { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kilic-ui .wp-list-table td.column-druck .kl-btn { min-height: 46px; font-size: 15px; }
+  .kilic-ui .wp-list-table tr.no-items td { display: block !important; }
+  .kilic-ui .wp-list-table tr.no-items td::before { display: none; }
+  .kilic-ui .tablenav { height: auto; }
+  .kilic-ui .tablenav .actions.bulkactions { display: none; }
+}
+@media (max-width: 782px) {
+  .kilic-ui .wp-list-table tbody td.column-druck:not(.column-primary):not(.check-column) { display: block !important; padding-top: 12px !important; }
+  .kilic-ui .wp-list-table tbody td.column-druck .kl-aktionen { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kilic-ui .wp-list-table tbody td.column-druck .kl-btn { width: 100%; }
+}

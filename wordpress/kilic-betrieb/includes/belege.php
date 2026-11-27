@@ -737,9 +737,11 @@ add_action( 'manage_kilic_beleg_posts_custom_column', function ( $col, $id ) {
 			echo esc_html( kilic_eur( kilic_beleg_summen( $id )['brutto'] ) );
 			break;
 		case 'druck':
-			echo '<a class="button button-large" style="width:100%;text-align:center;margin-top:8px" href="' . esc_url( kilic_senden_url( $id ) ) . '"><span class="dashicons dashicons-email" style="vertical-align:text-bottom"></span> Per E-Mail an Kunden</a>';
-		$print = wp_nonce_url( admin_url( 'admin-post.php?action=kilic_drucken&id=' . $id ), 'kilic_drucken_' . $id );
-			echo '<a class="button button-small" target="_blank" href="' . esc_url( $print ) . '">Drucken</a>';
+			$print = wp_nonce_url( admin_url( 'admin-post.php?action=kilic_drucken&id=' . $id ), 'kilic_drucken_' . $id );
+			echo '<div class="kl-aktionen">';
+			echo '<a class="kl-btn kl-primaer" href="' . esc_url( kilic_senden_url( $id ) ) . '"><span class="dashicons dashicons-email"></span><span>Senden</span></a>';
+			echo '<a class="kl-btn" target="_blank" href="' . esc_url( $print ) . '"><span class="dashicons dashicons-printer"></span><span>Drucken</span></a>';
+			echo '</div>';
 			break;
 	}
 }, 10, 2 );
