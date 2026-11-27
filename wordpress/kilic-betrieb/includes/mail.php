@@ -71,8 +71,12 @@ function kilic_mail_tabelle( $zeilen ) {
 function kilic_absender_email() {
 	$a    = kilic_opt( 'absender' );
 	$host = kilic_site_domain();
-	if ( kilic_smtp_aktiv() && is_email( $a ) ) {
-		return $a; // Postfach-Versand: Absender = Postfach.
+	if ( kilic_smtp_aktiv() ) {
+		// Postfach-Versand: Absender MUSS das angemeldete Postfach sein, sonst lehnen Server ab.
+		$u = trim( (string) kilic_opt( 'smtp_user' ) );
+		if ( is_email( $u ) ) {
+			return $u;
+		}
 	}
 	// Versand über die Website: Absender muss zur eigenen Domain passen.
 	if ( is_email( $a ) && $host && substr( strtolower( $a ), -strlen( '@' . $host ) ) === strtolower( '@' . $host ) ) {
@@ -165,6 +169,9 @@ function kilic_send_mail( $an, $betreff, $html, $anhaenge = array(), $bcc = '', 
 		if ( ! $ok && $fehler ) {
 			$GLOBALS['kilic_mail_fehler'] = $fehler . ' / Website: ' . ( $GLOBALS['kilic_mail_fehler'] ?? '' );
 		}
+	}
+	if ( empty( $GLOBALS['kilic_smtp_aus'] ) && empty( $GLOBALS['kilic_smtp_lokal'] ) ) {
+		kilic_versand_log( $an, $betreff, $ok, $von, $anhaenge );
 	}
 	return $ok;
 }
@@ -527,4 +534,22 @@ function kilic_mail_diagnose() {
 		'dmarc'    => $dmarc ? $dmarc[0] : '',
 		'mx'       => $mx ? implode( ', ', wp_list_pluck( $mx, 'target' ) ) : '',
 	);
+}
+
+
+/** Letzte 30 Versandversuche (für Einstellungen → Versandprotokoll). */
+function kilic_versand_log( $an, $betreff, $ok, $von, $anhaenge ) {
+	$log   = get_option( 'kilic_versand_log', array() );
+	$log   = is_array( $log ) ? $log : array();
+	$log[] = array(
+		'zeit'    => current_time( 'mysql' ),
+		'an'      => is_array( $an ) ? implode( ', ', $an ) : (string) $an,
+		'betreff' => (string) $betreff,
+		'von'     => (string) $von,
+		'weg'     => kilic_smtp_aktiv() ? 'Postfach ' . kilic_opt( 'smtp_host' ) : 'Website',
+		'pdf'     => count( (array) $anhaenge ),
+		'ok'      => $ok ? 1 : 0,
+		'fehler'  => $ok ? '' : (string) ( $GLOBALS['kilic_mail_fehler'] ?? '' ),
+	);
+	update_option( 'kilic_versand_log', array_slice( $log, -30 ), false );
 }

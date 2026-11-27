@@ -50,7 +50,7 @@ function kilic_settings_fields() {
 			'empfaenger'   => array( 'Benachrichtigung an', 'email', 'Leer = Firmen-E-Mail bzw. WordPress-Admin-E-Mail.' ),
 			'bestaetigung' => array( 'Eingangsbestätigung an Kunden senden', 'checkbox' ),
 			'inhaber_email' => array( 'Bestätigung an Inhaber', 'email', 'Der Inhaber bekommt bei jeder Anfrage eine eigene Bestätigung im Firmendesign. Leer = WordPress-Admin-E-Mail. Angebote und Rechnungen gehen ohne Kopie raus – die Kopie liegt am Beleg im Backend.' ),
-			'absender'      => array( 'Antwort-Adresse', 'email', 'Antwortet ein Kunde auf eine E-Mail der Website, landet die Antwort hier.' ),
+			'absender'      => array( 'Antwort-Adresse', 'email', 'Antwortet ein Kunde auf eine E-Mail der Website, landet die Antwort hier. (Absender ist immer das Postfach bzw. eine Adresse der Website.)' ),
 		),
 		'E-Mail-Postfach (SMTP)' => array(
 			'smtp_an'   => array( 'Über ein Postfach senden statt über die Website', 'checkbox', 'Aus = E-Mails gehen direkt über die Website (empfohlen, ohne Passwort). Absender ist dann eine Adresse der Website-Domain, Antworten gehen an die Antwort-Adresse oben.' ),
@@ -196,6 +196,19 @@ function kilic_render_settings() {
 			<p><label for="kilic_test_an">An</label><br><input type="email" id="kilic_test_an" name="an" value="<?php echo esc_attr( kilic_inhaber_email() ); ?>" class="regular-text" required></p>
 			<?php submit_button( 'Test-E-Mail senden', 'secondary', 'submit', false ); ?>
 		</form>
+
+		<h3>Versandprotokoll (letzte E-Mails)</h3>
+		<?php $vl = array_reverse( (array) get_option( 'kilic_versand_log', array() ) ); ?>
+		<?php if ( ! $vl ) : ?>
+			<p class="description">Noch keine E-Mails verschickt.</p>
+		<?php else : ?>
+			<div class="kilic-vlog"><table class="widefat"><thead><tr><th>Zeit</th><th>An</th><th>Betreff</th><th>Absender / Weg</th><th>Ergebnis</th></tr></thead><tbody>
+			<?php foreach ( array_slice( $vl, 0, 15 ) as $e ) : ?>
+				<tr><td><?php echo esc_html( mysql2date( 'd.m. H:i', $e['zeit'] ) ); ?></td><td><?php echo esc_html( $e['an'] ); ?></td><td><?php echo esc_html( $e['betreff'] ); ?><?php echo $e['pdf'] ? ' 📎' : ''; ?></td><td><?php echo esc_html( $e['von'] . ' · ' . $e['weg'] ); ?></td><td><?php echo $e['ok'] ? '<span style="color:#1f9d55;font-weight:600">✓ an Mailserver übergeben</span>' : '<span style="color:#d7262f;font-weight:600">✗ ' . esc_html( $e['fehler'] ? $e['fehler'] : 'fehlgeschlagen' ) . '</span>'; ?></td></tr>
+			<?php endforeach; ?>
+			</tbody></table></div>
+			<p class="description">„✓ an Mailserver übergeben“ heißt: Die Website hat die E-Mail abgeschickt. Kommt sie trotzdem nicht an, lehnt der Empfänger sie ab (meist fehlendes SPF/DKIM) – dann den Postfach-Versand oben einrichten.</p>
+		<?php endif; ?>
 
 		<h2>Seiten neu einrichten</h2>
 		<p>Fehlende Standardseiten (Estrich, Boden, Rohrreinigung, Unterseiten, Kontakt …) und das Hauptmenü neu anlegen. Bestehende Seiten werden nicht überschrieben.</p>

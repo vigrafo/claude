@@ -511,3 +511,6 @@ body.kilic-ui {
 .kilic-ui .kilic-diagnose h3 { margin: 0 0 10px; font-size: 16px; }
 .kilic-ui .kilic-diagnose table td { padding: 4px 14px 4px 0; vertical-align: top; }
 .kilic-ui .kilic-diagnose code { word-break: break-all; }
+
+.kilic-ui .kilic-vlog { overflow-x: auto; max-width: 100%; }
+.kilic-ui .kilic-vlog td { font-size: 13px; vertical-align: top; }
